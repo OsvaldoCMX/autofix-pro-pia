@@ -151,7 +151,7 @@ Notas de comportamiento (precisiones v3.0):
 | Pendiente de Autorización del Cliente | Autorizada Parcialmente | `registrar_decision` (algunas líneas) | E2 | `CotizacionAutorizada(parcial)` | CA-010 |
 | Pendiente de Autorización del Cliente | Rechazada | `registrar_decision` (ninguna línea) | E2 | `CotizacionRechazadaPorCliente` | CA-012, CA-018 |
 
-Estados finales: Autorizada, Autorizada Parcialmente y Rechazada. Aprobar dos veces, presentar una cotización que espera al Gerente o registrar una segunda decisión lanza `OperacionDeCotizacionNoPermitida` (409).
+Estados finales: Autorizada, Autorizada Parcialmente y Rechazada. Aprobar dos veces, presentar una cotización que espera al Gerente o registrar una segunda decisión lanza `OperacionDeCotizacionNoPermitida` (409). Lo mismo ocurre al presentar dos veces (reiniciaría las 48 horas; para eso está el recontacto) o al registrar un recontacto de una cotización que no se ha presentado.
 
 ### 5.3 Trabajo (4 estados) y Solicitud de Compra (2 estados)
 

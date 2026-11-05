@@ -61,8 +61,8 @@ Orden en que se construye el sistema a partir de esta documentación. Cada fase 
 
 **Construye** en este orden, cada uno con sus pruebas antes de pasar al siguiente:
 1. `clientes`, `vehiculos` y `empleados` (Aggregates, Value Objects e interfaces de repositorio).
-2. `cotizaciones`: `Cotizacion`, `LineaDeCotizacion`, Value Objects, `EstadoCotizacion` (6 estados) con su tabla de transiciones, eventos y E1 `RequiereAprobacionGerencial`.
-3. `ordenes`: `OrdenDeServicio`, `Trabajo`, `SolicitudDeCompra`, `FallaAdicional`, Value Objects (`EstadoDeRecepcion`, `Diagnostico`, `Pago`, `CargoACredito`, `NotaDeResponsabilidad`, `Cancelacion`), `EstadoOrden` (13), `EstadoTrabajo` (4), `EstadoSolicitud` (2), eventos y E3 a E8.
+2. `cotizaciones`: `Cotizacion`, `LineaDeCotizacion`, Value Objects, `EstadoCotizacion` (6 estados) con su tabla de transiciones, eventos, E1 `RequiereAprobacionGerencial` y E8 `RequiereRecontacto` (su candidato es la cotización).
+3. `ordenes`: `OrdenDeServicio`, `Trabajo`, `SolicitudDeCompra`, `FallaAdicional`, Value Objects (`EstadoDeRecepcion`, `Diagnostico`, `Pago`, `CargoACredito`, `NotaDeResponsabilidad`, `Cancelacion`), `EstadoOrden` (13), `EstadoTrabajo` (4), `EstadoSolicitud` (2), eventos y E3 a E7.
 4. `servicios`: `VerificadorDeAutorizante` con E2 `AutorizanteValido`.
 
 Los valores de los enums son los textos del Glosario (por ejemplo `EstadoOrden.EN_DIAGNOSTICO = "En Diagnóstico"`), porque la base los valida con `CHECK`.
