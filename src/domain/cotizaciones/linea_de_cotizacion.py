@@ -14,7 +14,7 @@ class DecisionDeLinea(Enum):
 
 
 class LineaDeCotizacion:
-    """Trabajo propuesto (mano de obra) con sus refacciones; es la unidad que el cliente autoriza."""
+    """Trabajo propuesto con su mano de obra y refacciones; es lo que el cliente autoriza."""
 
     def __init__(
         self,

@@ -151,7 +151,7 @@ class Cotizacion(RaizDeAgregado):
     def registrar_decision(
         self, lineas_autorizadas: Iterable[int], autorizante: Autorizante, fecha: datetime
     ) -> DecisionDelCliente:
-        """Autorización total, parcial o rechazo; E2 lo verifica antes `VerificadorDeAutorizante`."""
+        """Total, parcial o rechazo. `VerificadorDeAutorizante` comprueba E2 antes de llamarlo."""
         self._exigir_estado(_E.PENDIENTE_DE_AUTORIZACION_DEL_CLIENTE, "registrar la decisión de")
         autorizadas = set(lineas_autorizadas)
         desconocidas = autorizadas - set(self._lineas)

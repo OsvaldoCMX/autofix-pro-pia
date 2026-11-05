@@ -93,6 +93,8 @@ Base: `Especificacion[T]` con `es_satisfecha_por(candidato) -> bool` y los combi
 | E7 | `RequiereAlertaDeRefaccion` | `SolicitudPendiente() & MasDeDiasHabiles(3) & ~ClienteYaAvisado()` | `SolicitudDeCompra` + fecha de revisión | `ServicioDeRevisionDePlazos` | RN-11 · CA-023 |
 | E8 | `RequiereRecontacto` | `PendienteDeAutorizacion() & FuePresentada() & MasDeHorasDesdeElUltimoContacto(48)` | `Cotizacion` + fecha de revisión | `ServicioDeRevisionDePlazos` | RN-12 · CA-040 |
 
+En E2, `AutorizaElCliente` y `AutorizaSuResponsableDeFlotilla` comprueban el rol y el nombre del autorizante, sin distinguir mayúsculas, contra el cliente o su Responsable de Flotilla.
+
 En E6, la pieza `TrabajoAutorizado` solo acepta trabajos abiertos («Pendiente» o «En Progreso»): un trabajo «Completado» ya no necesita piezas y la solicitud se rechaza con `SolicitudNoPermitida`. Así, mientras haya una solicitud pendiente siempre queda un trabajo abierto y la orden no se atasca después de que llega la refacción.
 
 Combinan **AND, OR y NOT**: E2 y E6 (AND + OR), E3 (OR + AND), E5 y E7 (AND + NOT). E1 sustituye la lógica de `PoliticaPorMontoDeCotizacionInicial` de la Unidad 3 sin cambiar su intención (ADR-005 sigue vigente).
