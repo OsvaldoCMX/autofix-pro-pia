@@ -18,7 +18,7 @@ Orden en que se construye el sistema a partir de esta documentación. Cada fase 
 | 0 | Preparación del repositorio | Terminada | 05/11/2026 | `chore: configurar el proyecto y la estructura de carpetas` |
 | 1 | Núcleo compartido del dominio | Terminada | 05/11/2026 | `feat(dominio): eventos de dominio y calendario hábil` |
 | 2 | Aggregates, Specifications y máquinas de estados | Terminada | 05/11/2026 | `docs: cerrar la Fase 2` |
-| 3 | Capa de aplicación y adaptadores en memoria | Pendiente | | |
+| 3 | Capa de aplicación y adaptadores en memoria | Terminada | 05/11/2026 | `docs: cerrar la Fase 3` |
 | 4 | Persistencia con SQLAlchemy y PostgreSQL | Pendiente | | |
 | 5 | API REST con FastAPI | Pendiente | | |
 | 6 | Pruebas con los datos del profesor y trazabilidad | Pendiente | | |
@@ -82,7 +82,7 @@ Los valores de los enums son los textos del Glosario (por ejemplo `EstadoOrden.E
 
 **Pruebas (`tests/unit/application`):** cada servicio con repositorios en memoria y `Mock(spec=…)` para reloj y publicador; el flujo completo de una orden particular y de una de flotilla; alertas generadas por cada evento; revisión de plazos con reloj falso (E7, E8).
 
-**Commits:** `feat(aplicacion): puertos, comandos y unidad de trabajo` · `feat(aplicacion): servicios de recepción a entrega` · `feat(aplicacion): consultas y manejadores de alertas` · `feat(infraestructura): adaptadores en memoria`.
+**Commits:** `feat(aplicacion): puertos, comandos y unidad de trabajo` · `feat(infraestructura): adaptadores en memoria` (antes que los servicios, porque sus pruebas los usan) · `feat(aplicacion): servicios de recepción a entrega` · `feat(aplicacion): consultas y manejadores de alertas`.
 
 ## Fase 4 — Persistencia con SQLAlchemy y PostgreSQL
 
