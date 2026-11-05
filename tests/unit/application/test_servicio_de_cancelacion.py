@@ -4,9 +4,16 @@ from __future__ import annotations
 import pytest
 
 from application.comandos import CancelarOrden
-from domain.compartido.errores import OrdenNoEncontrada, ValorInvalido
+from domain.compartido.errores import CancelacionNoPermitida, OrdenNoEncontrada, ValorInvalido
 from domain.ordenes.eventos import OrdenCancelada
-from tests.unit.application.escenarios import AHORA, ASESOR, Taller, en_diagnostico, recibida
+from tests.unit.application.escenarios import (
+    AHORA,
+    ASESOR,
+    Taller,
+    cotizada,
+    en_diagnostico,
+    recibida,
+)
 
 
 def test_ca_044_cancela_orden_recibida_con_motivo(taller: Taller) -> None:
@@ -31,6 +38,15 @@ def test_ca_044_cancela_orden_en_diagnostico(taller: Taller) -> None:
     resultado = taller.cancelacion.cancelar(CancelarOrden(numero, "Ya no lo requiere", ASESOR))
 
     assert resultado.estado == "Cancelada"
+
+
+def test_ca_045_no_cancela_orden_cotizada(taller: Taller) -> None:
+    numero, _ = cotizada(taller)
+
+    with pytest.raises(CancelacionNoPermitida, match="rechazo total"):
+        taller.cancelacion.cancelar(CancelarOrden(numero, "El cliente desistió", ASESOR))
+
+    assert taller.datos.ordenes[numero].estado.value == "Cotizada"
 
 
 def test_rn_19_cancelacion_sin_motivo_es_invalida(taller: Taller) -> None:

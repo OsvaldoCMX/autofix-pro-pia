@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from decimal import Decimal
 from typing import TypeVar
 from unittest.mock import Mock
 from zoneinfo import ZoneInfo
@@ -9,15 +10,23 @@ from zoneinfo import ZoneInfo
 from application.comandos import (
     AsignarTecnicoParaDiagnostico,
     DatosDeVehiculo,
+    GenerarCotizacion,
     RegistrarCliente,
+    RegistrarDecisionDelCliente,
     RegistrarDiagnostico,
     RegistrarOrden,
+    TrabajoPropuesto,
 )
 from application.puertos import PublicadorDeEventos, Reloj
+from application.resultados import ResultadoDeDecision
+from application.servicios.servicio_de_aprobacion_gerencial import ServicioDeAprobacionGerencial
+from application.servicios.servicio_de_autorizacion import ServicioDeAutorizacion
 from application.servicios.servicio_de_cancelacion import ServicioDeCancelacion
+from application.servicios.servicio_de_cotizacion import ServicioDeCotizacion
 from application.servicios.servicio_de_diagnostico import ServicioDeDiagnostico
 from application.servicios.servicio_de_recepcion import ServicioDeRecepcion
 from domain.clientes.cliente import TipoCliente
+from domain.cotizaciones.valores import RolDeAutorizante
 from domain.empleados.empleado import Empleado, RolDeEmpleado
 from domain.ordenes.valores import NivelDeCombustible
 from infrastructure.memoria.almacen import AlmacenEnMemoria, DatosEnMemoria
@@ -36,6 +45,8 @@ FLOTILLA = RegistrarCliente(
     "81-1111",
     "ana@norte.test",
 )
+AUTORIZANTE_PARTICULAR = ("Luis Peña", RolDeAutorizante.CLIENTE)
+AUTORIZANTE_DE_FLOTILLA = ("Ana Torres", RolDeAutorizante.RESPONSABLE_DE_FLOTILLA)
 ZONA_DEL_TALLER = ZoneInfo("America/Monterrey")
 AHORA = datetime(2026, 10, 5, 15, 0, tzinfo=UTC)  # lunes
 ASESOR = "EMP-001"
@@ -90,6 +101,18 @@ class Taller:
     def diagnostico(self) -> ServicioDeDiagnostico:
         return self._armar(ServicioDeDiagnostico)
 
+    @property
+    def cotizacion(self) -> ServicioDeCotizacion:
+        return self._armar(ServicioDeCotizacion)
+
+    @property
+    def aprobacion(self) -> ServicioDeAprobacionGerencial:
+        return self._armar(ServicioDeAprobacionGerencial)
+
+    @property
+    def autorizacion(self) -> ServicioDeAutorizacion:
+        return self._armar(ServicioDeAutorizacion)
+
 
 # ------------------------------------------------------------------ pasos para llegar a un estado
 def recibida(taller: Taller, flotilla: bool = False) -> str:
@@ -120,3 +143,36 @@ def diagnosticada(taller: Taller, flotilla: bool = False, tecnico: str = TECNICO
         RegistrarDiagnostico(numero, tecnico, "Balatas gastadas", "Cambiar balatas")
     )
     return numero
+
+
+def trabajos(*importes: str) -> tuple[TrabajoPropuesto, ...]:
+    return tuple(
+        TrabajoPropuesto(numero, f"Trabajo {numero}", Decimal(importe))
+        for numero, importe in enumerate(importes, start=1)
+    )
+
+
+def cotizada(
+    taller: Taller, flotilla: bool = False, importes: tuple[str, ...] = ("1000.00", "2000.00")
+) -> tuple[str, str]:
+    """Devuelve el número de la orden y el id de su cotización inicial."""
+    numero = diagnosticada(taller, flotilla)
+    resultado = taller.cotizacion.generar_inicial(GenerarCotizacion(numero, trabajos(*importes)))
+    return numero, resultado.id
+
+
+def decidir(
+    taller: Taller, id_cotizacion: str, lineas: tuple[int, ...], flotilla: bool = False
+) -> ResultadoDeDecision:
+    nombre, rol = AUTORIZANTE_DE_FLOTILLA if flotilla else AUTORIZANTE_PARTICULAR
+    return taller.autorizacion.registrar_decision(
+        RegistrarDecisionDelCliente(id_cotizacion, lineas, nombre, rol)
+    )
+
+
+def autorizada(
+    taller: Taller, flotilla: bool = False, lineas: tuple[int, ...] = (1, 2)
+) -> tuple[str, str]:
+    numero, id_cotizacion = cotizada(taller, flotilla)
+    decidir(taller, id_cotizacion, lineas, flotilla)
+    return numero, id_cotizacion

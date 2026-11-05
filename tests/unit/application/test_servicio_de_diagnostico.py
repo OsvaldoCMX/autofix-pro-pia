@@ -9,6 +9,7 @@ from application.comandos import (
     ReportarFallaAdicional,
 )
 from domain.compartido.errores import (
+    DiagnosticoNoModificable,
     EmpleadoNoEncontrado,
     TrabajoDeOtroTecnico,
     TransicionDeEstadoNoPermitida,
@@ -21,6 +22,7 @@ from tests.unit.application.escenarios import (
     OTRO_TECNICO,
     TECNICO,
     Taller,
+    cotizada,
     diagnosticada,
     en_diagnostico,
     recibida,
@@ -87,6 +89,26 @@ def test_rn_02_el_tecnico_corrige_antes_de_cotizar(taller: Taller) -> None:
     )
 
     assert taller.datos.ordenes[numero].diagnostico.fallas == "Fallas corregidas"
+
+
+def test_ca_033_no_cambia_despues_de_cotizar(taller: Taller) -> None:
+    numero, _ = cotizada(taller)
+
+    with pytest.raises(DiagnosticoNoModificable):
+        taller.diagnostico.registrar_diagnostico(
+            RegistrarDiagnostico(numero, TECNICO, "Otra falla", "Otro trabajo")
+        )
+
+    assert taller.datos.ordenes[numero].diagnostico.fallas == "Balatas gastadas"
+
+
+def test_rn_03_mensaje_indica_falla_adicional(taller: Taller) -> None:
+    numero, _ = cotizada(taller)
+
+    with pytest.raises(DiagnosticoNoModificable, match="falla adicional"):
+        taller.diagnostico.registrar_diagnostico(
+            RegistrarDiagnostico(numero, TECNICO, "Otra falla", "Otro trabajo")
+        )
 
 
 def test_ca_034_falla_fuera_de_reparacion_se_rechaza(taller: Taller) -> None:
