@@ -106,7 +106,7 @@ ca("CA-001", "US-001", [
     (Y, "debe generar un número de orden de servicio único"),
     (Y, "debe asignarle el estado «Recibida»"),
     (Y, "debe mostrar un mensaje de éxito"),
-], F1, ["RN-01", "RN-22"], "Cliente, Vehiculo, OrdenDeServicio (MaquinaDeEstadosDeOrden), evento OrdenRecibida",
+], F1, ["RN-01", "RN-22"], "Cliente, Vehiculo, OrdenDeServicio (MAQUINA_DE_ORDEN), evento OrdenRecibida",
    "ServicioDeRecepcion.registrar_orden", "POST /api/ordenes", ASE,
    nombre="Registrar un vehículo nuevo y abrir su orden")
 
@@ -142,7 +142,7 @@ ca("CA-005", "US-004", [
     (Y, "debe cambiar la orden a «Cotizada»"),
     (Y, "si el total es menor o igual a $15,000 MXN, debe asignar a la cotización el estado «Pendiente de Autorización del Cliente»"),
 ], F2, ["RN-02", "RN-04", "RN-23", "RN-22"],
-   "Cotizacion, LineaDeCotizacion, Dinero, VersionCotizacion, spec RequiereAprobacionGerencial, MaquinaDeEstadosDeCotizacion, OrdenDeServicio, evento CotizacionGenerada",
+   "Cotizacion, LineaDeCotizacion, Dinero, VersionCotizacion, spec RequiereAprobacionGerencial, MAQUINA_DE_COTIZACION, OrdenDeServicio, evento CotizacionGenerada",
    "ServicioDeCotizacion.generar_inicial", "POST /api/ordenes/{numero}/cotizaciones · GET /api/cotizaciones/{id}/pdf",
    ASE, prioridad="P1 (cotización) · P2 (PDF)", nombre="Generar la cotización inicial")
 
@@ -150,7 +150,7 @@ ca("CA-006", "US-004", [
     (D, "que una cotización está en «Pendiente de Autorización del Cliente»"),
     (C, "el asesor la marca como presentada (al cliente o, si es flotilla, al Responsable de Flotilla)"),
     (E, "el sistema debe registrar la fecha y hora de presentación, a partir de la cual corre el plazo de 48 horas"),
-], F3, ["RN-06", "RN-12"], "Cotizacion (MaquinaDeEstadosDeCotizacion), evento CotizacionPresentada",
+], F3, ["RN-06", "RN-12"], "Cotizacion (MAQUINA_DE_COTIZACION), evento CotizacionPresentada",
    "ServicioDeCotizacion.presentar", "POST /api/cotizaciones/{id}/presentacion", ASE,
    nombre="Marcar la cotización como presentada")
 
@@ -204,7 +204,7 @@ ca("CA-011", "US-006", [
     (D, "que el cliente autorizó parcialmente la cotización"),
     (C, "el asesor asigna los trabajos a un técnico"),
     (E, "el sistema solo debe permitir seleccionar los trabajos autorizados"),
-], F5, ["RN-08"], "OrdenDeServicio, Trabajo (MaquinaDeEstadosDeTrabajo), evento TrabajosAsignados",
+], F5, ["RN-08"], "OrdenDeServicio, Trabajo (MAQUINA_DE_TRABAJO), evento TrabajosAsignados",
    "ServicioDeReparacion.asignar_trabajos", "POST /api/ordenes/{numero}/asignacion-trabajos", ASE,
    nombre="Solo se asignan los trabajos autorizados")
 
@@ -282,7 +282,7 @@ ca("CA-019", "US-010", [
     (Y, "debe mostrarla en la lista de Compras"),
     (Y, "debe cambiar la orden a «En Espera de Refacción»"),
 ], F4, ["RN-09", "RN-10", "RN-23", "RN-22"],
-   "spec PuedeSolicitarRefaccion, SolicitudDeCompra (MaquinaDeEstadosDeSolicitud), OrdenDeServicio, evento SolicitudDeCompraCreada",
+   "spec PuedeSolicitarRefaccion, SolicitudDeCompra (MAQUINA_DE_SOLICITUD), OrdenDeServicio, evento SolicitudDeCompraCreada",
    "ServicioDeRefacciones.solicitar", "POST /api/ordenes/{numero}/solicitudes-de-compra", TEC,
    nombre="Solicitar una refacción no disponible")
 
@@ -307,7 +307,7 @@ ca("CA-022", "US-011", [
     (E, "el sistema debe cambiar la solicitud a «Disponible»"),
     (Y, "debe notificar al técnico y al asesor"),
     (Y, "si la orden ya no tiene solicitudes pendientes, debe regresarla al estado que tenía antes de la espera («Autorizada» o «En Reparación»; si durante la espera se inició algún trabajo, a «En Reparación»)"),
-], F4, ["RN-10", "RN-22"], "SolicitudDeCompra, OrdenDeServicio (MaquinaDeEstadosDeOrden), evento RefaccionDisponible → AlertaInterna",
+], F4, ["RN-10", "RN-22"], "SolicitudDeCompra, OrdenDeServicio (MAQUINA_DE_ORDEN), evento RefaccionDisponible → AlertaInterna",
    "ServicioDeRefacciones.registrar_llegada", "POST /api/ordenes/{numero}/solicitudes-de-compra/{id}/llegada", COM,
    cambio="H-PIA-07", nombre="Registrar la llegada de la refacción")
 
@@ -318,7 +318,7 @@ ca("CA-023", "US-012", [
     (C, "el asesor avisa al cliente y lo registra"),
     (E, "el sistema guarda la fecha y hora de la notificación"),
     (Y, "no vuelve a generar la alerta para esa solicitud"),
-], F4, ["RN-11"], "spec RequiereAlertaDeRefaccion (SolicitudPendiente AND MasDeTresDiasHabiles AND NOT ClienteYaAvisado), CalendarioHabil, AlertaInterna",
+], F4, ["RN-11"], "spec RequiereAlertaDeRefaccion (SolicitudPendiente AND MasDeDiasHabiles(3) AND NOT ClienteYaAvisado), CalendarioHabil, AlertaInterna",
    "ServicioDeRevisionDePlazos.revisar · ServicioDeRefacciones.registrar_aviso_al_cliente",
    "POST /api/revisiones/plazos · POST /api/ordenes/{numero}/solicitudes-de-compra/{id}/aviso-al-cliente",
    f"{SIS} / {ASE}", cambio="H-PIA-10", nombre="Alerta por refacción con más de 3 días hábiles")
@@ -330,7 +330,7 @@ ca("CA-024", "US-013", [
     (C, "el asesor marca que el cliente la firmó"),
     (E, "la orden pasa a «Pausada por Retiro de Vehículo»"),
     (Y, "sale de la fila de trabajo"),
-], DG2R, ["RN-13", "RN-22"], "OrdenDeServicio (registrar_salida, confirmar_firma), NotaDeResponsabilidad, evento VehiculoRetirado",
+], DG2R, ["RN-13", "RN-22"], "OrdenDeServicio (registrar_salida, confirmar_firma_de_nota), NotaDeResponsabilidad, evento VehiculoRetirado",
    "ServicioDeRetiro.registrar_salida / confirmar_firma",
    "POST /api/ordenes/{numero}/retiro · GET /api/ordenes/{numero}/nota-de-responsabilidad/pdf · POST /api/ordenes/{numero}/retiro/firma",
    ASE, prioridad="P1 (estados) · P2 (PDF)", nombre="Retiro anticipado con Nota de Responsabilidad")
@@ -423,7 +423,7 @@ ca("CA-035", "US-020", [
     (C, "el asesor le asigna un técnico"),
     (E, "el sistema debe cambiar la orden a «En Diagnóstico»"),
     (Y, "debe mostrarla en el panel de ese técnico"),
-], F2, ["RN-22"], "OrdenDeServicio (MaquinaDeEstadosDeOrden), Empleado (RolDeEmpleado.TECNICO), evento TecnicoAsignadoParaDiagnostico",
+], F2, ["RN-22"], "OrdenDeServicio (MAQUINA_DE_ORDEN), Empleado (RolDeEmpleado.TECNICO), evento TecnicoAsignadoParaDiagnostico",
    "ServicioDeDiagnostico.asignar_tecnico", "POST /api/ordenes/{numero}/asignacion-diagnostico", ASE,
    nombre="Asignar técnico para el diagnóstico")
 
@@ -468,7 +468,7 @@ ca("CA-040", "US-023", [
     (C, "el asesor registra el recontacto"),
     (E, "el sistema guarda la fecha y hora sin cambiar el estado de la cotización"),
     (Y, "el plazo de 48 horas vuelve a contar desde ese recontacto"),
-], F3, ["RN-12"], "spec RequiereRecontacto (PendienteDeAutorizacion AND FuePresentada AND MasDe48HorasDesdeElUltimoContacto), Cotizacion (recontactos), AlertaInterna",
+], F3, ["RN-12"], "spec RequiereRecontacto (PendienteDeAutorizacion AND FuePresentada AND MasDeHorasDesdeElUltimoContacto(48)), Cotizacion (recontactos), AlertaInterna",
    "ServicioDeRevisionDePlazos.revisar · ServicioDeCotizacion.registrar_recontacto",
    "POST /api/revisiones/plazos · POST /api/cotizaciones/{id}/recontactos", f"{SIS} / {ASE}",
    cambio="H-PIA-10", nombre="Alerta por cotización sin respuesta en 48 horas")
