@@ -24,7 +24,7 @@ Formato: CSV UTF-8 **con BOM** (leer con `encoding="utf-8-sig"`), importes en MX
 | `actor_id`, `nombre` | `clientes` (Particular): id y nombre | Teléfono y correo no vienen: se generan valores ficticios reconocibles (`81-0000-0001`, `aut-c001@ejemplo.test`). |
 | `ciudad` | — | Informativo; no forma parte del modelo. |
 | `operacion_id` | `NumeroOrden` (folio) | El folio es el mismo id (`AUT-O001`), para que los casos se puedan cruzar. |
-| `fecha_solicitud` | `fecha_ingreso` | A las 09:00 de Monterrey, guardada en UTC. |
+| `fecha_solicitud` | `fecha_ingreso` y `fecha_ingreso_a_fila` | A las 09:00 de Monterrey, guardada en UTC. La orden entra a la fila de trabajo al registrarse, igual que las que se crean con la API. |
 | `referencia` (`PIA_AUT_001`) | `Placas` del vehículo y motivo de ingreso | Placas = `PIA-AUT-001` (el Value Object las normaliza a `PIAAUT001`); motivo = «Servicio de referencia PIA_AUT_001». |
 | — | `Vehiculo` | Uno por operación: marca «Ficticia», modelo «Referencia», año 2020, VIN `AUT` + 14 dígitos del número de operación. |
 | `estado_inicial` = `RECIBIDA` | `EstadoOrden.RECIBIDA` | Sin cambios; los cambios de estado se hacen **con el código** (casos de uso), como pide el paquete. |

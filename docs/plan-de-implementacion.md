@@ -147,6 +147,8 @@ Las restricciones `CHECK` propias de PostgreSQL (por ejemplo, expresiones regula
 
 **Lee:** ADR-009, ADR-011. Los pasos en las páginas de Render y Supabase los hace el equipo; el código solo se ajusta si algo falla.
 
+**Antes de empezar:** `database/02_datos_iniciales.sql` cambió en la Fase 2 (las órdenes importadas ahora traen `fecha_ingreso_a_fila`). Si los scripts ya se habían ejecutado en Supabase, el equipo debe **volver a ejecutar `01_esquema.sql`, `02_datos_iniciales.sql` y `03_verificacion.sql`, en ese orden, en el SQL Editor**. `01` borra y vuelve a crear las tablas, así que se ejecuta a mano y nunca desde pruebas o scripts automáticos.
+
 **Pasos:** Supabase con los tres scripts de `database/` ya ejecutados → Render: *New* → *Web Service* → este repositorio → *Docker* → región *Virginia (US East)* → plan *Free* → variables de entorno (`APP_ENV=produccion`, `DATABASE_URL` = cadena *Session pooler* de Supabase, los 7 tokens, `ZONA_HORARIA`, `LOG_LEVEL`) → *Health Check Path* `/health` → *Auto-Deploy* «After CI Checks Pass». Luego, en GitHub, los secretos `AUTOFIX_API_URL` y `TOKEN_SISTEMA` para la revisión de plazos.
 
 **Listo cuando:** `https://<servicio>.onrender.com/docs` funciona con los datos de Supabase y una ejecución manual de «revisión de plazos» termina en verde.

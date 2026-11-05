@@ -62,13 +62,13 @@ o.append(",\n".join(filas) + ";")
 
 o += ["", f"-- Órdenes de Servicio en estado inicial «Recibida» ({len(operaciones)}); folio = operacion_id",
       "INSERT INTO ordenes (numero, id_cliente, es_cliente_de_flotilla, placas, asesor, motivo_de_ingreso, estado,",
-      "                     fecha_ingreso, ultima_actualizacion) VALUES"]
+      "                     fecha_ingreso, ultima_actualizacion, fecha_ingreso_a_fila) VALUES"]
 filas = []
 for op in operaciones:
     fecha = f"{op['fecha_solicitud']} 09:00:00-06:00"
     placas = op["referencia"].replace("_", "").upper()
     filas.append(f"    ({q(op['operacion_id'])}, {q(op['actor_id'])}, FALSE, {q(placas)}, 'EMP-001', "
-                 f"{q('Servicio de referencia ' + op['referencia'])}, 'Recibida', {q(fecha)}, {q(fecha)})")
+                 f"{q('Servicio de referencia ' + op['referencia'])}, 'Recibida', {q(fecha)}, {q(fecha)}, {q(fecha)})")
 o.append(",\n".join(filas) + ";")
 
 o += ["", f"-- Catálogo de referencia del profesor ({len(catalogo)} servicios)",

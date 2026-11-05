@@ -131,6 +131,7 @@ Estados finales: **Cerrada**, **Cerrada sin Reparación** y **Cancelada**. Cualq
 
 Notas de comportamiento (precisiones v3.0):
 
+- La orden entra a la fila de trabajo al registrarse: `fecha_ingreso_a_fila` es la fecha de ingreso. Sale de la fila al cancelarse o al firmarse la Nota de Responsabilidad (la fecha queda vacía) y `reactivar` le asigna una nueva, de modo que queda al final (CA-025, CA-044).
 - Iniciar un trabajo mientras la orden está «En Espera de Refacción» se permite (otros trabajos pueden avanzar) y la orden sigue en espera; lo que cambia es el estado al que regresará: «En Reparación» (H-PIA-07).
 - Completar el último trabajo mientras hay una solicitud «Solicitada» se rechaza con 409: la orden no puede quedar lista con refacciones pendientes. La validación se hace **antes** de modificar el trabajo, para no dejar el Aggregate a medias.
 - La llegada de una refacción con la orden «Pausada por Retiro de Vehículo» marca la solicitud como «Disponible» pero no cambia el estado de la orden; al reactivarla se decide el estado (CA-025).
