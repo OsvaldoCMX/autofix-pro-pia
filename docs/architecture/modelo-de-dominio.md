@@ -63,10 +63,10 @@ Identidad `id_empleado`; nombre; `RolDeEmpleado` (Asesor, Técnico, Gerente, Com
 
 | Value Object | Regla que valida |
 |---|---|
-| `Dinero` | MXN con `Decimal`, redondeo a 2 decimales (`ROUND_HALF_UP`), nunca negativo. |
+| `Dinero` | MXN con `Decimal`, redondeo a 2 decimales (`ROUND_HALF_UP`), nunca negativo; máximo 9,999,999,999.99 (`NUMERIC(12,2)` de la base). |
 | `NumeroOrden` | No vacío; se guarda en mayúsculas. |
-| `Placas` | No vacías; se comparan sin mayúsculas, espacios ni guiones. |
-| `VIN` | 17 caracteres alfanuméricos (sin I, O, Q). |
+| `Placas` | No vacías; se comparan sin mayúsculas, espacios ni guiones. Ya normalizadas, solo admiten `A-Z` y `0-9` y máximo 15 caracteres (como el `CHECK` y el `VARCHAR(15)` de la base). |
+| `VIN` | 17 caracteres alfanuméricos (sin I, O, Q). Antes de validar se quitan los espacios de los extremos y se pasa a mayúsculas. |
 | `VersionCotizacion` | Empieza en 1; se muestra como `v.1`. |
 | `RefaccionCotizada` | Descripción no vacía, cantidad > 0, importe = precio × cantidad. |
 | `EstadoDeRecepcion` | Kilometraje ≥ 0, nivel de combustible de la lista (Reserva, 1/4, 1/2, 3/4, Lleno), fotos opcionales. Obligatorios al registrar una orden por la API; vacíos solo en las 60 órdenes importadas del profesor (no vienen en los datos). |
