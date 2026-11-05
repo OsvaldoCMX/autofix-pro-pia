@@ -1,0 +1,17 @@
+# Normaliza los saltos de línea de los archivos de texto.
+* text=auto
+
+# Scripts que se ejecutan dentro de Linux (Docker y GitHub Actions): siempre LF.
+*.sh text eol=lf
+*.sql text eol=lf
+Dockerfile text eol=lf
+
+# Los CSV del profesor y los oráculos se conservan byte por byte (UTF-8 con BOM y CRLF).
+*.csv -text
+
+# Binarios
+*.pdf binary
+*.png binary
+*.jpg binary
+*.xlsx binary
+*.docx binary

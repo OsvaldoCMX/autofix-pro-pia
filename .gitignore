@@ -1,0 +1,35 @@
+# Configuración local con secretos (se sube solo .env.example)
+.env
+.env.*
+!.env.example
+
+# Material de consulta local (código de la U5, PDF del PIA); no se sube
+_referencia/
+
+# Instrucciones personales de Claude Code
+CLAUDE.local.md
+.claude/settings.local.json
+
+# Entorno virtual y cachés de Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.ruff_cache/
+
+# Cobertura (se publica como artefacto del CI)
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+
+# Editores y sistema
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
