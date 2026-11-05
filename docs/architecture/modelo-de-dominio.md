@@ -53,7 +53,7 @@ Identidad `id_cliente`; `TipoCliente` (Particular/Flotilla); nombre, teléfono, 
 
 ### 2.4 Vehículo — raíz `Vehiculo`
 
-Identidad `Placas` (VO normalizado: sin espacios ni guiones, en mayúsculas) y `VIN`; marca, modelo, año e `id_cliente`. **Invariante:** placas y VIN obligatorios; el año es un número de 4 dígitos. Repositorio: `RepositorioDeVehiculos` (`por_placas`, `agregar`, `guardar`). Sin eventos. En los datos del profesor no hay vehículos: se crea uno por operación con las placas derivadas de `referencia` (ADR-013).
+Identidad `Placas` (VO normalizado: sin espacios ni guiones, en mayúsculas) y `VIN`; marca, modelo, año e `id_cliente`. **Invariante:** placas y VIN obligatorios; el año está entre 1900 y 2100 (como el `CHECK` de la base). Repositorio: `RepositorioDeVehiculos` (`por_placas`, `agregar`, `guardar`). Sin eventos. En los datos del profesor no hay vehículos: se crea uno por operación con las placas derivadas de `referencia` (ADR-013).
 
 ### 2.5 Empleado — raíz `Empleado`
 

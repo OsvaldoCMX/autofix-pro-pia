@@ -7,7 +7,17 @@ from decimal import Decimal
 import pytest
 
 from domain.compartido.errores import ValorInvalido
-from domain.compartido.valores import VIN, Dinero, NumeroOrden, Placas
+from domain.compartido.valores import VIN, Dinero, NumeroOrden, Placas, texto_requerido
+
+
+def test_texto_requerido_quita_espacios_de_los_extremos() -> None:
+    assert texto_requerido("  Ruido al frenar ", "Falta el motivo.") == "Ruido al frenar"
+
+
+@pytest.mark.parametrize("texto", ["", "   "])
+def test_texto_requerido_rechaza_texto_vacio(texto: str) -> None:
+    with pytest.raises(ValorInvalido, match="Falta el motivo"):
+        texto_requerido(texto, "Falta el motivo.")
 
 
 def test_rn_23_dinero_rechaza_importe_negativo() -> None:

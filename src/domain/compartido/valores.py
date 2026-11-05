@@ -14,6 +14,14 @@ _FORMATO_DE_PLACAS = re.compile(r"[A-Z0-9]+")
 _FORMATO_DE_VIN = re.compile(r"[A-HJ-NPR-Z0-9]{17}")
 
 
+def texto_requerido(valor: str, mensaje: str) -> str:
+    """Devuelve el texto sin espacios en los extremos o lanza `ValorInvalido` si queda vacío."""
+    limpio = valor.strip()
+    if not limpio:
+        raise ValorInvalido(mensaje)
+    return limpio
+
+
 def _a_decimal_finito(monto: Decimal | int | str) -> Decimal:
     if isinstance(monto, bool | float):
         raise ValorInvalido("Un importe debe capturarse como número decimal exacto.")
