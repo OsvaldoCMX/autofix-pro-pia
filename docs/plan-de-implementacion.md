@@ -76,11 +76,11 @@ Los valores de los enums son los textos del Glosario (por ejemplo `EstadoOrden.E
 **Lee:** `architecture/patrones.md`, `architecture/diagramas/secuencia-*.png`, ADR-002, ADR-003, ADR-015, ADR-016 y la columna «Caso de uso» de `api/README.md`.
 
 **Construye:**
-- `src/application`: `puertos.py` (repositorios, `UnidadDeTrabajo`, `Reloj`, `PublicadorDeEventos`, `GeneradorDeDocumentos`, lector de consultas), `comandos.py`, `resultados.py`, los **12 servicios** de `api/README.md` (de `ServicioDeRecepcion` a `ServicioDeRevisionDePlazos`), las **11 consultas** (CQRS) y `manejadores/alertas.py` (reacciones de `architecture/modelo-de-dominio.md` §6).
+- `src/application`: `puertos.py` (`Reloj`, `PublicadorDeEventos`, `GeneradorDeDocumentos`, `AlertaInterna`, `RepositorioDeAlertas`), `unidad_de_trabajo.py`, `comandos.py`, `resultados.py`, los **12 servicios** de `api/README.md` (de `ServicioDeRecepcion` a `ServicioDeRevisionDePlazos`, sin sus métodos P2, que se construyen en la Fase 10), las **11 consultas** (CQRS, con `LectorDeOrdenes` en `consultas/lector.py`) y `manejadores/alertas.py` (reacciones de `architecture/modelo-de-dominio.md` §6).
 - `src/infrastructure/memoria` (repositorios, Unidad de Trabajo y lector en memoria), `infrastructure/reloj.py` y `infrastructure/eventos/publicador_en_proceso.py`.
-- La Unidad de Trabajo recolecta los eventos y los publica **solo después de confirmar**; la revisión de plazos es idempotente (ADR-015).
+- La Unidad de Trabajo recolecta los eventos y guarda la bitácora; el servicio los publica **solo después de confirmar**, como en los diagramas de secuencia; la revisión de plazos es idempotente (ADR-015).
 
-**Pruebas (`tests/unit/application`):** cada servicio con repositorios en memoria y `Mock(spec=…)` para reloj, publicador y PDF; el flujo completo de una orden particular y de una de flotilla; alertas generadas por cada evento; revisión de plazos con reloj falso (E7, E8).
+**Pruebas (`tests/unit/application`):** cada servicio con repositorios en memoria y `Mock(spec=…)` para reloj y publicador; el flujo completo de una orden particular y de una de flotilla; alertas generadas por cada evento; revisión de plazos con reloj falso (E7, E8).
 
 **Commits:** `feat(aplicacion): puertos, comandos y unidad de trabajo` · `feat(aplicacion): servicios de recepción a entrega` · `feat(aplicacion): consultas y manejadores de alertas` · `feat(infraestructura): adaptadores en memoria`.
 
@@ -102,7 +102,7 @@ Las restricciones `CHECK` propias de PostgreSQL (por ejemplo, expresiones regula
 
 **Construye** (`src/api`): `main.py` (app, routers, `/health`, Swagger con botón *Authorize*), `dependencias.py` (Composition Root), `seguridad.py` (`requiere_rol(*roles)` con `secrets.compare_digest`), `errores.py` (cada `ErrorDeDominio` a su código y el formato `{"error", "detalle", "codigo"}`; JSON mal formado → 400), `esquemas/` (Pydantic; importes como texto con dos decimales) y los 14 archivos de `rutas/`. Las rutas P2 (PDF y fotos) responden `501` por ahora. `api/exportar_openapi.py` escribe `docs/api/openapi.json`.
 
-**Pruebas (`tests/api`, `TestClient`):** cada criterio de aceptación de punta a punta y los códigos 200/201/400/401/403/404/409/422 de cada área; rutas públicas sin token.
+**Pruebas (`tests/api`, `TestClient`):** cada criterio de aceptación de punta a punta y los códigos 200/201/400/401/403/404/409/422 de cada área; rutas públicas sin token. `test_ca_027_` comprueba que la ruta del recibo responde 501 hasta que se haga la Fase 10.
 
 **Listo cuando:** `uvicorn api.main:app --reload` (con `src` en el `PYTHONPATH`) muestra las 43 rutas en `/docs`.
 
@@ -159,7 +159,7 @@ Las restricciones `CHECK` propias de PostgreSQL (por ejemplo, expresiones regula
 
 **Lee:** ADR-014, CA-002, CA-005, CA-024, CA-027.
 
-**Construye:** `infrastructure/documentos/generador_pdf.py` (fpdf2) para la cotización, la Nota de Responsabilidad y el recibo interno, y las fotos de daños en `fotos_de_danos` (JPEG o PNG, máximo 5 MB). Las 4 rutas P2 dejan de responder 501.
+**Construye:** `infrastructure/documentos/generador_pdf.py` (fpdf2) para la cotización, la Nota de Responsabilidad y el recibo interno, y las fotos de daños en `fotos_de_danos` (JPEG o PNG, máximo 5 MB). Los métodos de servicio `ServicioDeCotizacion.generar_pdf`, `ServicioDeRetiro.generar_pdf_de_nota`, `ServicioDeCaja.generar_recibo` (con `ReciboInterno` y su folio REC-0001) y `ServicioDeRecepcion.adjuntar_foto`. Las 4 rutas P2 dejan de responder 501.
 
 **Pruebas:** el PDF se genera y contiene los datos clave; foto válida, tipo inválido y tamaño excedido.
 
