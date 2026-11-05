@@ -107,7 +107,7 @@ v = ["-- AutoFix Pro · Verificación de la carga (ejecutar después de 01 y 02)
      f"UNION ALL SELECT 'servicios_solicitados', COUNT(*), {len(detalle)} FROM servicios_solicitados",
      f"UNION ALL SELECT 'órdenes sin detalle', COUNT(*), {len(operaciones) - len(totales)} FROM ordenes o WHERE NOT EXISTS (SELECT 1 FROM servicios_solicitados s WHERE s.numero_orden = o.numero)",
      f"UNION ALL SELECT 'no autorizadas', COUNT(*), {sum(1 for op in operaciones if op['autorizado'] != '1')} FROM referencia_operaciones_profesor WHERE NOT autorizado",
-     "UNION ALL SELECT 'secuencias', COUNT(*), 3 FROM secuencias;",
+     "UNION ALL SELECT 'secuencias', COUNT(*), 4 FROM secuencias;",
      "",
      f"-- Total de referencia de todas las operaciones (precio × cantidad): debe dar {suma:.2f}",
      "SELECT SUM(c.precio_mxn * s.cantidad) AS total_referencia FROM servicios_solicitados s JOIN catalogo_servicios c USING (recurso_id);",

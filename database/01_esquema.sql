@@ -442,15 +442,15 @@ COMMENT ON COLUMN eventos.datos IS 'Datos del evento';
 COMMENT ON COLUMN eventos.ocurrido_en IS 'Cuándo ocurrió';
 COMMENT ON COLUMN eventos.registrado_en IS 'Cuándo se guardó';
 
--- Folios consecutivos (OS-0001, COT-0001, REC-0001); se revierten con la transacción.
+-- Folios consecutivos (OS-0001, COT-0001, REC-0001, CLI-0001); se revierten con la transacción.
 CREATE TABLE secuencias (
     nombre                       VARCHAR(30) NOT NULL,
     ultimo_valor                 INTEGER NOT NULL DEFAULT 0,
     CONSTRAINT pk_secuencias PRIMARY KEY (nombre),
     CONSTRAINT ck_secuencias_1 CHECK (ultimo_valor >= 0)
 );
-COMMENT ON TABLE secuencias IS 'Folios consecutivos (OS-0001, COT-0001, REC-0001); se revierten con la transacción.';
-COMMENT ON COLUMN secuencias.nombre IS 'orden, cotizacion, recibo';
+COMMENT ON TABLE secuencias IS 'Folios consecutivos (OS-0001, COT-0001, REC-0001, CLI-0001); se revierten con la transacción.';
+COMMENT ON COLUMN secuencias.nombre IS 'orden, cotizacion, recibo, cliente';
 COMMENT ON COLUMN secuencias.ultimo_valor IS 'Último número usado';
 
 -- Catálogo de referencia del profesor (catalogo.csv). No es parte del dominio: sirve para armar cotizaciones de demostración (ADR-013).
@@ -506,7 +506,7 @@ COMMENT ON COLUMN referencia_operaciones_profesor.autorizado IS 'operaciones.aut
 COMMENT ON COLUMN referencia_operaciones_profesor.referencia IS 'operaciones.referencia';
 
 -- Folios iniciales
-INSERT INTO secuencias (nombre, ultimo_valor) VALUES ('orden', 0), ('cotizacion', 0), ('recibo', 0);
+INSERT INTO secuencias (nombre, ultimo_valor) VALUES ('orden', 0), ('cotizacion', 0), ('recibo', 0), ('cliente', 0);
 
 -- Seguridad para Supabase: la aplicación se conecta con el usuario dueño de las tablas (que no
 -- está sujeto a RLS). Activar RLS sin políticas impide leer o escribir estas tablas desde la

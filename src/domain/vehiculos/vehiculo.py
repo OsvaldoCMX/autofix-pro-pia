@@ -30,3 +30,11 @@ class Vehiculo:
         self.modelo = texto_requerido(modelo, "El vehículo debe tener modelo.")
         self.anio = anio
         self.id_cliente = id_cliente
+
+    def actualizar_datos(self, vin: VIN, marca: str, modelo: str, anio: int) -> None:
+        """El asesor confirma o corrige los datos de un vehículo que regresa (CA-003)."""
+        validado = Vehiculo(self.placas, vin, marca, modelo, anio, self.id_cliente)
+        self.vin = validado.vin
+        self.marca = validado.marca
+        self.modelo = validado.modelo
+        self.anio = validado.anio

@@ -58,3 +58,9 @@ class Cliente:
     @property
     def es_de_flotilla(self) -> bool:
         return self.tipo is TipoCliente.FLOTILLA
+
+    def actualizar_contacto(self, nombre: str, telefono: str | None, correo: str | None) -> None:
+        """El asesor confirma o corrige los datos de un cliente recurrente (CA-003)."""
+        self.nombre = texto_requerido(nombre, "El cliente debe tener nombre.")
+        self.telefono = telefono
+        self.correo = correo

@@ -61,5 +61,26 @@ def test_ca_001_cliente_exige_nombre() -> None:
         Cliente("CLI-3", "  ", TipoCliente.PARTICULAR)
 
 
+def test_ca_003_cliente_actualiza_contacto() -> None:
+    cliente = Cliente("CLI-4", "Luis Peña", TipoCliente.PARTICULAR, "81-2", "luis@correo.test")
+
+    cliente.actualizar_contacto("Luis Peña Ruiz", "81-9", "nuevo@correo.test")
+
+    assert (cliente.nombre, cliente.telefono, cliente.correo) == (
+        "Luis Peña Ruiz",
+        "81-9",
+        "nuevo@correo.test",
+    )
+
+
+def test_ca_003_actualizacion_invalida_no_cambia_nada() -> None:
+    cliente = Cliente("CLI-5", "Luis Peña", TipoCliente.PARTICULAR, "81-2", "luis@correo.test")
+
+    with pytest.raises(ValorInvalido, match="nombre"):
+        cliente.actualizar_contacto("  ", "81-9", "nuevo@correo.test")
+
+    assert (cliente.nombre, cliente.telefono) == ("Luis Peña", "81-2")
+
+
 def test_tipo_de_cliente_coincide_con_la_base() -> None:
     assert {tipo.value for tipo in TipoCliente} == valores_del_check("clientes", "tipo")

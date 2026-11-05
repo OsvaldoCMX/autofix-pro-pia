@@ -88,7 +88,7 @@ Los valores de los enums son los textos del Glosario (por ejemplo `EstadoOrden.E
 
 **Lee:** `architecture/modelo-de-datos.md`, `database/01_esquema.sql`, ADR-004, ADR-009.
 
-**Construye** (`src/infrastructure`): `config.py` (lee el entorno; convierte `postgresql://` en `postgresql+psycopg://`), `base_de_datos/motor.py`, `tablas.py` (las 18 tablas con SQLAlchemy Core, mismas columnas, tipos, nulos, PK y FK que el SQL), `mapeo.py` (traducción explícita fila ↔ objeto, como en la U5), `repositorios.py`, `unidad_de_trabajo.py` (guarda la bitácora en `eventos` en la misma transacción) y `lector.py` (consultas), con los folios de `secuencias` (OS-0001, COT-0001, REC-0001).
+**Construye** (`src/infrastructure`): `config.py` (lee el entorno; convierte `postgresql://` en `postgresql+psycopg://`), `base_de_datos/motor.py`, `tablas.py` (las 18 tablas con SQLAlchemy Core, mismas columnas, tipos, nulos, PK y FK que el SQL), `mapeo.py` (traducción explícita fila ↔ objeto, como en la U5), `repositorios.py`, `unidad_de_trabajo.py` (guarda la bitácora en `eventos` en la misma transacción) y `lector.py` (consultas), con los folios de `secuencias` (OS-0001, COT-0001, REC-0001, CLI-0001).
 
 Las restricciones `CHECK` propias de PostgreSQL (por ejemplo, expresiones regulares con `~`) no se ponen en `tablas.py` o se limitan al dialecto PostgreSQL, para que las pruebas con SQLite funcionen. La aplicación **no** crea tablas en producción.
 
@@ -147,7 +147,7 @@ Las restricciones `CHECK` propias de PostgreSQL (por ejemplo, expresiones regula
 
 **Lee:** ADR-009, ADR-011. Los pasos en las páginas de Render y Supabase los hace el equipo; el código solo se ajusta si algo falla.
 
-**Antes de empezar:** `database/02_datos_iniciales.sql` cambió en la Fase 2 (las órdenes importadas ahora traen `fecha_ingreso_a_fila`). Si los scripts ya se habían ejecutado en Supabase, el equipo debe **volver a ejecutar `01_esquema.sql`, `02_datos_iniciales.sql` y `03_verificacion.sql`, en ese orden, en el SQL Editor**. `01` borra y vuelve a crear las tablas, así que se ejecuta a mano y nunca desde pruebas o scripts automáticos.
+**Antes de empezar:** `database/02_datos_iniciales.sql` cambió en la Fase 2 (las órdenes importadas ahora traen `fecha_ingreso_a_fila`) y `01_esquema.sql` y `03_verificacion.sql` en la Fase 3 (secuencia `cliente`). Si los scripts ya se habían ejecutado en Supabase, el equipo debe **volver a ejecutar `01_esquema.sql`, `02_datos_iniciales.sql` y `03_verificacion.sql`, en ese orden, en el SQL Editor**. `01` borra y vuelve a crear las tablas, así que se ejecuta a mano y nunca desde pruebas o scripts automáticos.
 
 **Pasos:** Supabase con los tres scripts de `database/` ya ejecutados → Render: *New* → *Web Service* → este repositorio → *Docker* → región *Virginia (US East)* → plan *Free* → variables de entorno (`APP_ENV=produccion`, `DATABASE_URL` = cadena *Session pooler* de Supabase, los 7 tokens, `ZONA_HORARIA`, `LOG_LEVEL`) → *Health Check Path* `/health` → *Auto-Deploy* «After CI Checks Pass». Luego, en GitHub, los secretos `AUTOFIX_API_URL` y `TOKEN_SISTEMA` para la revisión de plazos.
 

@@ -26,3 +26,7 @@ class RepositorioDeCotizaciones(ABC):
     @abstractmethod
     def siguiente_version(self, numero: NumeroOrden) -> VersionCotizacion:
         """Devuelve la versión que le toca a la próxima cotización de la orden (RN-24)."""
+
+    @abstractmethod
+    def siguiente_id(self) -> str:
+        """Devuelve el folio de la próxima cotización (COT-0001, COT-0002…)."""

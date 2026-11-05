@@ -20,3 +20,7 @@ class RepositorioDeClientes(ABC):
     @abstractmethod
     def buscar_flotilla(self, empresa: str) -> Cliente | None:
         """Devuelve el cliente de flotilla de esa empresa, si ya está registrado (CA-028)."""
+
+    @abstractmethod
+    def siguiente_id(self) -> str:
+        """Devuelve el folio del próximo cliente (CLI-0001, CLI-0002…)."""

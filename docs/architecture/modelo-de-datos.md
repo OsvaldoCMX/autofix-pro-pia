@@ -267,11 +267,11 @@ Bitácora de Domain Events (ADR-016): evidencia de transiciones y pruebas.
 
 #### `secuencias`
 
-Folios consecutivos (OS-0001, COT-0001, REC-0001); se revierten con la transacción.
+Folios consecutivos (OS-0001, COT-0001, REC-0001, CLI-0001); se revierten con la transacción.
 
 | Columna | Tipo | Nulo | Descripción |
 |---|---|---|---|
-| `nombre` (PK) | VARCHAR(30) | no | orden, cotizacion, recibo |
+| `nombre` (PK) | VARCHAR(30) | no | orden, cotizacion, recibo, cliente |
 | `ultimo_valor` | INTEGER | no | Último número usado · por defecto 0 |
 
 CHECK `ultimo_valor >= 0`

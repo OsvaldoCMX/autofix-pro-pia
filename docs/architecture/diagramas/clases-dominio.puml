@@ -111,6 +111,7 @@ package "cotizaciones" as PQ #FFF8F0 {
   interface RepositorioDeCotizaciones {
     +obtener(id) · agregar() · guardar()
     +de_la_orden(numero) · siguiente_version(numero)
+    +siguiente_id()
   }
   class "CotizacionGenerada … CotizacionRechazadaPorCliente\n(9 eventos)" as EvC <<Domain Event>>
 }
@@ -119,10 +120,12 @@ package "clientes · vehiculos · empleados · servicios" as PCV #F5FFF5 {
   class Cliente <<Aggregate Root>> {
     +tipo : TipoCliente
     +responsable : ResponsableDeFlotilla
+    +actualizar_contacto(nombre, telefono, correo)
   }
   class Vehiculo <<Aggregate Root>> {
     +placas : Placas
     +vin : VIN
+    +actualizar_datos(vin, marca, modelo, anio)
   }
   class Empleado <<Aggregate Root>> {
     +rol : RolDeEmpleado

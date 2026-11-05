@@ -45,15 +45,15 @@ Los Aggregates se relacionan **solo por identidad** (`numero_orden`, `id_cliente
 | Responsabilidades | Calcular el total, decidir si requiere aprobación gerencial (por medio de la Specification), controlar revisión, ajuste, presentación y recontactos, y registrar la decisión del cliente. |
 | Invariantes | Al menos un trabajo; total = suma de las líneas (RN-23) · la inicial es v.1 y las adicionales v.2 en adelante y no modifican la original (RN-24) · si requiere aprobación no se presenta (RN-04, RN-06) · el rechazo del Gerente exige observaciones y la ajustada no regresa a revisión (RN-05) · la decisión se registra una sola vez y sobre líneas existentes (RN-22). Guarda `fecha_aprobacion_gerencial` (CA-008, H-PIA-08). |
 | Eventos | `CotizacionGenerada`, `AprobacionGerencialRequerida`, `CotizacionAprobadaPorGerente`, `CotizacionRechazadaPorGerente`, `CotizacionAjustada`, `CotizacionPresentada`, `RecontactoRegistrado`, `CotizacionAutorizada`, `CotizacionRechazadaPorCliente`. |
-| Repositorio | `RepositorioDeCotizaciones`: `obtener(id)`, `agregar`, `guardar`, `de_la_orden(numero)`, `siguiente_version(numero)`. |
+| Repositorio | `RepositorioDeCotizaciones`: `obtener(id)`, `agregar`, `guardar`, `de_la_orden(numero)`, `siguiente_version(numero)`, `siguiente_id()` (folio COT-0001). |
 
 ### 2.3 Cliente — raíz `Cliente`
 
-Identidad `id_cliente`; `TipoCliente` (Particular/Flotilla); nombre, teléfono, correo; si es flotilla, `empresa` y `ResponsableDeFlotilla` (VO: nombre, teléfono, correo). **Invariante:** un cliente de flotilla siempre tiene empresa y Responsable de Flotilla (CA-028). Repositorio: `RepositorioDeClientes` (`obtener`, `agregar`, `guardar`, `buscar_flotilla(empresa)`). Sin eventos.
+Identidad `id_cliente`; `TipoCliente` (Particular/Flotilla); nombre, teléfono, correo; si es flotilla, `empresa` y `ResponsableDeFlotilla` (VO: nombre, teléfono, correo). **Invariante:** un cliente de flotilla siempre tiene empresa y Responsable de Flotilla (CA-028). `actualizar_contacto` cambia nombre, teléfono y correo de un cliente recurrente (CA-003). Repositorio: `RepositorioDeClientes` (`obtener`, `agregar`, `guardar`, `buscar_flotilla(empresa)`, `siguiente_id()`, folio CLI-0001). Sin eventos.
 
 ### 2.4 Vehículo — raíz `Vehiculo`
 
-Identidad `Placas` (VO normalizado: sin espacios ni guiones, en mayúsculas) y `VIN`; marca, modelo, año e `id_cliente`. **Invariante:** placas y VIN obligatorios; el año está entre 1900 y 2100 (como el `CHECK` de la base). Repositorio: `RepositorioDeVehiculos` (`por_placas`, `agregar`, `guardar`). Sin eventos. En los datos del profesor no hay vehículos: se crea uno por operación con las placas derivadas de `referencia` (ADR-013).
+Identidad `Placas` (VO normalizado: sin espacios ni guiones, en mayúsculas) y `VIN`; marca, modelo, año e `id_cliente`. **Invariante:** placas y VIN obligatorios; el año está entre 1900 y 2100 (como el `CHECK` de la base). `actualizar_datos` cambia VIN, marca, modelo y año de un vehículo que regresa (CA-003). Repositorio: `RepositorioDeVehiculos` (`por_placas`, `agregar`, `guardar`). Sin eventos. En los datos del profesor no hay vehículos: se crea uno por operación con las placas derivadas de `referencia` (ADR-013).
 
 ### 2.5 Empleado — raíz `Empleado`
 
@@ -187,7 +187,7 @@ Los eventos se registran dentro del Aggregate, la Unidad de Trabajo los recolect
 | `AprobacionGerencialRequerida` | Cotización | alerta al Gerente | CA-007 |
 | `CotizacionAprobadaPorGerente` | Cotización | alerta al asesor: «ya puede presentarse» | CA-008 |
 | `CotizacionRechazadaPorGerente` | Cotización | alerta al asesor con las observaciones | CA-009 |
-| `CotizacionAutorizada` (adicional) | Cotización | alerta al técnico de la orden | CA-017 |
+| `CotizacionAutorizada` (adicional) | Cotización | alerta a cada técnico con trabajos asignados en la orden | CA-017 |
 | `FallaAdicionalReportada` | Orden | alerta al asesor: «generar cotización adicional» | CA-034 |
 | `RefaccionDisponible` | Orden | alertas al técnico y al asesor | CA-022 |
 | `OrdenListaParaEntrega` | Orden | alerta al asesor | CA-015 |

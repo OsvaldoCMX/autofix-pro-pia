@@ -18,9 +18,9 @@ from domain.vehiculos.repositorio import RepositorioDeVehiculos
         (RepositorioDeOrdenes, {"obtener", "agregar", "guardar", "siguiente_numero"}),
         (
             RepositorioDeCotizaciones,
-            {"obtener", "agregar", "guardar", "de_la_orden", "siguiente_version"},
+            {"obtener", "agregar", "guardar", "de_la_orden", "siguiente_version", "siguiente_id"},
         ),
-        (RepositorioDeClientes, {"obtener", "agregar", "guardar", "buscar_flotilla"}),
+        (RepositorioDeClientes, {"obtener", "agregar", "guardar", "buscar_flotilla", "siguiente_id"}),
         (RepositorioDeVehiculos, {"por_placas", "agregar", "guardar"}),
         (RepositorioDeEmpleados, {"obtener"}),
     ],

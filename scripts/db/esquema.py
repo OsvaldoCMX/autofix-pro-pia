@@ -248,8 +248,8 @@ tabla("eventos", "Bitácora de Domain Events (ADR-016): evidencia de transicione
     ("registrado_en", TS, False, "NOW()", "Cuándo se guardó"),
 ], ["id"], indices=[("ix_eventos_agregado", "id_agregado"), ("ix_eventos_tipo", "tipo")])
 
-tabla("secuencias", "Folios consecutivos (OS-0001, COT-0001, REC-0001); se revierten con la transacción.", [
-    ("nombre", "VARCHAR(30)", False, None, "orden, cotizacion, recibo"),
+tabla("secuencias", "Folios consecutivos (OS-0001, COT-0001, REC-0001, CLI-0001); se revierten con la transacción.", [
+    ("nombre", "VARCHAR(30)", False, None, "orden, cotizacion, recibo, cliente"),
     ("ultimo_valor", "INTEGER", False, "0", "Último número usado"),
 ], ["nombre"], checks=["ultimo_valor >= 0"], grupo="Soporte")
 
@@ -321,7 +321,7 @@ def sql():
         for c, _tipo, _n, _d, com in t["columnas"]:
             o.append(f"COMMENT ON COLUMN {t['nombre']}.{c} IS '{com.replace(chr(39), chr(39) * 2)}';")
         o.append("")
-    o += ["-- Folios iniciales", "INSERT INTO secuencias (nombre, ultimo_valor) VALUES ('orden', 0), ('cotizacion', 0), ('recibo', 0);", "",
+    o += ["-- Folios iniciales", "INSERT INTO secuencias (nombre, ultimo_valor) VALUES ('orden', 0), ('cotizacion', 0), ('recibo', 0), ('cliente', 0);", "",
           "-- Seguridad para Supabase: la aplicación se conecta con el usuario dueño de las tablas (que no",
           "-- está sujeto a RLS). Activar RLS sin políticas impide leer o escribir estas tablas desde la",
           "-- Data API pública de Supabase con las llaves anon/authenticated. En PostgreSQL local no estorba."]

@@ -8,7 +8,7 @@ UNION ALL SELECT 'servicios inhabilitados', COUNT(*), 1 FROM catalogo_servicios 
 UNION ALL SELECT 'servicios_solicitados', COUNT(*), 117 FROM servicios_solicitados
 UNION ALL SELECT 'órdenes sin detalle', COUNT(*), 2 FROM ordenes o WHERE NOT EXISTS (SELECT 1 FROM servicios_solicitados s WHERE s.numero_orden = o.numero)
 UNION ALL SELECT 'no autorizadas', COUNT(*), 7 FROM referencia_operaciones_profesor WHERE NOT autorizado
-UNION ALL SELECT 'secuencias', COUNT(*), 3 FROM secuencias;
+UNION ALL SELECT 'secuencias', COUNT(*), 4 FROM secuencias;
 
 -- Total de referencia de todas las operaciones (precio × cantidad): debe dar 305758.00
 SELECT SUM(c.precio_mxn * s.cantidad) AS total_referencia FROM servicios_solicitados s JOIN catalogo_servicios c USING (recurso_id);
