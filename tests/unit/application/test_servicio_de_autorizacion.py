@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import pytest
 
-from application.comandos import RegistrarDecisionDelCliente
+from application.comandos import CompletarTrabajo, IniciarTrabajo, RegistrarDecisionDelCliente
 from domain.compartido.errores import (
     AutorizanteNoValido,
     CotizacionNoEncontrada,
@@ -14,7 +14,14 @@ from domain.cotizaciones.eventos import CotizacionAutorizada, CotizacionRechazad
 from domain.cotizaciones.valores import RolDeAutorizante
 from domain.ordenes.estados import EstadoTrabajo
 from domain.ordenes.eventos import OrdenAutorizada
-from tests.unit.application.escenarios import AHORA, Taller, cotizada, decidir
+from tests.unit.application.escenarios import (
+    AHORA,
+    TECNICO,
+    Taller,
+    con_adicional,
+    cotizada,
+    decidir,
+)
 
 
 def test_ca_010_autorizacion_total(taller: Taller) -> None:
@@ -57,6 +64,46 @@ def test_ca_012_rechazo_total_deja_la_orden_cotizada(taller: Taller) -> None:
     assert orden.rechazo_total is True
     tipos = [type(evento) for evento in taller.publicador.publicar.call_args.args[0]]
     assert tipos == [CotizacionRechazadaPorCliente]
+
+
+def test_ca_017_adicional_agrega_trabajos_pendientes(taller: Taller) -> None:
+    numero, id_adicional = con_adicional(taller)
+
+    resultado = decidir(taller, id_adicional, (1, 2))
+
+    orden = taller.datos.ordenes[numero]
+    assert resultado.estado_cotizacion == "Autorizada"
+    assert resultado.estado_orden == "En Reparación"
+    assert [trabajo.estado.value for trabajo in orden.trabajos[2:]] == ["Pendiente", "Pendiente"]
+    assert orden.adicionales_pendientes == 0
+    eventos = taller.publicador.publicar.call_args.args[0]
+    autorizada = next(e for e in eventos if isinstance(e, CotizacionAutorizada))
+    assert autorizada.es_adicional is True
+
+
+def test_ca_018_adicional_rechazada_pasa_a_lista(taller: Taller) -> None:
+    numero, id_adicional = con_adicional(taller)
+    taller.reparacion.iniciar_trabajo(IniciarTrabajo(numero, 2, TECNICO))
+    taller.reparacion.completar_trabajo(CompletarTrabajo(numero, 1, TECNICO))
+    taller.reparacion.completar_trabajo(CompletarTrabajo(numero, 2, TECNICO))
+
+    resultado = decidir(taller, id_adicional, ())
+
+    orden = taller.datos.ordenes[numero]
+    assert resultado.estado_cotizacion == "Rechazada"
+    assert resultado.estado_orden == "Lista para Entrega"
+    assert [t.estado.value for t in orden.trabajos[2:]] == ["No Autorizado", "No Autorizado"]
+    assert str(orden.total_autorizado.monto) == "3000.00"
+
+
+def test_ca_018_adicional_rechazada_con_trabajos_abiertos_sigue_en_reparacion(
+    taller: Taller,
+) -> None:
+    _, id_adicional = con_adicional(taller)
+
+    resultado = decidir(taller, id_adicional, ())
+
+    assert resultado.estado_orden == "En Reparación"
 
 
 def test_ca_029_conductor_no_autoriza(taller: Taller) -> None:

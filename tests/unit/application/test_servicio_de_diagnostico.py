@@ -15,7 +15,11 @@ from domain.compartido.errores import (
     TransicionDeEstadoNoPermitida,
     ValorInvalido,
 )
-from domain.ordenes.eventos import DiagnosticoRegistrado, TecnicoAsignadoParaDiagnostico
+from domain.ordenes.eventos import (
+    DiagnosticoRegistrado,
+    FallaAdicionalReportada,
+    TecnicoAsignadoParaDiagnostico,
+)
 from tests.unit.application.escenarios import (
     AHORA,
     GERENTE,
@@ -25,6 +29,7 @@ from tests.unit.application.escenarios import (
     cotizada,
     diagnosticada,
     en_diagnostico,
+    en_reparacion,
     recibida,
 )
 
@@ -109,6 +114,20 @@ def test_rn_03_mensaje_indica_falla_adicional(taller: Taller) -> None:
         taller.diagnostico.registrar_diagnostico(
             RegistrarDiagnostico(numero, TECNICO, "Otra falla", "Otro trabajo")
         )
+
+
+def test_ca_034_reporta_falla_en_reparacion(taller: Taller) -> None:
+    numero = en_reparacion(taller)
+
+    resultado = taller.diagnostico.reportar_falla_adicional(
+        ReportarFallaAdicional(numero, TECNICO, "Fuga de aceite")
+    )
+
+    assert (resultado.id_falla, resultado.descripcion) == (1, "Fuga de aceite")
+    assert resultado.reportada_en == AHORA
+    assert taller.datos.ordenes[numero].fallas_adicionales[0].tecnico == TECNICO
+    eventos = taller.publicador.publicar.call_args.args[0]
+    assert [type(evento) for evento in eventos] == [FallaAdicionalReportada]
 
 
 def test_ca_034_falla_fuera_de_reparacion_se_rechaza(taller: Taller) -> None:

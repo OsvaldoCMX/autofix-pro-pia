@@ -8,7 +8,9 @@ import pytest
 
 from application.comandos import (
     AjustarCotizacion,
+    AsignarTrabajos,
     GenerarCotizacion,
+    IniciarTrabajo,
     PresentarCotizacion,
     RefaccionPropuesta,
     RegistrarRecontacto,
@@ -20,15 +22,19 @@ from domain.compartido.errores import (
     DiagnosticoRequerido,
     OperacionDeCotizacionNoPermitida,
     OrdenNoEncontrada,
+    TransicionDeEstadoNoPermitida,
 )
 from domain.cotizaciones.eventos import AprobacionGerencialRequerida, CotizacionGenerada
 from tests.unit.application.escenarios import (
     AHORA,
     ASESOR,
+    TECNICO,
     Taller,
+    autorizada,
     cotizada,
     diagnosticada,
     en_diagnostico,
+    en_reparacion,
     poner_hora,
     trabajos,
 )
@@ -128,6 +134,46 @@ def test_ca_006_presentar_guarda_la_fecha(taller: Taller) -> None:
 def test_cotizacion_inexistente_no_se_presenta(taller: Taller) -> None:
     with pytest.raises(CotizacionNoEncontrada):
         taller.cotizacion.presentar(PresentarCotizacion("COT-9999"))
+
+
+def test_ca_016_adicional_v2_sin_gerente(taller: Taller) -> None:
+    numero = en_reparacion(taller)
+
+    resultado = taller.cotizacion.generar_adicional(GenerarCotizacion(numero, trabajos("90000.00")))
+
+    assert resultado.version == "v.2"
+    assert resultado.tipo == "Adicional"
+    assert resultado.estado == "Pendiente de Autorización del Cliente"
+    assert taller.datos.ordenes[numero].adicionales_pendientes == 1
+
+
+def test_ca_016_cada_adicional_toma_la_siguiente_version(taller: Taller) -> None:
+    numero = en_reparacion(taller)
+    taller.cotizacion.generar_adicional(GenerarCotizacion(numero, trabajos("100.00")))
+
+    resultado = taller.cotizacion.generar_adicional(GenerarCotizacion(numero, trabajos("100.00")))
+
+    assert resultado.version == "v.3"
+
+
+def test_ca_016_adicional_fuera_de_reparacion_se_rechaza(taller: Taller) -> None:
+    numero, _ = cotizada(taller)
+
+    with pytest.raises(TransicionDeEstadoNoPermitida, match="En Reparación"):
+        taller.cotizacion.generar_adicional(GenerarCotizacion(numero, trabajos("100.00")))
+
+
+def test_rn_24_adicional_no_modifica_la_original(taller: Taller) -> None:
+    numero, id_original = autorizada(taller)
+    original = taller.datos.cotizaciones[id_original]
+    total, estado = original.total, original.estado
+    taller.reparacion.asignar_trabajos(AsignarTrabajos(numero, (1, 2), TECNICO))
+    taller.reparacion.iniciar_trabajo(IniciarTrabajo(numero, 1, TECNICO))
+
+    taller.cotizacion.generar_adicional(GenerarCotizacion(numero, trabajos("100.00")))
+
+    original = taller.datos.cotizaciones[id_original]
+    assert (original.total, original.estado) == (total, estado)
 
 
 def test_rn_23_sin_trabajos_no_cambia_la_orden(taller: Taller) -> None:

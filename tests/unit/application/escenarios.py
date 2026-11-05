@@ -9,12 +9,18 @@ from zoneinfo import ZoneInfo
 
 from application.comandos import (
     AsignarTecnicoParaDiagnostico,
+    AsignarTrabajos,
+    CompletarTrabajo,
+    ConfirmarFirmaDeNota,
     DatosDeVehiculo,
     GenerarCotizacion,
+    IniciarTrabajo,
     RegistrarCliente,
     RegistrarDecisionDelCliente,
     RegistrarDiagnostico,
     RegistrarOrden,
+    RegistrarSalida,
+    SolicitarRefaccion,
     TrabajoPropuesto,
 )
 from application.puertos import PublicadorDeEventos, Reloj
@@ -25,6 +31,9 @@ from application.servicios.servicio_de_cancelacion import ServicioDeCancelacion
 from application.servicios.servicio_de_cotizacion import ServicioDeCotizacion
 from application.servicios.servicio_de_diagnostico import ServicioDeDiagnostico
 from application.servicios.servicio_de_recepcion import ServicioDeRecepcion
+from application.servicios.servicio_de_refacciones import ServicioDeRefacciones
+from application.servicios.servicio_de_reparacion import ServicioDeReparacion
+from application.servicios.servicio_de_retiro import ServicioDeRetiro
 from domain.clientes.cliente import TipoCliente
 from domain.cotizaciones.valores import RolDeAutorizante
 from domain.empleados.empleado import Empleado, RolDeEmpleado
@@ -113,6 +122,18 @@ class Taller:
     def autorizacion(self) -> ServicioDeAutorizacion:
         return self._armar(ServicioDeAutorizacion)
 
+    @property
+    def reparacion(self) -> ServicioDeReparacion:
+        return self._armar(ServicioDeReparacion)
+
+    @property
+    def refacciones(self) -> ServicioDeRefacciones:
+        return self._armar(ServicioDeRefacciones)
+
+    @property
+    def retiro(self) -> ServicioDeRetiro:
+        return self._armar(ServicioDeRetiro)
+
 
 # ------------------------------------------------------------------ pasos para llegar a un estado
 def recibida(taller: Taller, flotilla: bool = False) -> str:
@@ -176,3 +197,48 @@ def autorizada(
     numero, id_cotizacion = cotizada(taller, flotilla)
     decidir(taller, id_cotizacion, lineas, flotilla)
     return numero, id_cotizacion
+
+
+def asignada(taller: Taller, flotilla: bool = False, tecnico: str = TECNICO) -> str:
+    """Orden «Autorizada» con los trabajos 1 y 2 asignados al técnico."""
+    numero, _ = autorizada(taller, flotilla)
+    taller.reparacion.asignar_trabajos(AsignarTrabajos(numero, (1, 2), tecnico))
+    return numero
+
+
+def en_reparacion(taller: Taller, flotilla: bool = False) -> str:
+    """El trabajo 1 queda «En Progreso» y el 2 «Pendiente»."""
+    numero = asignada(taller, flotilla)
+    taller.reparacion.iniciar_trabajo(IniciarTrabajo(numero, 1, TECNICO))
+    return numero
+
+
+def en_espera(taller: Taller, iniciada: bool = False) -> str:
+    """Tiene la solicitud 1 pendiente, del trabajo 2."""
+    numero = en_reparacion(taller) if iniciada else asignada(taller)
+    taller.refacciones.solicitar(SolicitarRefaccion(numero, 2, "Balatas", 2))
+    return numero
+
+
+def pausada(taller: Taller, iniciada: bool = False) -> str:
+    numero = en_espera(taller, iniciada)
+    taller.retiro.registrar_salida(RegistrarSalida(numero))
+    taller.retiro.confirmar_firma(ConfirmarFirmaDeNota(numero))
+    return numero
+
+
+def con_adicional(taller: Taller) -> tuple[str, str]:
+    """Orden «En Reparación» con una cotización adicional v.2 de dos trabajos, sin decisión."""
+    numero = en_reparacion(taller)
+    resultado = taller.cotizacion.generar_adicional(
+        GenerarCotizacion(numero, trabajos("500.00", "700.00"))
+    )
+    return numero, resultado.id
+
+
+def lista(taller: Taller, flotilla: bool = False) -> str:
+    numero = en_reparacion(taller, flotilla)
+    taller.reparacion.iniciar_trabajo(IniciarTrabajo(numero, 2, TECNICO))
+    taller.reparacion.completar_trabajo(CompletarTrabajo(numero, 1, TECNICO))
+    taller.reparacion.completar_trabajo(CompletarTrabajo(numero, 2, TECNICO))
+    return numero
