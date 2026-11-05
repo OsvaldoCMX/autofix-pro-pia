@@ -28,7 +28,7 @@ Los Aggregates se relacionan **solo por identidad** (`numero_orden`, `id_cliente
 |---|---|
 | Identidad | `NumeroOrden` (folio único). En los datos del profesor, el folio es el `operacion_id` (p. ej. `AUT-O001`). |
 | Referencias | `id_cliente`, `placas`, `asesor` (empleado que la registró), `tecnico_de_diagnostico`. |
-| Entidades internas | `Trabajo`, `SolicitudDeCompra`, `FallaAdicional`, `ReciboInterno`. |
+| Entidades internas | `Trabajo`, `SolicitudDeCompra`, `FallaAdicional`, `ReciboInterno` (se construye en la Fase 10 junto con su PDF, P2; hasta entonces la orden solo guarda el `Pago`). |
 | Value Objects | `EstadoDeRecepcion` (kilometraje, nivel de combustible, fotos), `Diagnostico`, `Pago`, `CargoACredito`, `NotaDeResponsabilidad`, `Cancelacion`. |
 | Responsabilidades | Ciclo de vida completo del servicio: recepción, diagnóstico, cotizada, decisión, asignación y avance de trabajos, fallas adicionales, refacciones, retiro anticipado, pago o crédito, entrega y cancelación. |
 | Invariantes | Solo cambia de estado por la tabla de su máquina de estados (RN-22) · sin diagnóstico no hay cotización y después el diagnóstico no cambia (RN-02, RN-03) · solo se asignan e inician trabajos autorizados (RN-08) · refacciones solo de trabajos autorizados (RN-09) · «En Espera de Refacción» mientras exista una solicitud «Solicitada» (RN-10) · nadie trabaja la orden con el vehículo fuera del taller y cada trabajo lo inicia su técnico (RN-14) · «Lista para Entrega» cuando todos los trabajos autorizados están completados y no hay cotización adicional sin decisión (RN-15) · el pago cubre el total autorizado y las flotillas no pagan de contado; después ya no cambian los costos (RN-16) · el vencimiento del crédito es la entrega + 15 días naturales (RN-17) · se entrega solo con pago, crédito o rechazo total (RN-18) · se cancela solo sin cotización, con motivo (RN-19). |
@@ -93,6 +93,8 @@ Base: `Especificacion[T]` con `es_satisfecha_por(candidato) -> bool` y los combi
 | E7 | `RequiereAlertaDeRefaccion` | `SolicitudPendiente() & MasDeDiasHabiles(3) & ~ClienteYaAvisado()` | `SolicitudDeCompra` + fecha de revisión | `ServicioDeRevisionDePlazos` | RN-11 · CA-023 |
 | E8 | `RequiereRecontacto` | `PendienteDeAutorizacion() & FuePresentada() & MasDeHorasDesdeElUltimoContacto(48)` | `Cotizacion` + fecha de revisión | `ServicioDeRevisionDePlazos` | RN-12 · CA-040 |
 
+En E6, la pieza `TrabajoAutorizado` solo acepta trabajos abiertos («Pendiente» o «En Progreso»): un trabajo «Completado» ya no necesita piezas y la solicitud se rechaza con `SolicitudNoPermitida`. Así, mientras haya una solicitud pendiente siempre queda un trabajo abierto y la orden no se atasca después de que llega la refacción.
+
 Combinan **AND, OR y NOT**: E2 y E6 (AND + OR), E3 (OR + AND), E5 y E7 (AND + NOT). E1 sustituye la lógica de `PoliticaPorMontoDeCotizacionInicial` de la Unidad 3 sin cambiar su intención (ADR-005 sigue vigente).
 
 **Specifications de referencia del profesor.** Las reglas `puede_procesarse` y `beneficio_referencia` del paquete de datos **no** se agregan al dominio porque no son requisitos de AutoFix Pro (no hay clientes inactivos, preferentes ni promociones en el BRD). Para anotar los 120 casos de prueba, el arnés de `tests/datos_profesor/` las arma con la misma clase `Especificacion` y compara su resultado con la regla propia equivalente (ADR-013, [datos-profesor](../datos-profesor/README.md)).
@@ -136,6 +138,11 @@ Notas de comportamiento (precisiones v3.0):
 - Completar el último trabajo mientras hay una solicitud «Solicitada» se rechaza con 409: la orden no puede quedar lista con refacciones pendientes. La validación se hace **antes** de modificar el trabajo, para no dejar el Aggregate a medias.
 - La llegada de una refacción con la orden «Pausada por Retiro de Vehículo» marca la solicitud como «Disponible» pero no cambia el estado de la orden; al reactivarla se decide el estado (CA-025).
 - El rechazo total no cierra la orden: queda «Cotizada» con la marca de rechazo total hasta «Entregar sin reparación» (decisión de la Unidad 3).
+- El estado al que regresa una orden en espera o pausada se calcula con sus trabajos: «En Reparación» si alguno se inició y «Autorizada» si ninguno; `estado_antes_de_espera` expone ese resultado para guardarlo.
+- Solo el técnico asignado registra el diagnóstico (RN-02) y, antes de generar la cotización, puede corregirlo. Las fallas adicionales y las cotizaciones adicionales solo se registran con la orden «En Reparación» (CA-016, CA-034).
+- `asignar_trabajos` acepta trabajos «Pendiente», también para reasignarlos; una orden pausada o un trabajo ya iniciado se rechazan con `TrabajoNoPermitido`. Con el vehículo fuera del taller tampoco se completan trabajos (RN-14).
+- El aviso al cliente se registra solo con la solicitud «Solicitada» y una sola vez; si no, `SolicitudNoPermitida`.
+- La salida se registra solo con la orden «En Espera de Refacción». Una nota sin firmar se reemplaza si se registra otra salida y se descarta si la orden sale de la espera.
 
 ### 5.2 Cotización (6 estados)
 
@@ -197,8 +204,8 @@ Las alertas por tiempo (CA-023 y CA-040) no vienen de un evento sino de la revis
 | `DiagnosticoRequerido`, `DiagnosticoNoModificable` | RN-02 y RN-03. | 409 |
 | `AutorizanteNoValido` | E2 no se cumple. | 409 |
 | `TrabajoNoAutorizado`, `SolicitudNoPermitida` | E6 no se cumple, o se intenta asignar trabajos de una orden sin trabajos autorizados (rechazo total, CA-012). | 409 |
-| `TrabajoNoPermitido` | E5 no se cumple porque el vehículo está fuera del taller o el trabajo no está pendiente. | 409 |
-| `TrabajoDeOtroTecnico` | E5 no se cumple porque el trabajo está asignado a otro técnico. | 403 |
+| `TrabajoNoPermitido` | E5 no se cumple porque el vehículo está fuera del taller o el trabajo no está pendiente; también al asignar con el vehículo fuera o un trabajo ya iniciado, o al completar con el vehículo fuera. | 409 |
+| `TrabajoDeOtroTecnico` | E5 no se cumple porque el trabajo está asignado a otro técnico o a ninguno; también al completar un trabajo ajeno o al registrar un diagnóstico asignado a otro técnico. | 403 |
 | `PagoNoPermitido` | Monto distinto del total autorizado o pago de contado de una flotilla. | 409 |
 | `EntregaNoPermitida` | E3 no se cumple. | 409 |
 | `CancelacionNoPermitida` | E4 no se cumple. | 409 |

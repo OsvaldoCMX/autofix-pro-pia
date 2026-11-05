@@ -29,7 +29,7 @@ autofix-pro/
 ├── src/
 │   ├── domain/                ← modelo de dominio puro (sin FastAPI ni SQLAlchemy)
 │   │   ├── compartido/        valores, errores, eventos, especificacion, maquina_de_estados, calendario
-│   │   ├── ordenes/           orden_de_servicio, trabajo, solicitud_de_compra, valores, estados, eventos, especificaciones, repositorio
+│   │   ├── ordenes/           orden_de_servicio, trabajo, solicitud_de_compra, falla_adicional, valores, estados, eventos, especificaciones, repositorio
 │   │   ├── cotizaciones/      cotizacion, linea_de_cotizacion, valores, estados, eventos, especificaciones, repositorio
 │   │   ├── clientes/          cliente, especificaciones, repositorio
 │   │   ├── vehiculos/         vehiculo, repositorio
