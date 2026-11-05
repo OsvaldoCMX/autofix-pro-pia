@@ -38,11 +38,13 @@ from application.servicios.servicio_de_recepcion import ServicioDeRecepcion
 from application.servicios.servicio_de_refacciones import ServicioDeRefacciones
 from application.servicios.servicio_de_reparacion import ServicioDeReparacion
 from application.servicios.servicio_de_retiro import ServicioDeRetiro
+from application.servicios.servicio_de_revision_de_plazos import ServicioDeRevisionDePlazos
 from domain.clientes.cliente import TipoCliente
 from domain.cotizaciones.valores import RolDeAutorizante
 from domain.empleados.empleado import Empleado, RolDeEmpleado
 from domain.ordenes.valores import FormaDePago, NivelDeCombustible
 from infrastructure.memoria.almacen import AlmacenEnMemoria, DatosEnMemoria
+from infrastructure.memoria.lector import LectorEnMemoria
 from infrastructure.memoria.unidad_de_trabajo import UnidadDeTrabajoEnMemoria
 
 S = TypeVar("S")
@@ -146,6 +148,10 @@ class Taller:
     @property
     def entrega(self) -> ServicioDeEntrega:
         return self._armar(ServicioDeEntrega)
+
+    @property
+    def revision(self) -> ServicioDeRevisionDePlazos:
+        return ServicioDeRevisionDePlazos(self.uow(), LectorEnMemoria(self.almacen), self.reloj)
 
 
 # ------------------------------------------------------------------ pasos para llegar a un estado
