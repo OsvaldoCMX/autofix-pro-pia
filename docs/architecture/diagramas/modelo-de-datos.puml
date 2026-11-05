@@ -1,0 +1,237 @@
+@startuml modelo-de-datos
+skinparam defaultFontName Arial
+skinparam defaultFontSize 11
+skinparam shadowing false
+skinparam dpi 150
+skinparam linetype ortho
+hide circle
+hide methods
+left to right direction
+title Modelo de datos — AutoFix Pro (PostgreSQL / Supabase) · PIA v3.0
+
+entity "empleados" as empleados #EEF5FF {
+  * <b>id</b> : VARCHAR(20) <<PK>>
+  --
+  * nombre : VARCHAR(120)
+  * rol : VARCHAR(20)
+}
+entity "clientes" as clientes #EEF5FF {
+  * <b>id</b> : VARCHAR(20) <<PK>>
+  --
+  * nombre : VARCHAR(120)
+    telefono : VARCHAR(20)
+    correo : VARCHAR(120)
+  * tipo : VARCHAR(20)
+    empresa : VARCHAR(120)
+    responsable_nombre : VARCHAR(120)
+    responsable_telefono : VARCHAR(20)
+    responsable_correo : VARCHAR(120)
+}
+entity "vehiculos" as vehiculos #EEF5FF {
+  * <b>placas</b> : VARCHAR(15) <<PK>>
+  --
+  * vin : CHAR(17)
+  * marca : VARCHAR(60)
+  * modelo : VARCHAR(60)
+  * anio : SMALLINT
+  * id_cliente : VARCHAR(20) <<FK>>
+}
+entity "ordenes" as ordenes #EEF5FF {
+  * <b>numero</b> : VARCHAR(20) <<PK>>
+  --
+  * id_cliente : VARCHAR(20) <<FK>>
+  * es_cliente_de_flotilla : BOOLEAN
+  * placas : VARCHAR(15) <<FK>>
+  * asesor : VARCHAR(20) <<FK>>
+  * motivo_de_ingreso : TEXT
+    kilometraje : INTEGER
+    nivel_combustible : VARCHAR(10)
+  * estado : VARCHAR(40)
+  * fecha_ingreso : TIMESTAMPTZ
+  * ultima_actualizacion : TIMESTAMPTZ
+    tecnico_de_diagnostico : VARCHAR(20) <<FK>>
+    diagnostico_fallas : TEXT
+    diagnostico_recomendaciones : TEXT
+    diagnostico_registrado_en : TIMESTAMPTZ
+  * cotizada : BOOLEAN
+  * rechazo_total : BOOLEAN
+  * adicionales_pendientes : SMALLINT
+    fecha_ingreso_a_fila : TIMESTAMPTZ
+    estado_antes_de_espera : VARCHAR(40)
+    nota_fecha_salida : TIMESTAMPTZ
+  * nota_firmada : BOOLEAN
+    nota_fecha_firma : TIMESTAMPTZ
+    pago_monto : NUMERIC(12,2)
+    pago_forma : VARCHAR(20)
+    pago_registrado_en : TIMESTAMPTZ
+    recibo_numero : VARCHAR(20)
+    credito_monto : NUMERIC(12,2)
+    credito_registrado_en : TIMESTAMPTZ
+    credito_fecha_vencimiento : DATE
+    fecha_entrega : TIMESTAMPTZ
+    cancelacion_motivo : TEXT
+    cancelacion_registrada_en : TIMESTAMPTZ
+    cancelacion_asesor : VARCHAR(20) <<FK>>
+}
+entity "trabajos" as trabajos #EEF5FF {
+  * <b>numero_orden</b> : VARCHAR(20) <<PK>>
+  * <b>id</b> : INTEGER <<PK>>
+  --
+  * descripcion : TEXT
+  * importe : NUMERIC(12,2)
+  * estado : VARCHAR(20)
+    tecnico : VARCHAR(20) <<FK>>
+    id_cotizacion : VARCHAR(20)
+    numero_linea : INTEGER
+}
+entity "solicitudes_de_compra" as solicitudes_de_compra #EEF5FF {
+  * <b>numero_orden</b> : VARCHAR(20) <<PK>>
+  * <b>id</b> : INTEGER <<PK>>
+  --
+  * id_trabajo : INTEGER <<FK>>
+  * refaccion : VARCHAR(200)
+  * cantidad : INTEGER
+  * fecha_solicitud : TIMESTAMPTZ
+  * estado : VARCHAR(20)
+    fecha_llegada : TIMESTAMPTZ
+    fecha_aviso_al_cliente : TIMESTAMPTZ
+}
+entity "fallas_adicionales" as fallas_adicionales #EEF5FF {
+  * <b>numero_orden</b> : VARCHAR(20) <<PK>>
+  * <b>id</b> : INTEGER <<PK>>
+  --
+  * descripcion : TEXT
+  * tecnico : VARCHAR(20) <<FK>>
+  * reportada_en : TIMESTAMPTZ
+}
+entity "fotos_de_danos" as fotos_de_danos #EEF5FF {
+  * <b>id</b> : BIGSERIAL <<PK>>
+  --
+  * numero_orden : VARCHAR(20) <<FK>>
+  * nombre_archivo : VARCHAR(200)
+  * tipo_mime : VARCHAR(20)
+  * tamano_bytes : INTEGER
+  * contenido : BYTEA
+  * subida_en : TIMESTAMPTZ
+}
+entity "cotizaciones" as cotizaciones #EEF5FF {
+  * <b>id</b> : VARCHAR(20) <<PK>>
+  --
+  * numero_orden : VARCHAR(20) <<FK>>
+  * tipo : VARCHAR(20)
+  * version : SMALLINT
+  * estado : VARCHAR(50)
+  * total : NUMERIC(12,2)
+  * generada_en : TIMESTAMPTZ
+    fecha_aprobacion_gerencial : TIMESTAMPTZ
+    observaciones_del_gerente : TEXT
+    fecha_presentacion : TIMESTAMPTZ
+    decision_autorizante : VARCHAR(120)
+    decision_rol : VARCHAR(30)
+    decision_registrada_en : TIMESTAMPTZ
+}
+entity "lineas_de_cotizacion" as lineas_de_cotizacion #EEF5FF {
+  * <b>id_cotizacion</b> : VARCHAR(20) <<PK>>
+  * <b>numero</b> : INTEGER <<PK>>
+  --
+  * descripcion : TEXT
+  * mano_de_obra : NUMERIC(12,2)
+    decision : VARCHAR(20)
+}
+entity "refacciones_cotizadas" as refacciones_cotizadas #EEF5FF {
+  * <b>id</b> : BIGSERIAL <<PK>>
+  --
+  * id_cotizacion : VARCHAR(20) <<FK>>
+  * numero_linea : INTEGER <<FK>>
+  * posicion : INTEGER
+  * descripcion : VARCHAR(200)
+  * cantidad : INTEGER
+  * precio_unitario : NUMERIC(12,2)
+}
+entity "recontactos" as recontactos #EEF5FF {
+  * <b>id</b> : BIGSERIAL <<PK>>
+  --
+  * id_cotizacion : VARCHAR(20) <<FK>>
+  * asesor : VARCHAR(20) <<FK>>
+  * registrado_en : TIMESTAMPTZ
+}
+entity "alertas_internas" as alertas_internas #EEF5FF {
+  * <b>id</b> : BIGSERIAL <<PK>>
+  --
+    destinatario : VARCHAR(20) <<FK>>
+    destinatario_rol : VARCHAR(20)
+  * tipo : VARCHAR(50)
+  * mensaje : TEXT
+    numero_orden : VARCHAR(20) <<FK>>
+    id_cotizacion : VARCHAR(20) <<FK>>
+    clave : VARCHAR(120)
+  * creada_en : TIMESTAMPTZ
+  * leida : BOOLEAN
+}
+entity "eventos" as eventos #EEF5FF {
+  * <b>id</b> : BIGSERIAL <<PK>>
+  --
+  * tipo : VARCHAR(60)
+  * agregado : VARCHAR(30)
+  * id_agregado : VARCHAR(20)
+  * datos : JSONB
+  * ocurrido_en : TIMESTAMPTZ
+  * registrado_en : TIMESTAMPTZ
+}
+entity "secuencias" as secuencias #F4F6F6 {
+  * <b>nombre</b> : VARCHAR(30) <<PK>>
+  --
+  * ultimo_valor : INTEGER
+}
+entity "catalogo_servicios" as catalogo_servicios #FEF9E7 {
+  * <b>recurso_id</b> : VARCHAR(20) <<PK>>
+  --
+  * descripcion : VARCHAR(120)
+  * precio_mxn : NUMERIC(12,2)
+  * capacidad_o_stock : INTEGER
+  * habilitado : BOOLEAN
+}
+entity "servicios_solicitados" as servicios_solicitados #FEF9E7 {
+  * <b>numero_orden</b> : VARCHAR(20) <<PK>>
+  * <b>recurso_id</b> : VARCHAR(20) <<PK>>
+  --
+  * cantidad : INTEGER
+}
+entity "referencia_operaciones_profesor" as referencia_operaciones_profesor #FEF9E7 {
+  * <b>numero_orden</b> : VARCHAR(20) <<PK>>
+  --
+  * actor_activo : BOOLEAN
+  * actor_preferente : BOOLEAN
+  * promocion_activa : BOOLEAN
+  * autorizado : BOOLEAN
+  * referencia : VARCHAR(30)
+}
+
+clientes ||--o{ vehiculos
+clientes ||--o{ ordenes
+vehiculos ||--o{ ordenes
+empleados ||--o{ ordenes
+ordenes ||--o{ trabajos
+empleados ||--o{ trabajos
+ordenes ||--o{ solicitudes_de_compra
+trabajos ||--o{ solicitudes_de_compra
+ordenes ||--o{ fallas_adicionales
+empleados ||--o{ fallas_adicionales
+ordenes ||--o{ fotos_de_danos
+ordenes ||--o{ cotizaciones
+cotizaciones ||--o{ lineas_de_cotizacion
+lineas_de_cotizacion ||--o{ refacciones_cotizadas
+cotizaciones ||--o{ recontactos
+empleados ||--o{ recontactos
+empleados ||--o{ alertas_internas
+ordenes ||--o{ alertas_internas
+cotizaciones ||--o{ alertas_internas
+ordenes ||--o{ servicios_solicitados
+catalogo_servicios ||--o{ servicios_solicitados
+ordenes ||--o{ referencia_operaciones_profesor
+
+legend bottom
+  Azul: tablas del dominio · Gris: soporte · Amarillo: datos de referencia del profesor (ADR-013).
+  * = obligatorio · PK = llave primaria · FK = llave foránea. Detalle de columnas en docs/architecture/modelo-de-datos.md
+endlegend
+@enduml

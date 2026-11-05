@@ -1,0 +1,66 @@
+@startuml secuencia-entrega
+title Secuencia 3 — Entregar el vehículo (PuedeEntregarse con OR / AND y vencimiento del crédito)\nUS-022, US-024 · CA-039, CA-041, CA-042 · RN-17, RN-18 · POST /api/ordenes/{numero}/entrega
+skinparam defaultFontName Arial
+skinparam defaultFontSize 13
+skinparam shadowing false
+skinparam dpi 150
+skinparam sequenceMessageAlign center
+skinparam ParticipantPadding 12
+skinparam BoxPadding 8
+autonumber
+
+actor "Asesor de\nServicio" as Asesor
+box "API" #FDEDEC
+  participant ":rutas/\nentrega" as R
+end box
+box "Aplicación" #EAF2FB
+  participant ":ServicioDe\nEntrega" as S
+  participant ":UnidadDe\nTrabajo" as U
+  participant ":Reloj" as Reloj
+end box
+box "Dominio" #FDF2E9
+  participant "orden:\nOrdenDeServicio" as O
+  participant ":PuedeEntregarse\n(E3)" as E3
+  participant "cargo:\nCargoACredito" as CC
+end box
+box "Infraestructura" #EEF7EE
+  participant ":PublicadorEn\nProceso" as P
+end box
+
+Asesor -> R : POST /api/ordenes/{numero}/entrega
+activate R
+R -> R : requiere_rol(Asesor)
+R -> S : entregar(RegistrarEntrega)
+activate S
+S -> Reloj : ahora()
+Reloj --> S : fecha de entrega (UTC)
+S -> U : with UnidadDeTrabajo → ordenes.obtener(numero)
+activate U
+U --> S : orden
+S -> O : entregar(fecha)
+activate O
+O -> E3 : es_satisfecha_por(orden)
+E3 --> O : EstaPagada OR EstaPorCobrarACredito\nOR (EstaCotizada AND TieneRechazoTotal)
+alt no se cumple, o es rechazo total (se usa «Entregar sin reparación»)
+  O --> S : EntregaNoPermitida
+  S -> U : deshacer()
+  R --> Asesor : 409 «primero debe registrarse el pago o el cargo a crédito»
+else «Pagada» o «Por Cobrar (Crédito)»
+  O -> O : máquina de estados → «Cerrada»\nguarda fecha y hora de entrega
+  opt la orden tiene cargo a crédito (flotilla)
+    O -> CC : fijar_vencimiento(fecha de entrega)
+    CC --> O : vence = entrega + 15 días naturales (RN-17)
+  end
+  O -> O : + VehiculoEntregado(sin_reparacion=False, vence)
+  O --> S
+  deactivate O
+  S -> U : confirmar()
+  U --> S : eventos confirmados
+  deactivate U
+  S -> P : publicar(eventos)
+  S --> R : ResultadoDeEntrega
+  R --> Asesor : 200 {estado: "Cerrada", fecha_entrega,\nfecha_vencimiento_credito (si aplica)}
+end
+deactivate S
+deactivate R
+@enduml

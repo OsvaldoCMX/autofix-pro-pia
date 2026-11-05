@@ -1,0 +1,237 @@
+@startuml mapa-dominio
+!include _estilo.iuml
+skinparam nodesep 45
+skinparam ranksep 60
+skinparam defaultFontSize 13
+skinparam ArrowFontSize 12
+skinparam packageFontSize 15
+skinparam titleFontSize 20
+skinparam legendFontSize 12
+
+left to right direction
+title AutoFix Pro — Mapa de dominio (PIA v3.0)
+
+' =========================================================== Aggregates de apoyo
+package "Aggregate: Cliente" as PCli #F5FFF5 {
+  class Cliente <<Aggregate Root>> {
+    id · nombre · teléfono · correo
+    tipo : Particular | Flotilla
+    empresa: solo si es flotilla
+  }
+  class ResponsableDeFlotilla <<Value Object>> {
+    nombre · teléfono · correo
+  }
+}
+
+package "Aggregate: Vehículo" as PVeh #F5FAFF {
+  class Vehiculo <<Aggregate Root>> {
+    placas : Placas · vin : VIN
+    marca · modelo · año
+    id_cliente: propietario
+  }
+}
+
+package "Aggregate: Empleado" as PEmp #FAFAFA {
+  class Empleado <<Aggregate Root>> {
+    id · nombre
+    rol : RolDeEmpleado
+    Asesor | Técnico | Gerente | Compras | Caja
+  }
+}
+
+' =========================================================== Aggregate principal
+package "Aggregate: Orden de Servicio" as POrd #EEF5FF {
+  class OrdenDeServicio <<Aggregate Root>> {
+    numero : NumeroOrden
+    estado : EstadoOrden (13)
+    id_cliente · placas · asesor
+    tecnico_de_diagnostico
+    fecha_ingreso_a_fila
+    total_autorizado : Dinero
+  }
+  class EstadoDeRecepcion <<Value Object>> {
+    kilometraje · combustible · fotos
+  }
+  class Diagnostico <<Value Object>> {
+    fallas · recomendaciones
+    técnico · fecha y hora
+  }
+  class Trabajo <<Entity>> {
+    descripción · importe : Dinero
+    técnico · estado : EstadoTrabajo
+  }
+  class FallaAdicional <<Entity>> {
+    descripción · fecha
+  }
+  class SolicitudDeCompra <<Entity>> {
+    refacción · cantidad · fecha
+    estado : EstadoSolicitud
+    fecha_aviso_al_cliente
+  }
+  class NotaDeResponsabilidad <<Value Object>> {
+    fecha de salida · firmada
+  }
+  class Pago <<Value Object>> {
+    monto · forma de pago
+  }
+  class CargoACredito <<Value Object>> {
+    monto · vence: entrega + 15 días
+  }
+  class ReciboInterno <<Entity>> {
+    número · monto · fecha
+  }
+  class Cancelacion <<Value Object>> {
+    motivo · fecha y hora · asesor
+  }
+}
+
+' =========================================================== Cotización
+package "Aggregate: Cotización" as PCot #FFF8F0 {
+  class Cotizacion <<Aggregate Root>> {
+    id · numero_orden
+    tipo : Inicial | Adicional
+    versión: v.1, v.2… · estado (6)
+    total : Dinero
+    fecha_aprobacion_gerencial
+    fecha_presentacion · recontactos
+  }
+  class LineaDeCotizacion <<Entity>> {
+    descripción · mano de obra
+    decisión : Autorizada | No Autorizado
+  }
+  class RefaccionCotizada <<Value Object>> {
+    descripción · cantidad · precio
+  }
+  class DecisionDelCliente <<Value Object>> {
+    autorizados · no autorizados · fecha
+  }
+  class Autorizante <<Value Object>> {
+    nombre
+    rol : Cliente | Resp. de Flotilla
+  }
+}
+
+' =========================================================== reglas del dominio
+package "Servicios del dominio y Specifications" as PSrv #FBF5FF {
+  class VerificadorDeAutorizante <<Domain Service>> {
+    usa E2 AutorizanteValido
+  }
+  class CalendarioHabil <<Domain Service>> {
+    cuenta días hábiles (L–V)
+  }
+  class "E1 RequiereAprobacionGerencial" as E1 <<Specification>> {
+    EsCotizacionInicial AND TotalMayorAlUmbral($15,000)
+  }
+  class "E2 AutorizanteValido" as E2 <<Specification>> {
+    (Particular AND AutorizaElCliente)
+    OR (Flotilla AND AutorizaSuResponsable)
+  }
+  class "E3 PuedeEntregarse" as E3 <<Specification>> {
+    Pagada OR PorCobrar OR (Cotizada AND RechazoTotal)
+  }
+  class "E4 PuedeCancelarse" as E4 <<Specification>> {
+    Recibida OR EnDiagnostico
+  }
+  class "E5 PuedeIniciarTrabajo" as E5 <<Specification>> {
+    Pendiente AND AsignadoAlTecnico
+    AND NOT OrdenPausadaPorRetiro
+  }
+  class "E6 PuedeSolicitarRefaccion" as E6 <<Specification>> {
+    (TrabajoAutorizado) AND
+    (Autorizada OR EnReparacion OR EnEspera)
+  }
+  class "E7 RequiereAlertaDeRefaccion" as E7 <<Specification>> {
+    Solicitada AND MasDe3DiasHabiles
+    AND NOT ClienteYaAvisado
+  }
+  class "E8 RequiereRecontacto" as E8 <<Specification>> {
+    PendienteDeAutorizacion AND FuePresentada
+    AND MasDe48hDesdeElUltimoContacto
+  }
+}
+
+' ----------------------------------------------------------- composición dentro de cada Aggregate
+ResponsableDeFlotilla "0..1" --* Cliente
+
+OrdenDeServicio *-- EstadoDeRecepcion : 1
+OrdenDeServicio *-- Diagnostico : 0..1
+OrdenDeServicio *-- Trabajo : 0..*
+OrdenDeServicio *-- FallaAdicional : 0..*
+OrdenDeServicio *-- SolicitudDeCompra : 0..*
+OrdenDeServicio *-- NotaDeResponsabilidad : 0..1
+OrdenDeServicio *-- Pago : 0..1
+OrdenDeServicio *-- CargoACredito : 0..1
+OrdenDeServicio *-- ReciboInterno : 0..1
+OrdenDeServicio *-- Cancelacion : 0..1
+
+Cotizacion *-- LineaDeCotizacion : 1..*
+LineaDeCotizacion *-- RefaccionCotizada : 0..*
+Cotizacion *-- DecisionDelCliente : 0..1
+DecisionDelCliente *-- Autorizante : 1
+
+' ----------------------------------------------------------- referencias entre Aggregates (solo por id)
+Cliente <-- Vehiculo : id_cliente
+Cliente <-- OrdenDeServicio : id_cliente
+Vehiculo <-- OrdenDeServicio : placas
+Empleado <-- OrdenDeServicio : asesor · técnicos
+OrdenDeServicio <-- Cotizacion : numero_orden
+
+E1 -[hidden]down- E2
+E2 -[hidden]down- E3
+E3 -[hidden]down- E4
+E1 -[hidden]right- E5
+E5 -[hidden]down- E6
+E6 -[hidden]down- E7
+E7 -[hidden]down- E8
+E5 -[hidden]right- VerificadorDeAutorizante
+VerificadorDeAutorizante -[hidden]down- CalendarioHabil
+
+note as NReglas
+  <b>Reglas que protege cada Aggregate</b> (RN-xx en la matriz de trazabilidad)
+  <b>Orden de Servicio</b>
+  1. El estado solo cambia por su máquina de estados (RN-22).
+  2. Sin diagnóstico no se cotiza; ya cotizada, el diagnóstico no cambia (RN-02, RN-03).
+  3. Solo se asignan, inician y piden refacciones de trabajos autorizados (RN-08, RN-09; E6).
+  4. «En Espera de Refacción» mientras haya solicitudes «Solicitada» (RN-10); alerta a los 3 días hábiles (E7).
+  5. No se trabaja un vehículo retirado; cada trabajo lo inicia su técnico (RN-14; E5).
+  6. «Lista para Entrega» con todos los autorizados completados y sin adicional pendiente (RN-15).
+  7. Pago = total autorizado (particular) o cargo a crédito (flotilla); vence 15 días después de la entrega (RN-16, RN-17).
+  8. Se entrega solo con pago, crédito o rechazo total (RN-18; E3).
+  9. Se cancela solo sin cotización, con motivo y sin cobro (RN-19; E4).
+  <b>Cotización</b>
+  10. Inicial > $15,000 MXN requiere al Gerente; las adicionales no (RN-04; E1). No se presenta sin aprobación (RN-06).
+  11. El rechazo del Gerente exige observaciones; la ajustada no regresa a revisión (RN-05). Adicionales = v.2+ (RN-24).
+  12. Sin respuesta en 48 h desde la presentación o el último recontacto → alerta (RN-12; E8).
+  <b>Cliente</b>
+  13. Flotilla siempre tiene empresa y Responsable; solo él autoriza, el conductor no (RN-07; E2).
+end note
+
+note as NEventos
+  <b>Domain Events</b>
+  <i>Orden de Servicio:</i>
+  OrdenRecibida · TecnicoAsignadoParaDiagnostico
+  DiagnosticoRegistrado · OrdenAutorizada
+  TrabajosAsignados · TrabajoIniciado
+  FallaAdicionalReportada · SolicitudDeCompraCreada
+  RefaccionDisponible · ClienteAvisadoDelRetraso
+  VehiculoRetirado · OrdenReactivada
+  OrdenListaParaEntrega · PagoRegistrado
+  CargoACreditoRegistrado · VehiculoEntregado
+  OrdenCancelada
+  <i>Cotización:</i>
+  CotizacionGenerada · AprobacionGerencialRequerida
+  CotizacionAprobadaPorGerente · CotizacionRechazadaPorGerente
+  CotizacionAjustada · CotizacionPresentada
+  RecontactoRegistrado · CotizacionAutorizada
+  CotizacionRechazadaPorCliente
+end note
+NReglas -[hidden]down- NEventos
+
+legend bottom
+  <b>Cómo leer:</b> cada recuadro grande es un <b>Aggregate</b>; su objeto naranja es la <b>raíz</b> (todo cambio pasa por ella).
+  Azul = <b>Entidad</b> · Verde = <b>Value Object</b> · Morado = <b>Servicio del dominio</b> · Amarillo = <b>Specification</b> (E1–E8, combinan AND / OR / NOT).
+  Línea con rombo = la parte vive dentro del Aggregate · Flecha simple = referencia a otro Aggregate <b>solo por identificador</b>.
+  Uso: la Cotización consulta E1 al generarse; el Verificador usa E2 al registrar la decisión; la Orden usa E3–E6 como guardas
+  de su máquina de estados; la revisión de plazos usa E7 y E8 con el Calendario hábil.
+endlegend
+@enduml

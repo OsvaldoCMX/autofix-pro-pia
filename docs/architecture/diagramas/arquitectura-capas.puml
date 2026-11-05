@@ -1,0 +1,93 @@
+@startuml arquitectura-capas
+!include _estilo.iuml
+skinparam classAttributeIconSize 0
+skinparam nodesep 25
+skinparam ranksep 50
+skinparam defaultFontSize 12
+show circle
+title Arquitectura por capas — dependencias entre src/api, src/application, src/domain y src/infrastructure
+
+package "src/api  ·  FastAPI (HTTP ↔ Command / Query)" as API #FDEDEC {
+  class "main.py\n(app, OpenAPI /docs)" as Main
+  class "rutas/*\n(14 routers)" as Rutas
+  class "esquemas/*\n(Pydantic)" as Esq
+  class "seguridad.py\nrequiere_rol(*roles)" as Seg
+  class "errores.py\nErrorDeDominio → 404/409/422/403" as Err
+  class "dependencias.py\nComposition Root" as Dep
+}
+
+package "src/application  ·  Service Layer" as APP #EAF2FB {
+  class "12 servicios\nServicioDeRecepcion … ServicioDeRevisionDePlazos" as Svc
+  class "comandos.py · resultados.py" as Cmd
+  class "consultas/\n11 consultas + vistas" as Qry
+  interface LectorDeOrdenes
+  abstract class UnidadDeTrabajo {
+    +ordenes · cotizaciones · clientes
+    +vehiculos · empleados · alertas
+    +confirmar() · eventos_confirmados()
+  }
+  interface Reloj
+  interface PublicadorDeEventos
+  interface GeneradorDeDocumentos
+  class "manejadores/alertas.py\n(reaccionan a Domain Events)" as Man
+}
+
+package "src/domain  ·  reglas del negocio (sin frameworks)" as DOM #FDF2E9 {
+  class "Aggregates\nOrdenDeServicio · Cotizacion · Cliente\nVehiculo · Empleado" as Agg <<Aggregate Root>>
+  class "Specifications E1–E8" as Spec <<Specification>>
+  class "Máquinas de estados (4)" as SM <<State Machine>>
+  class "Domain Events" as Ev <<Domain Event>>
+  interface "Repositorio*" as Repo
+}
+
+package "src/infrastructure  ·  adaptadores reemplazables" as INF #EEF7EE {
+  class "base_de_datos/\nUnidadDeTrabajoSqlAlchemy\nRepositorios* · LectorSqlAlchemy\n(PostgreSQL / SQLite)" as BD
+  class "memoria/\nUoW y repositorios en memoria\n(pruebas unitarias)" as Mem
+  class "eventos/PublicadorEnProceso" as Pub
+  class "documentos/GeneradorPdf (fpdf2)" as Pdf
+  class "reloj.py · RelojDelSistema (UTC)" as Rel
+  class "config.py · Configuracion (variables de entorno)" as Cfg
+}
+
+Rutas --> Svc : Command
+Rutas --> Qry : Query
+Rutas ..> Esq
+Rutas ..> Seg
+Main ..> Rutas
+Main ..> Err
+Dep ..> BD : crea
+Dep ..> Pub
+Dep ..> Pdf
+Dep ..> Rel
+Dep ..> Cfg
+Rutas ..> Dep : Depends()
+
+Svc --> UnidadDeTrabajo
+Svc --> Reloj
+Svc --> PublicadorDeEventos
+Svc --> GeneradorDeDocumentos
+Svc --> Agg : pide la operación
+Qry --> LectorDeOrdenes
+Man ..> Ev : escucha
+UnidadDeTrabajo --> Repo
+Agg ..> Spec
+Agg ..> SM
+Agg ..> Ev : registra
+
+BD ..|> UnidadDeTrabajo
+BD ..|> Repo
+BD ..|> LectorDeOrdenes
+Mem ..|> UnidadDeTrabajo
+Mem ..|> Repo
+Pub ..|> PublicadorDeEventos
+Pdf ..|> GeneradorDeDocumentos
+Rel ..|> Reloj
+
+note as N
+  <b>Regla de dependencias</b>
+  api → application → domain · infrastructure → application / domain.
+  El dominio no importa FastAPI, Pydantic ni SQLAlchemy.
+  Solo dependencias.py decide qué implementación se usa;
+  las pruebas la sustituyen con dependency_overrides.
+end note
+@enduml

@@ -1,0 +1,21 @@
+﻿caso_id,operacion_id,accion,flujo_autofix,estado_final_esperado,evento_o_excepcion,http
+AUT-S001,AUT-O001,completar,Asignar técnico → diagnóstico → generar cotización → presentar → registrar decisión → asignar y completar trabajos → pago → entrega,Cerrada,VehiculoEntregado (cadena completa de eventos),200
+AUT-S002,AUT-O002,cancelar,Cancelar con motivo desde «Recibida» (E4),Cancelada,OrdenCancelada,200
+AUT-S003,AUT-O003,repetir_aprobacion,Asignar técnico → diagnóstico → generar cotización → presentar → registrar decisión dos veces,Autorizada,OperacionDeCotizacionNoPermitida (la decisión ya está registrada),409
+AUT-S004,AUT-O004,saltar_estado,Intentar entregar una orden «Recibida» (saltar a «Cerrada»),Recibida,EntregaNoPermitida (E3 no se cumple),409
+AUT-S005,AUT-O005,aprobar,Asignar técnico → diagnóstico → generar cotización,En Diagnóstico,ValorInvalido (servicio AUT-P011 inhabilitado),422
+AUT-S006,AUT-O006,completar,Asignar técnico → diagnóstico → generar cotización → presentar → registrar decisión → asignar y completar trabajos → pago → entrega,Cerrada,VehiculoEntregado (cadena completa de eventos),200
+AUT-S007,AUT-O007,cancelar,Cancelar con motivo desde «Recibida» (E4),Cancelada,OrdenCancelada,200
+AUT-S008,AUT-O008,repetir_aprobacion,Asignar técnico → diagnóstico → generar cotización → presentar → registrar decisión dos veces,Cotizada,OperacionDeCotizacionNoPermitida (la decisión ya está registrada),409
+AUT-S009,AUT-O009,saltar_estado,Intentar entregar una orden «Recibida» (saltar a «Cerrada»),Recibida,EntregaNoPermitida (E3 no se cumple),409
+AUT-S010,AUT-O010,aprobar,Asignar técnico → diagnóstico → generar cotización → presentar → registrar decisión (autoriza todo),Autorizada,CotizacionAutorizada + OrdenAutorizada,200
+AUT-S011,AUT-O011,completar,Asignar técnico → diagnóstico → generar cotización → presentar → registrar decisión → asignar y completar trabajos → pago → entrega,Cerrada,VehiculoEntregado (cadena completa de eventos),200
+AUT-S012,AUT-O012,cancelar,Cancelar con motivo desde «Recibida» (E4),Cancelada,OrdenCancelada,200
+AUT-S013,AUT-O013,repetir_aprobacion,Asignar técnico → diagnóstico → generar cotización,En Diagnóstico,CotizacionSinTrabajos (sin detalle),422
+AUT-S014,AUT-O014,saltar_estado,Intentar entregar una orden «Recibida» (saltar a «Cerrada»),Recibida,EntregaNoPermitida (E3 no se cumple),409
+AUT-S015,AUT-O015,aprobar,Asignar técnico → diagnóstico → generar cotización,En Diagnóstico,ValorInvalido (servicio AUT-P011 inhabilitado),422
+AUT-S016,AUT-O016,completar,Asignar técnico → diagnóstico → generar cotización → presentar → registrar decisión (rechazo total) → asignar trabajos,Cotizada,TrabajoNoAutorizado (no hay trabajos autorizados),409
+AUT-S017,AUT-O017,cancelar,Cancelar con motivo desde «Recibida» (E4),Cancelada,OrdenCancelada,200
+AUT-S018,AUT-O018,repetir_aprobacion,Asignar técnico → diagnóstico → generar cotización → presentar → registrar decisión dos veces,Autorizada,OperacionDeCotizacionNoPermitida (la decisión ya está registrada),409
+AUT-S019,AUT-O019,saltar_estado,Intentar entregar una orden «Recibida» (saltar a «Cerrada»),Recibida,EntregaNoPermitida (E3 no se cumple),409
+AUT-S020,AUT-O020,aprobar,Asignar técnico → diagnóstico → generar cotización,En Diagnóstico,ValorInvalido (servicio AUT-P011 inhabilitado),422

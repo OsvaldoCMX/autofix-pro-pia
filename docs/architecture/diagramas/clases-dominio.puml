@@ -1,0 +1,179 @@
+@startuml clases-dominio
+!include _estilo.iuml
+skinparam classAttributeIconSize 0
+skinparam nodesep 30
+skinparam ranksep 55
+skinparam defaultFontSize 12
+show circle
+title Diagrama de clases — capa de dominio (src/domain) · PIA v3.0
+
+package "compartido" as PC #F8F9F9 {
+  abstract class "Especificacion<T>" as Esp {
+    +es_satisfecha_por(candidato: T) : bool
+    +y(otra) / & : Especificacion
+    +o(otra) / | : Especificacion
+    +no() / ~ : Especificacion
+  }
+  class "Y<T>" as EY
+  class "O<T>" as EO
+  class "No<T>" as EN
+  class "MaquinaDeEstados<E>" as MDE <<State Machine>> {
+    -tabla : dict[E, set[E]]
+    -finales : set[E]
+    +validar(actual: E, nuevo: E)
+    +permite(actual: E, nuevo: E) : bool
+    +es_final(estado: E) : bool
+  }
+  abstract class RaizDeAgregado {
+    -eventos : list[EventoDeDominio]
+    #registrar(evento)
+    +extraer_eventos() : list
+  }
+  abstract class EventoDeDominio <<Domain Event>> {
+    +ocurrido_en : datetime
+  }
+  class Dinero <<Value Object>>
+  class NumeroOrden <<Value Object>>
+  class Placas <<Value Object>>
+  class VIN <<Value Object>>
+  class CalendarioHabil <<Domain Service>> {
+    +dias_habiles_entre(inicio, fin) : int
+  }
+  class ErrorDeDominio
+  EY --|> Esp
+  EO --|> Esp
+  EN --|> Esp
+}
+
+package "ordenes" as PO #EEF5FF {
+  class OrdenDeServicio <<Aggregate Root>> {
+    +numero : NumeroOrden
+    +estado : EstadoOrden
+    +registrar(...) : OrdenDeServicio
+    +asignar_tecnico_para_diagnostico(tecnico)
+    +registrar_diagnostico(diagnostico)
+    +reportar_falla_adicional(descripcion)
+    +marcar_cotizada()
+    +registrar_cotizacion_adicional_pendiente()
+    +aplicar_decision(decision)
+    +asignar_trabajos(ids, tecnico)
+    +iniciar_trabajo(id, tecnico)
+    +completar_trabajo(id, tecnico)
+    +crear_solicitud_de_compra(id_trabajo, refaccion, cantidad)
+    +registrar_llegada_de_refaccion(id_solicitud)
+    +registrar_aviso_al_cliente(id_solicitud)
+    +registrar_salida() / confirmar_firma_de_nota()
+    +reactivar()
+    +registrar_pago(pago)
+    +registrar_cargo_a_credito()
+    +entregar() / entregar_sin_reparacion()
+    +cancelar(motivo, asesor)
+  }
+  class Trabajo <<Entity>> {
+    +estado : EstadoTrabajo
+    +tecnico
+    +iniciar() / completar()
+  }
+  class SolicitudDeCompra <<Entity>> {
+    +estado : EstadoSolicitud
+    +marcar_disponible()
+  }
+  class FallaAdicional <<Entity>>
+  class "Diagnostico · Pago · CargoACredito\nNotaDeResponsabilidad · Cancelacion\nEstadoDeRecepcion" as VOO <<Value Object>>
+  class "MAQUINA_DE_ORDEN\n(13 estados)" as MO <<State Machine>>
+  class "MAQUINA_DE_TRABAJO (4)\nMAQUINA_DE_SOLICITUD (2)" as MT <<State Machine>>
+  class "PuedeEntregarse (E3)\nPuedeCancelarse (E4)\nPuedeIniciarTrabajo (E5)\nPuedeSolicitarRefaccion (E6)\nRequiereAlertaDeRefaccion (E7)" as EspO <<Specification>>
+  interface RepositorioDeOrdenes {
+    +obtener(numero) · agregar() · guardar()
+    +siguiente_numero()
+  }
+  class "OrdenRecibida … OrdenCancelada\n(17 eventos)" as EvO <<Domain Event>>
+}
+
+package "cotizaciones" as PQ #FFF8F0 {
+  class Cotizacion <<Aggregate Root>> {
+    +tipo : TipoCotizacion
+    +version : VersionCotizacion
+    +estado : EstadoCotizacion
+    +total : Dinero
+    +generar(..., politica: Especificacion) : Cotizacion
+    +aprobar_por_gerente()
+    +rechazar_por_gerente(observaciones)
+    +ajustar(lineas)
+    +marcar_presentada()
+    +registrar_recontacto()
+    +registrar_decision(lineas, autorizante) : DecisionDelCliente
+  }
+  class LineaDeCotizacion <<Entity>>
+  class "RefaccionCotizada · DecisionDelCliente\nAutorizante · Recontacto" as VOC <<Value Object>>
+  class "MAQUINA_DE_COTIZACION\n(6 estados)" as MC <<State Machine>>
+  class "RequiereAprobacionGerencial (E1)\nRequiereRecontacto (E8)" as EspC <<Specification>>
+  interface RepositorioDeCotizaciones {
+    +obtener(id) · agregar() · guardar()
+    +de_la_orden(numero) · siguiente_version(numero)
+  }
+  class "CotizacionGenerada … CotizacionRechazadaPorCliente\n(9 eventos)" as EvC <<Domain Event>>
+}
+
+package "clientes · vehiculos · empleados · servicios" as PCV #F5FFF5 {
+  class Cliente <<Aggregate Root>> {
+    +tipo : TipoCliente
+    +responsable : ResponsableDeFlotilla
+  }
+  class Vehiculo <<Aggregate Root>> {
+    +placas : Placas
+    +vin : VIN
+  }
+  class Empleado <<Aggregate Root>> {
+    +rol : RolDeEmpleado
+  }
+  class "AutorizanteValido (E2)" as E2 <<Specification>>
+  class VerificadorDeAutorizante <<Domain Service>> {
+    +verificar(cliente, autorizante)
+  }
+  interface "RepositorioDeClientes\nRepositorioDeVehiculos\nRepositorioDeEmpleados" as RCl
+}
+
+OrdenDeServicio --|> RaizDeAgregado
+Cotizacion --|> RaizDeAgregado
+OrdenDeServicio *-- "0..*" Trabajo
+OrdenDeServicio *-- "0..*" SolicitudDeCompra
+OrdenDeServicio *-- "0..*" FallaAdicional
+OrdenDeServicio *-- VOO
+Cotizacion *-- "1..*" LineaDeCotizacion
+Cotizacion *-- VOC
+
+OrdenDeServicio ..> MO : valida transiciones
+Trabajo ..> MT
+SolicitudDeCompra ..> MT
+Cotizacion ..> MC
+MO --|> MDE
+MT --|> MDE
+MC --|> MDE
+
+OrdenDeServicio ..> EspO : guardas
+Cotizacion ..> EspC : estado inicial / recontacto
+EspO --|> Esp
+EspC --|> Esp
+E2 --|> Esp
+VerificadorDeAutorizante ..> E2
+EspO ..> CalendarioHabil : E7
+
+OrdenDeServicio ..> EvO : registra
+Cotizacion ..> EvC : registra
+EvO --|> EventoDeDominio
+EvC --|> EventoDeDominio
+
+RepositorioDeOrdenes ..> OrdenDeServicio
+RepositorioDeCotizaciones ..> Cotizacion
+RCl ..> Cliente
+RCl ..> Vehiculo
+RCl ..> Empleado
+
+note bottom of Esp
+  Las Specifications son puras: no modifican nada.
+  Si no se cumplen, el Aggregate lanza el error del
+  negocio (subclase de ErrorDeDominio) con un mensaje
+  para el usuario. Composición en modelo-de-dominio.md §4.
+end note
+@enduml

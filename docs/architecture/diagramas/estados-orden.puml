@@ -1,0 +1,68 @@
+@startuml estados-orden
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam shadowing false
+skinparam dpi 150
+skinparam ArrowColor #34495E
+skinparam ArrowFontSize 11
+skinparam state {
+  BackgroundColor #EEF5FF
+  BorderColor #2E86C1
+  BackgroundColor<<final>> #E9F7EF
+  BorderColor<<final>> #229954
+  BackgroundColor<<nuevo>> #FDEDEC
+  BorderColor<<nuevo>> #C0392B
+}
+title Máquina de estados — Orden de Servicio (13 estados) · PIA v3.0\nGuardas = Specifications (E3–E6) · cualquier otra transición → 409 TransicionDeEstadoNoPermitida
+
+state "Recibida" as REC
+state "En Diagnóstico" as DIA
+state "Cotizada" as COT
+state "Autorizada" as AUT
+state "En Reparación" as REP
+state "En Espera de Refacción" as ESP
+state "Pausada por Retiro\nde Vehículo" as PAU
+state "Lista para Entrega" as LIS
+state "Pagada" as PAG
+state "Por Cobrar (Crédito)" as CRE
+state "Cerrada" as CER <<final>>
+state "Cerrada sin Reparación" as CSR <<final>>
+state "Cancelada" as CAN <<nuevo>>
+
+[*] --> REC : registrar\n[CA-001] / OrdenRecibida
+REC --> DIA : asignar técnico\n[CA-035]
+REC --> CAN : cancelar con motivo\n[E4 · CA-044] / OrdenCancelada
+DIA --> CAN : cancelar con motivo\n[E4 · CA-044]
+DIA --> COT : generar cotización\n[diagnóstico registrado · CA-005]
+COT --> AUT : decisión total o parcial\n[E2 · CA-010] / OrdenAutorizada
+COT --> CSR : entregar sin reparación\n[E3: rechazo total · CA-043]
+AUT --> REP : iniciar trabajo\n[E5 · CA-014]
+AUT --> ESP : solicitud de compra\n[E6 · CA-019]
+REP --> ESP : solicitud de compra\n[E6 · CA-019]
+REP --> LIS : último trabajo completado\nsin adicional pendiente [CA-015, CA-018]
+ESP --> AUT : llegó la última refacción\n(ningún trabajo iniciado) [CA-022]
+ESP --> REP : llegó la última refacción\n(algún trabajo iniciado) [CA-022]
+ESP --> PAU : nota firmada\n[CA-024] / VehiculoRetirado
+PAU --> ESP : reactivar (aún faltan piezas)\n[CA-025]
+PAU --> AUT : reactivar (sin pendientes,\nningún trabajo iniciado) [CA-025]
+PAU --> REP : reactivar (sin pendientes,\nalgún trabajo iniciado) [CA-025]
+LIS --> PAG : pago de contado\n(particular) [CA-026]
+LIS --> CRE : cargo a crédito\n(flotilla) [CA-039]
+PAG --> CER : entregar\n[E3 · CA-041]
+CRE --> CER : entregar · vence = entrega + 15 días\n[E3 · CA-041]
+CER --> [*]
+CSR --> [*]
+CAN --> [*]
+
+note right of CAN
+  Nuevo en v3.0 (H-PIA-01).
+  Solo sin cotización;
+  con cotización → 409
+  CancelacionNoPermitida (CA-045).
+end note
+note left of PAU
+  E5: ningún trabajo se inicia
+  mientras el vehículo está
+  fuera del taller (CA-046).
+end note
+@enduml

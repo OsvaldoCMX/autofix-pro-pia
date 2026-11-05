@@ -1,0 +1,121 @@
+﻿caso_id,operacion_id,tipo_prueba,referencia_profesor,esperado_autofix,regla_autofix,diferencia,explicacion
+AUT-T001,AUT-O001,validar_operacion,FALSO,VERDADERO,TieneDetalle AND ServiciosHabilitados AND Autorizado,D-01: AutoFix no maneja clientes inactivos,Detalle válido y autorizado: se puede reparar
+AUT-B001,AUT-O001,evaluar_beneficio,FALSO,FALSO,"RequiereAprobacionGerencial = EsCotizacionInicial AND Total > $15,000",D-02: AutoFix no tiene clientes preferentes ni promociones,"Total $7,909.00 ≤ $15,000: no requiere Gerente"
+AUT-T002,AUT-O002,validar_operacion,FALSO,VERDADERO,TieneDetalle AND ServiciosHabilitados AND Autorizado,D-01: AutoFix no maneja clientes inactivos,Detalle válido y autorizado: se puede reparar
+AUT-B002,AUT-O002,evaluar_beneficio,FALSO,FALSO,"RequiereAprobacionGerencial = EsCotizacionInicial AND Total > $15,000",D-02: AutoFix no tiene clientes preferentes ni promociones,"Total $6,915.00 ≤ $15,000: no requiere Gerente"
+AUT-T003,AUT-O003,validar_operacion,FALSO,VERDADERO,TieneDetalle AND ServiciosHabilitados AND Autorizado,D-01: AutoFix no maneja clientes inactivos,Detalle válido y autorizado: se puede reparar
+AUT-B003,AUT-O003,evaluar_beneficio,FALSO,FALSO,"RequiereAprobacionGerencial = EsCotizacionInicial AND Total > $15,000",D-02: AutoFix no tiene clientes preferentes ni promociones,"Total $1,353.00 ≤ $15,000: no requiere Gerente"
+AUT-T004,AUT-O004,validar_operacion,FALSO,VERDADERO,TieneDetalle AND ServiciosHabilitados AND Autorizado,D-01: AutoFix no maneja clientes inactivos,Detalle válido y autorizado: se puede reparar
+AUT-B004,AUT-O004,evaluar_beneficio,VERDADERO,FALSO,"RequiereAprobacionGerencial = EsCotizacionInicial AND Total > $15,000",D-02: AutoFix no tiene clientes preferentes ni promociones,"Total $4,635.00 ≤ $15,000: no requiere Gerente"
+AUT-T005,AUT-O005,validar_operacion,VERDADERO,FALSO,TieneDetalle AND ServiciosHabilitados AND Autorizado,D-05: AutoFix rechaza servicios inhabilitados,Servicio inhabilitado AUT-P011: dato inválido (422 ValorInvalido)
+AUT-B005,AUT-O005,evaluar_beneficio,FALSO,FALSO,"RequiereAprobacionGerencial = EsCotizacionInicial AND Total > $15,000",D-02: AutoFix no tiene clientes preferentes ni promociones,"Total $5,002.00 ≤ $15,000: no requiere Gerente"
+AUT-T006,AUT-O006,validar_operacion,VERDADERO,VERDADERO,TieneDetalle AND ServiciosHabilitados AND Autorizado,,Detalle válido y autorizado: se puede reparar
+AUT-B006,AUT-O006,evaluar_beneficio,FALSO,FALSO,"RequiereAprobacionGerencial = EsCotizacionInicial AND Total > $15,000",D-02: AutoFix no tiene clientes preferentes ni promociones,"Total $2,288.00 ≤ $15,000: no requiere Gerente"
+AUT-T007,AUT-O007,validar_operacion,VERDADERO,VERDADERO,TieneDetalle AND ServiciosHabilitados AND Autorizado,,Detalle válido y autorizado: se puede reparar
+AUT-B007,AUT-O007,evaluar_beneficio,FALSO,FALSO,"RequiereAprobacionGerencial = EsCotizacionInicial AND Total > $15,000",D-02: AutoFix no tiene clientes preferentes ni promociones,"Total $3,065.00 ≤ $15,000: no requiere Gerente"
+AUT-T008,AUT-O008,validar_operacion,FALSO,FALSO,TieneDetalle AND ServiciosHabilitados AND Autorizado,,autorizado=0: rechazo total (CA-012); no se puede reparar
+AUT-B008,AUT-O008,evaluar_beneficio,FALSO,FALSO,"RequiereAprobacionGerencial = EsCotizacionInicial AND Total > $15,000",D-02: AutoFix no tiene clientes preferentes ni promociones,"Total $12,887.00 ≤ $15,000: no requiere Gerente"
+AUT-T009,AUT-O009,validar_operacion,VERDADERO,VERDADERO,TieneDetalle AND ServiciosHabilitados AND Autorizado,,Detalle válido y autorizado: se puede reparar
+AUT-B009,AUT-O009,evaluar_beneficio,FALSO,FALSO,"RequiereAprobacionGerencial = EsCotizacionInicial AND Total > $15,000",D-02: AutoFix no tiene clientes preferentes ni promociones,"Total $3,633.00 ≤ $15,000: no requiere Gerente"
+AUT-T010,AUT-O010,validar_operacion,VERDADERO,VERDADERO,TieneDetalle AND ServiciosHabilitados AND Autorizado,,Detalle válido y autorizado: se puede reparar
+AUT-B010,AUT-O010,evaluar_beneficio,FALSO,FALSO,"RequiereAprobacionGerencial = EsCotizacionInicial AND Total > $15,000",D-02: AutoFix no tiene clientes preferentes ni promociones,"Total $6,055.00 ≤ $15,000: no requiere Gerente"
+AUT-T011,AUT-O011,validar_operacion,VERDADERO,VERDADERO,TieneDetalle AND ServiciosHabilitados AND Autorizado,,Detalle válido y autorizado: se puede reparar
+AUT-B011,AUT-O011,evaluar_beneficio,FALSO,FALSO,"RequiereAprobacionGerencial = EsCotizacionInicial AND Total > $15,000",D-02: AutoFix no tiene clientes preferentes ni promociones,"Total $5,562.00 ≤ $15,000: no requiere Gerente"
+AUT-T012,AUT-O012,validar_operacion,VERDADERO,VERDADERO,TieneDetalle AND ServiciosHabilitados AND Autorizado,,Detalle válido y autorizado: se puede reparar
+AUT-B012,AUT-O012,evaluar_beneficio,FALSO,FALSO,"RequiereAprobacionGerencial = EsCotizacionInicial AND Total > $15,000",D-02: AutoFix no tiene clientes preferentes ni promociones,"Total $860.00 ≤ $15,000: no requiere Gerente"
+AUT-T013,AUT-O013,validar_operacion,FALSO,FALSO,TieneDetalle AND ServiciosHabilitados AND Autorizado,,Sin detalle: la cotización no se genera (422 CotizacionSinTrabajos)
+AUT-B013,AUT-O013,evaluar_beneficio,FALSO,FALSO,"RequiereAprobacionGerencial = EsCotizacionInicial AND Total > $15,000",D-02: AutoFix no tiene clientes preferentes ni promociones,"Total $0.00 ≤ $15,000: no requiere Gerente"
+AUT-T014,AUT-O014,validar_operacion,VERDADERO,VERDADERO,TieneDetalle AND ServiciosHabilitados AND Autorizado,,Detalle válido y autorizado: se puede reparar
+AUT-B014,AUT-O014,evaluar_beneficio,VERDADERO,FALSO,"RequiereAprobacionGerencial = EsCotizacionInicial AND Total > $15,000",D-02: AutoFix no tiene clientes preferentes ni promociones,"Total $7,767.00 ≤ $15,000: no requiere Gerente"
+AUT-T015,AUT-O015,validar_operacion,VERDADERO,FALSO,TieneDetalle AND ServiciosHabilitados AND Autorizado,D-05: AutoFix rechaza servicios inhabilitados,Servicio inhabilitado AUT-P011: dato inválido (422 ValorInvalido)
+AUT-B015,AUT-O015,evaluar_beneficio,FALSO,FALSO,"RequiereAprobacionGerencial = EsCotizacionInicial AND Total > $15,000",D-02: AutoFix no tiene clientes preferentes ni promociones,"Total $1,069.00 ≤ $15,000: no requiere Gerente"
+AUT-T016,AUT-O016,validar_operacion,FALSO,FALSO,TieneDetalle AND ServiciosHabilitados AND Autorizado,,autorizado=0: rechazo total (CA-012); no se puede reparar
+AUT-B016,AUT-O016,evaluar_beneficio,FALSO,FALSO,"RequiereAprobacionGerencial = EsCotizacionInicial AND Total > $15,000",D-02: AutoFix no tiene clientes preferentes ni promociones,"Total $7,475.00 ≤ $15,000: no requiere Gerente"
+AUT-T017,AUT-O017,validar_operacion,VERDADERO,VERDADERO,TieneDetalle AND ServiciosHabilitados AND Autorizado,,Detalle válido y autorizado: se puede reparar
+AUT-B017,AUT-O017,evaluar_beneficio,FALSO,FALSO,"RequiereAprobacionGerencial = EsCotizacionInicial AND Total > $15,000",D-02: AutoFix no tiene clientes preferentes ni promociones,"Total $6,990.00 ≤ $15,000: no requiere Gerente"
+AUT-T018,AUT-O018,validar_operacion,VERDADERO,VERDADERO,TieneDetalle AND ServiciosHabilitados AND Autorizado,,Detalle válido y autorizado: se puede reparar
+AUT-B018,AUT-O018,evaluar_beneficio,FALSO,FALSO,"RequiereAprobacionGerencial = EsCotizacionInicial AND Total > $15,000",D-02: AutoFix no tiene clientes preferentes ni promociones,"Total $6,832.00 ≤ $15,000: no requiere Gerente"
+AUT-T019,AUT-O019,validar_operacion,VERDADERO,VERDADERO,TieneDetalle AND ServiciosHabilitados AND Autorizado,,Detalle válido y autorizado: se puede reparar
+AUT-B019,AUT-O019,evaluar_beneficio,VERDADERO,FALSO,"RequiereAprobacionGerencial = EsCotizacionInicial AND Total > $15,000",D-02: AutoFix no tiene clientes preferentes ni promociones,"Total $2,213.00 ≤ $15,000: no requiere Gerente"
+AUT-T020,AUT-O020,validar_operacion,VERDADERO,FALSO,TieneDetalle AND ServiciosHabilitados AND Autorizado,D-05: AutoFix rechaza servicios inhabilitados,Servicio inhabilitado AUT-P011: dato inválido (422 ValorInvalido)
+AUT-B020,AUT-O020,evaluar_beneficio,FALSO,FALSO,"RequiereAprobacionGerencial = EsCotizacionInicial AND Total > $15,000",D-02: AutoFix no tiene clientes preferentes ni promociones,"Total $10,331.00 ≤ $15,000: no requiere Gerente"
+AUT-T021,AUT-O021,validar_operacion,VERDADERO,VERDADERO,TieneDetalle AND ServiciosHabilitados AND Autorizado,,Detalle válido y autorizado: se puede reparar
+AUT-B021,AUT-O021,evaluar_beneficio,FALSO,FALSO,"RequiereAprobacionGerencial = EsCotizacionInicial AND Total > $15,000",D-02: AutoFix no tiene clientes preferentes ni promociones,"Total $2,781.00 ≤ $15,000: no requiere Gerente"
+AUT-T022,AUT-O022,validar_operacion,VERDADERO,VERDADERO,TieneDetalle AND ServiciosHabilitados AND Autorizado,,Detalle válido y autorizado: se puede reparar
+AUT-B022,AUT-O022,evaluar_beneficio,FALSO,FALSO,"RequiereAprobacionGerencial = EsCotizacionInicial AND Total > $15,000",D-02: AutoFix no tiene clientes preferentes ni promociones,"Total $6,055.00 ≤ $15,000: no requiere Gerente"
+AUT-T023,AUT-O023,validar_operacion,VERDADERO,VERDADERO,TieneDetalle AND ServiciosHabilitados AND Autorizado,,Detalle válido y autorizado: se puede reparar
+AUT-B023,AUT-O023,evaluar_beneficio,FALSO,FALSO,"RequiereAprobacionGerencial = EsCotizacionInicial AND Total > $15,000",D-02: AutoFix no tiene clientes preferentes ni promociones,"Total $6,698.00 ≤ $15,000: no requiere Gerente"
+AUT-T024,AUT-O024,validar_operacion,FALSO,FALSO,TieneDetalle AND ServiciosHabilitados AND Autorizado,,autorizado=0: rechazo total (CA-012); no se puede reparar
+AUT-B024,AUT-O024,evaluar_beneficio,VERDADERO,FALSO,"RequiereAprobacionGerencial = EsCotizacionInicial AND Total > $15,000",D-02: AutoFix no tiene clientes preferentes ni promociones,"Total $3,132.00 ≤ $15,000: no requiere Gerente"
+AUT-T025,AUT-O025,validar_operacion,VERDADERO,VERDADERO,TieneDetalle AND ServiciosHabilitados AND Autorizado,,Detalle válido y autorizado: se puede reparar
+AUT-B025,AUT-O025,evaluar_beneficio,FALSO,FALSO,"RequiereAprobacionGerencial = EsCotizacionInicial AND Total > $15,000",D-02: AutoFix no tiene clientes preferentes ni promociones,"Total $3,933.00 ≤ $15,000: no requiere Gerente"
+AUT-T026,AUT-O026,validar_operacion,VERDADERO,VERDADERO,TieneDetalle AND ServiciosHabilitados AND Autorizado,,Detalle válido y autorizado: se puede reparar
+AUT-B026,AUT-O026,evaluar_beneficio,FALSO,FALSO,"RequiereAprobacionGerencial = EsCotizacionInicial AND Total > $15,000",D-02: AutoFix no tiene clientes preferentes ni promociones,"Total $5,779.00 ≤ $15,000: no requiere Gerente"
+AUT-T027,AUT-O027,validar_operacion,VERDADERO,VERDADERO,TieneDetalle AND ServiciosHabilitados AND Autorizado,,Detalle válido y autorizado: se puede reparar
+AUT-B027,AUT-O027,evaluar_beneficio,FALSO,FALSO,"RequiereAprobacionGerencial = EsCotizacionInicial AND Total > $15,000",D-02: AutoFix no tiene clientes preferentes ni promociones,"Total $785.00 ≤ $15,000: no requiere Gerente"
+AUT-T028,AUT-O028,validar_operacion,VERDADERO,VERDADERO,TieneDetalle AND ServiciosHabilitados AND Autorizado,,Detalle válido y autorizado: se puede reparar
+AUT-B028,AUT-O028,evaluar_beneficio,FALSO,FALSO,"RequiereAprobacionGerencial = EsCotizacionInicial AND Total > $15,000",D-02: AutoFix no tiene clientes preferentes ni promociones,"Total $6,055.00 ≤ $15,000: no requiere Gerente"
+AUT-T029,AUT-O029,validar_operacion,VERDADERO,VERDADERO,TieneDetalle AND ServiciosHabilitados AND Autorizado,,Detalle válido y autorizado: se puede reparar
+AUT-B029,AUT-O029,evaluar_beneficio,VERDADERO,FALSO,"RequiereAprobacionGerencial = EsCotizacionInicial AND Total > $15,000",D-02: AutoFix no tiene clientes preferentes ni promociones,"Total $10,398.00 ≤ $15,000: no requiere Gerente"
+AUT-T030,AUT-O030,validar_operacion,VERDADERO,VERDADERO,TieneDetalle AND ServiciosHabilitados AND Autorizado,,Detalle válido y autorizado: se puede reparar
+AUT-B030,AUT-O030,evaluar_beneficio,FALSO,FALSO,"RequiereAprobacionGerencial = EsCotizacionInicial AND Total > $15,000",D-02: AutoFix no tiene clientes preferentes ni promociones,"Total $5,696.00 ≤ $15,000: no requiere Gerente"
+AUT-T031,AUT-O031,validar_operacion,VERDADERO,VERDADERO,TieneDetalle AND ServiciosHabilitados AND Autorizado,,Detalle válido y autorizado: se puede reparar
+AUT-B031,AUT-O031,evaluar_beneficio,FALSO,FALSO,"RequiereAprobacionGerencial = EsCotizacionInicial AND Total > $15,000",D-02: AutoFix no tiene clientes preferentes ni promociones,"Total $2,781.00 ≤ $15,000: no requiere Gerente"
+AUT-T032,AUT-O032,validar_operacion,FALSO,FALSO,TieneDetalle AND ServiciosHabilitados AND Autorizado,,autorizado=0: rechazo total (CA-012); no se puede reparar
+AUT-B032,AUT-O032,evaluar_beneficio,FALSO,FALSO,"RequiereAprobacionGerencial = EsCotizacionInicial AND Total > $15,000",D-02: AutoFix no tiene clientes preferentes ni promociones,"Total $7,775.00 ≤ $15,000: no requiere Gerente"
+AUT-T033,AUT-O033,validar_operacion,VERDADERO,VERDADERO,TieneDetalle AND ServiciosHabilitados AND Autorizado,,Detalle válido y autorizado: se puede reparar
+AUT-B033,AUT-O033,evaluar_beneficio,FALSO,FALSO,"RequiereAprobacionGerencial = EsCotizacionInicial AND Total > $15,000",D-02: AutoFix no tiene clientes preferentes ni promociones,"Total $1,929.00 ≤ $15,000: no requiere Gerente"
+AUT-T034,AUT-O034,validar_operacion,VERDADERO,VERDADERO,TieneDetalle AND ServiciosHabilitados AND Autorizado,,Detalle válido y autorizado: se puede reparar
+AUT-B034,AUT-O034,evaluar_beneficio,VERDADERO,FALSO,"RequiereAprobacionGerencial = EsCotizacionInicial AND Total > $15,000",D-02: AutoFix no tiene clientes preferentes ni promociones,"Total $4,635.00 ≤ $15,000: no requiere Gerente"
+AUT-T035,AUT-O035,validar_operacion,VERDADERO,FALSO,TieneDetalle AND ServiciosHabilitados AND Autorizado,D-05: AutoFix rechaza servicios inhabilitados,Servicio inhabilitado AUT-P011: dato inválido (422 ValorInvalido)
+AUT-B035,AUT-O035,evaluar_beneficio,FALSO,FALSO,"RequiereAprobacionGerencial = EsCotizacionInicial AND Total > $15,000",D-02: AutoFix no tiene clientes preferentes ni promociones,"Total $4,994.00 ≤ $15,000: no requiere Gerente"
+AUT-T036,AUT-O036,validar_operacion,VERDADERO,VERDADERO,TieneDetalle AND ServiciosHabilitados AND Autorizado,,Detalle válido y autorizado: se puede reparar
+AUT-B036,AUT-O036,evaluar_beneficio,FALSO,FALSO,"RequiereAprobacionGerencial = EsCotizacionInicial AND Total > $15,000",D-02: AutoFix no tiene clientes preferentes ni promociones,"Total $2,564.00 ≤ $15,000: no requiere Gerente"
+AUT-T037,AUT-O037,validar_operacion,VERDADERO,VERDADERO,TieneDetalle AND ServiciosHabilitados AND Autorizado,,Detalle válido y autorizado: se puede reparar
+AUT-B037,AUT-O037,evaluar_beneficio,FALSO,FALSO,"RequiereAprobacionGerencial = EsCotizacionInicial AND Total > $15,000",D-02: AutoFix no tiene clientes preferentes ni promociones,"Total $6,205.00 ≤ $15,000: no requiere Gerente"
+AUT-T038,AUT-O038,validar_operacion,VERDADERO,VERDADERO,TieneDetalle AND ServiciosHabilitados AND Autorizado,,Detalle válido y autorizado: se puede reparar
+AUT-B038,AUT-O038,evaluar_beneficio,FALSO,FALSO,"RequiereAprobacionGerencial = EsCotizacionInicial AND Total > $15,000",D-02: AutoFix no tiene clientes preferentes ni promociones,"Total $9,471.00 ≤ $15,000: no requiere Gerente"
+AUT-T039,AUT-O039,validar_operacion,FALSO,FALSO,TieneDetalle AND ServiciosHabilitados AND Autorizado,,Sin detalle: la cotización no se genera (422 CotizacionSinTrabajos)
+AUT-B039,AUT-O039,evaluar_beneficio,FALSO,FALSO,"RequiereAprobacionGerencial = EsCotizacionInicial AND Total > $15,000",D-02: AutoFix no tiene clientes preferentes ni promociones,"Total $0.00 ≤ $15,000: no requiere Gerente"
+AUT-T040,AUT-O040,validar_operacion,FALSO,FALSO,TieneDetalle AND ServiciosHabilitados AND Autorizado,,Servicio inhabilitado AUT-P011: dato inválido (422 ValorInvalido)
+AUT-B040,AUT-O040,evaluar_beneficio,FALSO,FALSO,"RequiereAprobacionGerencial = EsCotizacionInicial AND Total > $15,000",D-02: AutoFix no tiene clientes preferentes ni promociones,"Total $4,635.00 ≤ $15,000: no requiere Gerente"
+AUT-T041,AUT-O041,validar_operacion,FALSO,VERDADERO,TieneDetalle AND ServiciosHabilitados AND Autorizado,D-01: AutoFix no maneja clientes inactivos,Detalle válido y autorizado: se puede reparar
+AUT-B041,AUT-O041,evaluar_beneficio,FALSO,FALSO,"RequiereAprobacionGerencial = EsCotizacionInicial AND Total > $15,000",D-02: AutoFix no tiene clientes preferentes ni promociones,"Total $9,546.00 ≤ $15,000: no requiere Gerente"
+AUT-T042,AUT-O042,validar_operacion,FALSO,VERDADERO,TieneDetalle AND ServiciosHabilitados AND Autorizado,D-01: AutoFix no maneja clientes inactivos,Detalle válido y autorizado: se puede reparar
+AUT-B042,AUT-O042,evaluar_beneficio,FALSO,FALSO,"RequiereAprobacionGerencial = EsCotizacionInicial AND Total > $15,000",D-02: AutoFix no tiene clientes preferentes ni promociones,"Total $4,560.00 ≤ $15,000: no requiere Gerente"
+AUT-T043,AUT-O043,validar_operacion,FALSO,VERDADERO,TieneDetalle AND ServiciosHabilitados AND Autorizado,D-01: AutoFix no maneja clientes inactivos,Detalle válido y autorizado: se puede reparar
+AUT-B043,AUT-O043,evaluar_beneficio,FALSO,FALSO,"RequiereAprobacionGerencial = EsCotizacionInicial AND Total > $15,000",D-02: AutoFix no tiene clientes preferentes ni promociones,"Total $4,769.00 ≤ $15,000: no requiere Gerente"
+AUT-T044,AUT-O044,validar_operacion,FALSO,VERDADERO,TieneDetalle AND ServiciosHabilitados AND Autorizado,D-01: AutoFix no maneja clientes inactivos,Detalle válido y autorizado: se puede reparar
+AUT-B044,AUT-O044,evaluar_beneficio,VERDADERO,FALSO,"RequiereAprobacionGerencial = EsCotizacionInicial AND Total > $15,000",D-02: AutoFix no tiene clientes preferentes ni promociones,"Total $8,059.00 ≤ $15,000: no requiere Gerente"
+AUT-T045,AUT-O045,validar_operacion,VERDADERO,VERDADERO,TieneDetalle AND ServiciosHabilitados AND Autorizado,,Detalle válido y autorizado: se puede reparar
+AUT-B045,AUT-O045,evaluar_beneficio,FALSO,FALSO,"RequiereAprobacionGerencial = EsCotizacionInicial AND Total > $15,000",D-02: AutoFix no tiene clientes preferentes ni promociones,"Total $1,077.00 ≤ $15,000: no requiere Gerente"
+AUT-T046,AUT-O046,validar_operacion,VERDADERO,VERDADERO,TieneDetalle AND ServiciosHabilitados AND Autorizado,,Detalle válido y autorizado: se puede reparar
+AUT-B046,AUT-O046,evaluar_beneficio,FALSO,FALSO,"RequiereAprobacionGerencial = EsCotizacionInicial AND Total > $15,000",D-02: AutoFix no tiene clientes preferentes ni promociones,"Total $3,215.00 ≤ $15,000: no requiere Gerente"
+AUT-T047,AUT-O047,validar_operacion,VERDADERO,VERDADERO,TieneDetalle AND ServiciosHabilitados AND Autorizado,,Detalle válido y autorizado: se puede reparar
+AUT-B047,AUT-O047,evaluar_beneficio,FALSO,FALSO,"RequiereAprobacionGerencial = EsCotizacionInicial AND Total > $15,000",D-02: AutoFix no tiene clientes preferentes ni promociones,"Total $7,550.00 ≤ $15,000: no requiere Gerente"
+AUT-T048,AUT-O048,validar_operacion,FALSO,FALSO,TieneDetalle AND ServiciosHabilitados AND Autorizado,,autorizado=0: rechazo total (CA-012); no se puede reparar
+AUT-B048,AUT-O048,evaluar_beneficio,FALSO,FALSO,"RequiereAprobacionGerencial = EsCotizacionInicial AND Total > $15,000",D-02: AutoFix no tiene clientes preferentes ni promociones,"Total $1,996.00 ≤ $15,000: no requiere Gerente"
+AUT-T049,AUT-O049,validar_operacion,VERDADERO,VERDADERO,TieneDetalle AND ServiciosHabilitados AND Autorizado,,Detalle válido y autorizado: se puede reparar
+AUT-B049,AUT-O049,evaluar_beneficio,VERDADERO,FALSO,"RequiereAprobacionGerencial = EsCotizacionInicial AND Total > $15,000",D-02: AutoFix no tiene clientes preferentes ni promociones,"Total $9,897.00 ≤ $15,000: no requiere Gerente"
+AUT-T050,AUT-O050,validar_operacion,VERDADERO,VERDADERO,TieneDetalle AND ServiciosHabilitados AND Autorizado,,Detalle válido y autorizado: se puede reparar
+AUT-B050,AUT-O050,evaluar_beneficio,FALSO,FALSO,"RequiereAprobacionGerencial = EsCotizacionInicial AND Total > $15,000",D-02: AutoFix no tiene clientes preferentes ni promociones,"Total $7,483.00 ≤ $15,000: no requiere Gerente"
+AUT-T051,AUT-O051,validar_operacion,VERDADERO,VERDADERO,TieneDetalle AND ServiciosHabilitados AND Autorizado,,Detalle válido y autorizado: se puede reparar
+AUT-B051,AUT-O051,evaluar_beneficio,FALSO,FALSO,"RequiereAprobacionGerencial = EsCotizacionInicial AND Total > $15,000",D-02: AutoFix no tiene clientes preferentes ni promociones,"Total $1,637.00 ≤ $15,000: no requiere Gerente"
+AUT-T052,AUT-O052,validar_operacion,VERDADERO,VERDADERO,TieneDetalle AND ServiciosHabilitados AND Autorizado,,Detalle válido y autorizado: se puede reparar
+AUT-B052,AUT-O052,evaluar_beneficio,FALSO,FALSO,"RequiereAprobacionGerencial = EsCotizacionInicial AND Total > $15,000",D-02: AutoFix no tiene clientes preferentes ni promociones,"Total $3,215.00 ≤ $15,000: no requiere Gerente"
+AUT-T053,AUT-O053,validar_operacion,VERDADERO,VERDADERO,TieneDetalle AND ServiciosHabilitados AND Autorizado,,Detalle válido y autorizado: se puede reparar
+AUT-B053,AUT-O053,evaluar_beneficio,FALSO,FALSO,"RequiereAprobacionGerencial = EsCotizacionInicial AND Total > $15,000",D-02: AutoFix no tiene clientes preferentes ni promociones,"Total $7,274.00 ≤ $15,000: no requiere Gerente"
+AUT-T054,AUT-O054,validar_operacion,VERDADERO,VERDADERO,TieneDetalle AND ServiciosHabilitados AND Autorizado,,Detalle válido y autorizado: se puede reparar
+AUT-B054,AUT-O054,evaluar_beneficio,FALSO,FALSO,"RequiereAprobacionGerencial = EsCotizacionInicial AND Total > $15,000",D-02: AutoFix no tiene clientes preferentes ni promociones,"Total $3,424.00 ≤ $15,000: no requiere Gerente"
+AUT-T055,AUT-O055,validar_operacion,VERDADERO,FALSO,TieneDetalle AND ServiciosHabilitados AND Autorizado,D-05: AutoFix rechaza servicios inhabilitados,Servicio inhabilitado AUT-P011: dato inválido (422 ValorInvalido)
+AUT-B055,AUT-O055,evaluar_beneficio,FALSO,FALSO,"RequiereAprobacionGerencial = EsCotizacionInicial AND Total > $15,000",D-02: AutoFix no tiene clientes preferentes ni promociones,"Total $3,917.00 ≤ $15,000: no requiere Gerente"
+AUT-T056,AUT-O056,validar_operacion,FALSO,FALSO,TieneDetalle AND ServiciosHabilitados AND Autorizado,,autorizado=0: rechazo total (CA-012); no se puede reparar
+AUT-B056,AUT-O056,evaluar_beneficio,FALSO,FALSO,"RequiereAprobacionGerencial = EsCotizacionInicial AND Total > $15,000",D-02: AutoFix no tiene clientes preferentes ni promociones,"Total $9,763.00 ≤ $15,000: no requiere Gerente"
+AUT-T057,AUT-O057,validar_operacion,VERDADERO,VERDADERO,TieneDetalle AND ServiciosHabilitados AND Autorizado,,Detalle válido y autorizado: se puede reparar
+AUT-B057,AUT-O057,evaluar_beneficio,FALSO,FALSO,"RequiereAprobacionGerencial = EsCotizacionInicial AND Total > $15,000",D-02: AutoFix no tiene clientes preferentes ni promociones,"Total $4,485.00 ≤ $15,000: no requiere Gerente"
+AUT-T058,AUT-O058,validar_operacion,VERDADERO,VERDADERO,TieneDetalle AND ServiciosHabilitados AND Autorizado,,Detalle válido y autorizado: se puede reparar
+AUT-B058,AUT-O058,evaluar_beneficio,FALSO,FALSO,"RequiereAprobacionGerencial = EsCotizacionInicial AND Total > $15,000",D-02: AutoFix no tiene clientes preferentes ni promociones,"Total $7,475.00 ≤ $15,000: no requiere Gerente"
+AUT-T059,AUT-O059,validar_operacion,VERDADERO,VERDADERO,TieneDetalle AND ServiciosHabilitados AND Autorizado,,Detalle válido y autorizado: se puede reparar
+AUT-B059,AUT-O059,evaluar_beneficio,VERDADERO,FALSO,"RequiereAprobacionGerencial = EsCotizacionInicial AND Total > $15,000",D-02: AutoFix no tiene clientes preferentes ni promociones,"Total $5,846.00 ≤ $15,000: no requiere Gerente"
+AUT-T060,AUT-O060,validar_operacion,VERDADERO,VERDADERO,TieneDetalle AND ServiciosHabilitados AND Autorizado,,Detalle válido y autorizado: se puede reparar
+AUT-B060,AUT-O060,evaluar_beneficio,FALSO,FALSO,"RequiereAprobacionGerencial = EsCotizacionInicial AND Total > $15,000",D-02: AutoFix no tiene clientes preferentes ni promociones,"Total $1,428.00 ≤ $15,000: no requiere Gerente"

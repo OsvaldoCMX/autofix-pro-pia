@@ -1,0 +1,32 @@
+skinparam defaultFontName Arial
+skinparam defaultFontSize 13
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam packageStyle rectangle
+skinparam ArrowColor #34495E
+skinparam ArrowFontSize 12
+skinparam dpi 150
+skinparam class {
+  BackgroundColor<<Aggregate Root>> #FDEBD0
+  BorderColor<<Aggregate Root>> #CA6F1E
+  BackgroundColor<<Entity>> #EBF5FB
+  BorderColor<<Entity>> #2E86C1
+  BackgroundColor<<Value Object>> #E9F7EF
+  BorderColor<<Value Object>> #229954
+  BackgroundColor<<Domain Service>> #F4ECF7
+  BorderColor<<Domain Service>> #7D3C98
+}
+skinparam note {
+  BackgroundColor #FFFFF0
+  BorderColor #B7950B
+}
+hide empty members
+hide circle
+skinparam class {
+  BackgroundColor<<Specification>> #FEF9E7
+  BorderColor<<Specification>> #B7950B
+  BackgroundColor<<State Machine>> #FDEDEC
+  BorderColor<<State Machine>> #C0392B
+  BackgroundColor<<Domain Event>> #EAECEE
+  BorderColor<<Domain Event>> #566573
+}

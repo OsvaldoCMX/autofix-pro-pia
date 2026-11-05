@@ -1,0 +1,76 @@
+@startuml secuencia-registrar-decision
+title Secuencia 2 — Registrar la decisión del cliente (AutorizanteValido con AND / OR)\nUS-006, US-016 · CA-010, CA-012, CA-029 · RN-07, RN-08 · POST /api/cotizaciones/{id}/decision
+skinparam defaultFontName Arial
+skinparam defaultFontSize 13
+skinparam shadowing false
+skinparam dpi 150
+skinparam sequenceMessageAlign center
+skinparam ParticipantPadding 12
+skinparam BoxPadding 8
+autonumber
+
+actor "Asesor de\nServicio" as Asesor
+box "API" #FDEDEC
+  participant ":rutas/\nautorizacion" as R
+end box
+box "Aplicación" #EAF2FB
+  participant ":ServicioDe\nAutorizacion" as S
+  participant ":UnidadDe\nTrabajo" as U
+end box
+box "Dominio" #FDF2E9
+  participant ":VerificadorDe\nAutorizante" as V
+  participant ":AutorizanteValido\n(E2)" as E2
+  participant "cotizacion:\nCotizacion" as C
+  participant "orden:\nOrdenDeServicio" as O
+end box
+box "Infraestructura" #EEF7EE
+  participant ":PublicadorEn\nProceso" as P
+end box
+
+Asesor -> R : POST /api/cotizaciones/{id}/decision\n{lineas_autorizadas, autorizante: {nombre, rol}}
+activate R
+R -> R : requiere_rol(Asesor) · valida JSON
+R -> S : registrar_decision(RegistrarDecisionDelCliente)
+activate S
+S -> U : with UnidadDeTrabajo
+activate U
+S -> U : cotizaciones.obtener(id) · ordenes.obtener(numero)\nclientes.obtener(id_cliente)
+U --> S : cotizacion, orden, cliente
+S -> V : verificar(cliente, autorizante)
+V -> E2 : es_satisfecha_por((cliente, autorizante))
+E2 --> V : (Particular AND AutorizaElCliente)\nOR (Flotilla AND AutorizaSuResponsable)
+alt no se cumple (p. ej. el conductor de una flotilla)
+  V --> S : AutorizanteNoValido
+  S -> U : deshacer()
+  R --> Asesor : 409 «Para la flotilla … solo puede autorizar el Responsable de Flotilla»
+else se cumple
+  S -> C : registrar_decision(lineas, autorizante)
+  activate C
+  C -> C : máquina de estados: desde «Pendiente de\nAutorización del Cliente» (si no → 409)
+  alt ninguna línea autorizada
+    C -> C : «Rechazada» + CotizacionRechazadaPorCliente
+  else todas o algunas
+    C -> C : «Autorizada» / «Autorizada Parcialmente»\n+ CotizacionAutorizada
+  end
+  C --> S : decision (DecisionDelCliente)
+  deactivate C
+  S -> O : aplicar_decision(decision)
+  activate O
+  alt rechazo total
+    O -> O : queda «Cotizada» con rechazo_total\n(habilita «Entregar sin reparación»)
+  else autorización total o parcial
+    O -> O : crea Trabajos «Pendiente» / «No Autorizado»\n«Cotizada» → «Autorizada» + OrdenAutorizada
+  end
+  O --> S
+  deactivate O
+  S -> U : confirmar()
+  note right of U : Cotización y Orden se guardan\njuntas o ninguna (ADR-002)
+  U --> S : eventos confirmados
+  deactivate U
+  S -> P : publicar(eventos)
+  S --> R : ResultadoDeDecision
+  R --> Asesor : 200 {estado_cotizacion, estado_orden,\ntrabajos_autorizados, trabajos_no_autorizados}
+end
+deactivate S
+deactivate R
+@enduml

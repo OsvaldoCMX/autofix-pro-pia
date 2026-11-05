@@ -1,0 +1,58 @@
+@startuml estados-cotizacion-trabajo-solicitud
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam shadowing false
+skinparam dpi 150
+skinparam ArrowColor #34495E
+skinparam ArrowFontSize 11
+skinparam state {
+  BackgroundColor #FFF8F0
+  BorderColor #CA6F1E
+  BackgroundColor<<final>> #E9F7EF
+  BorderColor<<final>> #229954
+}
+title Máquinas de estados — Cotización (6), Trabajo (4) y Solicitud de Compra (2)
+
+state "Cotización" as COTIZ {
+  state "Pendiente de Aprobación\nGerencial" as PAG
+  state "Requiere Ajuste" as RAJ
+  state "Pendiente de Autorización\ndel Cliente" as PAC
+  state "Autorizada" as AUT <<final>>
+  state "Autorizada Parcialmente" as AUP <<final>>
+  state "Rechazada" as REC <<final>>
+  [*] --> PAG : generar [E1 se cumple]\nCA-007
+  [*] --> PAC : generar [E1 no se cumple;\nincluye adicionales] CA-005, CA-016
+  PAG --> PAC : aprobar (Gerente)\nCA-008
+  PAG --> RAJ : rechazar con observaciones\nCA-009
+  RAJ --> PAC : ajustar\nCA-009
+  PAC --> PAC : presentar · recontactar\nCA-006, CA-040
+  PAC --> AUT : decisión: todas [E2]\nCA-010
+  PAC --> AUP : decisión: algunas [E2]\nCA-010
+  PAC --> REC : decisión: ninguna [E2]\nCA-012, CA-018
+}
+
+state "Trabajo" as TRAB {
+  state "Pendiente" as TP
+  state "En Progreso" as TE
+  state "Completado" as TC <<final>>
+  state "No Autorizado" as TN <<final>>
+  [*] --> TP : línea autorizada\nCA-010, CA-017
+  [*] --> TN : línea no autorizada\nCA-010, CA-018
+  TP --> TE : iniciar [E5]\nCA-014
+  TE --> TC : completar\nCA-015
+}
+
+state "Solicitud de Compra" as SOL {
+  state "Solicitada" as SS
+  state "Disponible" as SD <<final>>
+  [*] --> SS : crear [E6]\nCA-019
+  SS --> SS : aviso al cliente\n(E7 deja de alertar) CA-023
+  SS --> SD : registrar llegada\nCA-022
+}
+
+
+note bottom of COTIZ
+  Aprobar dos veces, presentar mientras espera al Gerente o registrar
+  una segunda decisión → 409 OperacionDeCotizacionNoPermitida.
+end note
+@enduml

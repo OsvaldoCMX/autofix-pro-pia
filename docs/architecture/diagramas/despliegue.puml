@@ -1,0 +1,58 @@
+@startuml despliegue
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam shadowing false
+skinparam dpi 150
+skinparam ArrowColor #34495E
+skinparam ArrowFontSize 11
+skinparam nodesep 40
+skinparam ranksep 50
+title Despliegue — local (Docker Compose), CI/CD (GitHub Actions) y producción (Render + Supabase)
+
+actor "Equipo /\nprofesor" as Dev
+actor "Empleados del taller\n(Swagger / cliente HTTP)" as Emp
+actor "Cliente\n(consulta pública)" as Cli
+
+node "Computadora del equipo" as PC {
+  node "Docker Compose" as DC {
+    node "app\n(imagen del Dockerfile)\nuvicorn api.main:app :8000" as APP_L
+    database "db\npostgres:16-alpine\nvolumen datos-pg\n(ejecuta database/*.sql)" as DB_L
+    node "tests (perfil tests)\npytest ~--cov ~--cov-fail-under=80" as TST_L
+  }
+  file ".env (no se sube)\nbasado en .env.example" as ENV
+}
+
+cloud "GitHub" as GH {
+  node "Repositorio del PIA" as REPO
+  node "Actions: ci.yml\nruff · pytest + PostgreSQL (servicio)\ncobertura ≥ 80 % · artefacto htmlcov" as CI
+  node "Actions: revision-de-plazos.yml\ncron cada 6 h + manual" as CRON
+}
+
+cloud "Render" as RENDER {
+  node "Web Service (Docker)\n/docs · /openapi.json · /health\nAuto-Deploy: After CI Checks Pass" as APP_R
+}
+cloud "Supabase" as SUPA {
+  database "PostgreSQL 16\n01_esquema.sql + 02_datos_iniciales.sql\n(RLS activado)" as DB_R
+}
+
+Dev --> REPO : git push
+REPO --> CI : push / pull request
+CI --> REPO : check verde / rojo
+REPO --> APP_R : despliega main\nsi el CI pasó
+APP_R --> DB_R : DATABASE_URL (Session pooler, IPv4)\nSQLAlchemy 2 · psycopg 3
+CRON --> APP_R : POST /api/revisiones/plazos\n(TOKEN_SISTEMA)
+Emp --> APP_R : HTTPS · Bearer token por rol
+Cli --> APP_R : GET /api/consulta-de-estado
+
+Dev --> DC : docker compose up\ndocker compose run --rm tests
+APP_L --> DB_L
+TST_L --> DB_L
+ENV ..> APP_L : variables de entorno
+
+note bottom of DB_R
+  Render gratis: se duerme tras 15 min sin tráfico
+  (≈1 min en despertar) · disco efímero.
+  Supabase gratis: pausa tras 7 días sin actividad;
+  la revisión de plazos cada 6 h la mantiene activa.
+end note
+@enduml

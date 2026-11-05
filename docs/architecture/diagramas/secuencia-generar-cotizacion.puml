@@ -1,0 +1,79 @@
+@startuml secuencia-generar-cotizacion
+title Secuencia 1 — Generar la cotización inicial (regla de $15,000 MXN con Specification)\nUS-004, US-005 · CA-005, CA-007 · RN-02, RN-04 · POST /api/ordenes/{numero}/cotizaciones
+skinparam defaultFontName Arial
+skinparam defaultFontSize 13
+skinparam shadowing false
+skinparam dpi 150
+skinparam sequenceMessageAlign center
+skinparam ParticipantPadding 12
+skinparam BoxPadding 8
+autonumber
+
+actor "Asesor de\nServicio" as Asesor
+box "API" #FDEDEC
+  participant ":rutas/\ncotizaciones" as R
+  participant ":seguridad\nrequiere_rol" as Seg
+end box
+box "Aplicación" #EAF2FB
+  participant ":ServicioDe\nCotizacion" as S
+  participant ":UnidadDe\nTrabajo" as U
+end box
+box "Dominio" #FDF2E9
+  participant "orden:\nOrdenDeServicio" as O
+  participant "Cotizacion" as C
+  participant ":RequiereAprobacion\nGerencial (E1)" as E1
+end box
+box "Infraestructura" #EEF7EE
+  participant ":PublicadorEn\nProceso" as P
+end box
+actor "Gerente\nde Taller" as Gerente
+
+Asesor -> R : POST /api/ordenes/{numero}/cotizaciones\n(Bearer token, trabajos y refacciones)
+activate R
+R -> Seg : requiere_rol(Asesor)
+Seg --> R : empleado (o 401 / 403)
+R -> R : valida el JSON con Pydantic (400 / 422)
+R -> S : generar_inicial(GenerarCotizacion)
+activate S
+S -> U : with UnidadDeTrabajo
+activate U
+S -> U : ordenes.obtener(numero)
+U --> S : orden (o OrdenNoEncontrada → 404)
+S -> O : marcar_cotizada()
+activate O
+alt la orden NO tiene diagnóstico (RN-02)
+  O --> S : DiagnosticoRequerido
+  S -> U : deshacer()
+  S --> R : error
+  R --> Asesor : 409 {error: "DiagnosticoRequerido", detalle: "No se puede cotizar…"}
+else la orden tiene diagnóstico
+  O -> O : máquina de estados:\n«En Diagnóstico» → «Cotizada»
+  O --> S
+  deactivate O
+  S -> C : generar(orden, Inicial, v.1, lineas, politica=E1)
+  activate C
+  C -> C : total = suma de las líneas (Decimal)\n+ CotizacionGenerada
+  C -> E1 : es_satisfecha_por(cotizacion)
+  E1 --> C : EsCotizacionInicial AND TotalMayorAlUmbral($15,000)
+  alt E1 se cumple (total > $15,000)
+    C -> C : «Pendiente de Aprobación Gerencial»\n+ AprobacionGerencialRequerida
+  else E1 no se cumple
+    C -> C : «Pendiente de Autorización del Cliente»
+  end
+  C --> S : cotizacion
+  deactivate C
+  S -> U : cotizaciones.agregar(cotizacion)\nordenes.guardar(orden)
+  S -> U : confirmar()
+  note right of U : Orden y Cotización se guardan juntas\n+ bitácora de eventos (ADR-002, ADR-016)
+  U --> S : eventos confirmados
+  deactivate U
+  S -> P : publicar(eventos)
+  opt AprobacionGerencialRequerida
+    P -> Gerente : AlertaInterna «la cotización v.1 requiere su aprobación»
+  end
+  S --> R : ResultadoDeCotizacion
+  R --> Asesor : 201 {id, version: "v.1", estado, total}
+end
+deactivate S
+deactivate R
+@enduml
