@@ -15,10 +15,12 @@ from application.comandos import (
     DatosDeVehiculo,
     GenerarCotizacion,
     IniciarTrabajo,
+    RegistrarCargoACredito,
     RegistrarCliente,
     RegistrarDecisionDelCliente,
     RegistrarDiagnostico,
     RegistrarOrden,
+    RegistrarPago,
     RegistrarSalida,
     SolicitarRefaccion,
     TrabajoPropuesto,
@@ -27,9 +29,11 @@ from application.puertos import PublicadorDeEventos, Reloj
 from application.resultados import ResultadoDeDecision
 from application.servicios.servicio_de_aprobacion_gerencial import ServicioDeAprobacionGerencial
 from application.servicios.servicio_de_autorizacion import ServicioDeAutorizacion
+from application.servicios.servicio_de_caja import ServicioDeCaja
 from application.servicios.servicio_de_cancelacion import ServicioDeCancelacion
 from application.servicios.servicio_de_cotizacion import ServicioDeCotizacion
 from application.servicios.servicio_de_diagnostico import ServicioDeDiagnostico
+from application.servicios.servicio_de_entrega import ServicioDeEntrega
 from application.servicios.servicio_de_recepcion import ServicioDeRecepcion
 from application.servicios.servicio_de_refacciones import ServicioDeRefacciones
 from application.servicios.servicio_de_reparacion import ServicioDeReparacion
@@ -37,7 +41,7 @@ from application.servicios.servicio_de_retiro import ServicioDeRetiro
 from domain.clientes.cliente import TipoCliente
 from domain.cotizaciones.valores import RolDeAutorizante
 from domain.empleados.empleado import Empleado, RolDeEmpleado
-from domain.ordenes.valores import NivelDeCombustible
+from domain.ordenes.valores import FormaDePago, NivelDeCombustible
 from infrastructure.memoria.almacen import AlmacenEnMemoria, DatosEnMemoria
 from infrastructure.memoria.unidad_de_trabajo import UnidadDeTrabajoEnMemoria
 
@@ -54,6 +58,7 @@ FLOTILLA = RegistrarCliente(
     "81-1111",
     "ana@norte.test",
 )
+TOTAL_DE_DOS_TRABAJOS = Decimal("3000.00")
 AUTORIZANTE_PARTICULAR = ("Luis Peña", RolDeAutorizante.CLIENTE)
 AUTORIZANTE_DE_FLOTILLA = ("Ana Torres", RolDeAutorizante.RESPONSABLE_DE_FLOTILLA)
 ZONA_DEL_TALLER = ZoneInfo("America/Monterrey")
@@ -133,6 +138,14 @@ class Taller:
     @property
     def retiro(self) -> ServicioDeRetiro:
         return self._armar(ServicioDeRetiro)
+
+    @property
+    def caja(self) -> ServicioDeCaja:
+        return self._armar(ServicioDeCaja)
+
+    @property
+    def entrega(self) -> ServicioDeEntrega:
+        return self._armar(ServicioDeEntrega)
 
 
 # ------------------------------------------------------------------ pasos para llegar a un estado
@@ -241,4 +254,16 @@ def lista(taller: Taller, flotilla: bool = False) -> str:
     taller.reparacion.iniciar_trabajo(IniciarTrabajo(numero, 2, TECNICO))
     taller.reparacion.completar_trabajo(CompletarTrabajo(numero, 1, TECNICO))
     taller.reparacion.completar_trabajo(CompletarTrabajo(numero, 2, TECNICO))
+    return numero
+
+
+def pagada(taller: Taller) -> str:
+    numero = lista(taller)
+    taller.caja.registrar_pago(RegistrarPago(numero, TOTAL_DE_DOS_TRABAJOS, FormaDePago.TARJETA))
+    return numero
+
+
+def por_cobrar(taller: Taller) -> str:
+    numero = lista(taller, flotilla=True)
+    taller.caja.registrar_cargo_a_credito(RegistrarCargoACredito(numero))
     return numero
