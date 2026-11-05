@@ -15,7 +15,7 @@ Orden en que se construye el sistema a partir de esta documentación. Cada fase 
 
 | Fase | Contenido | Estado | Fecha | Último commit |
 |---|---|---|---|---|
-| 0 | Preparación del repositorio | Pendiente | | |
+| 0 | Preparación del repositorio | Terminada | 05/11/2026 | `chore: configurar el proyecto y la estructura de carpetas` |
 | 1 | Núcleo compartido del dominio | Pendiente | | |
 | 2 | Aggregates, Specifications y máquinas de estados | Pendiente | | |
 | 3 | Capa de aplicación y adaptadores en memoria | Pendiente | | |
@@ -35,10 +35,11 @@ Orden en que se construye el sistema a partir de esta documentación. Cada fase 
 **Lee:** `architecture/decisiones-tecnicas.md` (§1 a §3 y §7).
 
 **Construye:**
-- `pyproject.toml`: proyecto `autofix-pro`, `requires-python >=3.11`; dependencias `fastapi`, `uvicorn[standard]`, `pydantic>=2`, `sqlalchemy>=2`, `psycopg[binary]>=3`, `fpdf2`, `python-multipart`; extras `dev` con `pytest`, `pytest-cov`, `httpx` y `ruff` (rangos con límite de versión mayor, como en la U5). Configuración de pytest (`testpaths = ["tests"]`, `pythonpath = ["src"]`), de coverage (`source = ["src"]`, ramas) y de Ruff (`E4, E7, E9, F, W, I, B, UP`, línea de 100, `extend-exclude = ["_referencia"]`). La carpeta local `_referencia/` (código de la U5 y PDF del PIA) está en `.gitignore` y no se sube.
+- `pyproject.toml`: proyecto `autofix-pro`, `requires-python >=3.11`; dependencias `fastapi`, `uvicorn[standard]`, `pydantic>=2`, `sqlalchemy>=2`, `psycopg[binary]>=3`, `fpdf2`, `python-multipart`, `tzdata` (Windows no trae las zonas horarias que usa `zoneinfo`); extras `dev` con `pytest`, `pytest-cov`, `httpx` y `ruff` (rangos con límite de versión mayor, como en la U5). Configuración de pytest (`testpaths = ["tests"]`, `pythonpath = ["src"]`), de coverage (`source = ["src"]`, ramas) y de Ruff (`E4, E7, E9, F, W, I, B, UP`, línea de 100, `extend-exclude = ["_referencia"]`). La carpeta local `_referencia/` (código de la U5 y PDF del PIA) está en `.gitignore` y no se sube.
 - La estructura de carpetas de `architecture/decisiones-tecnicas.md` §2 con sus `__init__.py`: paquetes raíz `domain`, `application`, `infrastructure` y `api` dentro de `src/` (se importan sin el prefijo `src.`), y `tests/unit/domain`, `tests/unit/application`, `tests/integration`, `tests/api`, `tests/datos_profesor`.
 - `.env.example` con todas las variables de `architecture/decisiones-tecnicas.md` §3 y valores de ejemplo (sin secretos reales).
-- `tests/test_arquitectura.py`: la regla de dependencias de la U5 adaptada (el dominio no importa `application`, `infrastructure`, `api`, `fastapi`, `pydantic` ni `sqlalchemy`; la aplicación no importa `infrastructure`, `api`, `fastapi` ni `sqlalchemy`).
+- `tests/test_arquitectura.py`: la regla de dependencias de la U5 adaptada (el dominio no importa `application`, `infrastructure`, `api`, `fastapi`, `pydantic` ni `sqlalchemy`; la aplicación no importa `infrastructure`, `api`, `fastapi` ni `sqlalchemy`; la infraestructura no importa `api`; dentro de `api`, solo `dependencias.py` importa `infrastructure`).
+- `README.md` corto en la raíz: nombre del proyecto, equipo y enlace a `docs/` (el completo se hace en la Fase 11).
 
 **Listo cuando:** `pip install -e ".[dev]"` funciona, `ruff check .` sin errores y `pytest` pasa (prueba de arquitectura).
 
