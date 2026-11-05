@@ -16,7 +16,7 @@ Orden en que se construye el sistema a partir de esta documentación. Cada fase 
 | Fase | Contenido | Estado | Fecha | Último commit |
 |---|---|---|---|---|
 | 0 | Preparación del repositorio | Terminada | 05/11/2026 | `chore: configurar el proyecto y la estructura de carpetas` |
-| 1 | Núcleo compartido del dominio | Pendiente | | |
+| 1 | Núcleo compartido del dominio | Terminada | 05/11/2026 | `feat(dominio): eventos de dominio y calendario hábil` |
 | 2 | Aggregates, Specifications y máquinas de estados | Pendiente | | |
 | 3 | Capa de aplicación y adaptadores en memoria | Pendiente | | |
 | 4 | Persistencia con SQLAlchemy y PostgreSQL | Pendiente | | |
