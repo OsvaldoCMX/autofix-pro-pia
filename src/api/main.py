@@ -11,9 +11,11 @@ from api.esquemas.comunes import rechazar_caracteres_no_validos
 from api.rutas import (
     alertas,
     autorizacion,
+    caja,
     cancelacion,
     cotizaciones,
     diagnostico,
+    entrega,
     recepcion,
     refacciones,
     reparacion,
@@ -33,6 +35,8 @@ ROUTERS = (
     reparacion.router,
     refacciones.router,
     retiro.router,
+    caja.router,
+    entrega.router,
     alertas.router,
 )
 

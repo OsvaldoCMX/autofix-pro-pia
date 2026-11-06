@@ -260,5 +260,35 @@ def con_adicional(cliente: TestClient) -> tuple[str, str]:
     return numero, adicional["id"]
 
 
+def lista(cliente: TestClient, flotilla: bool = False) -> str:
+    """Orden «Lista para Entrega» con dos trabajos que suman $3,000.00."""
+    numero = en_reparacion(cliente, flotilla)
+    iniciar(cliente, numero, 2)
+    completar(cliente, numero, 1)
+    completar(cliente, numero, 2)
+    return numero
+
+
+def pagar(cliente: TestClient, numero: str, monto: str = "3000.00") -> dict[str, Any]:
+    return exigir(
+        cliente.post(
+            f"/api/ordenes/{numero}/pago", json={"monto": monto, "forma": "Tarjeta"}, headers=CAJA
+        ),
+        201,
+    )
+
+
+def pagada(cliente: TestClient) -> str:
+    numero = lista(cliente)
+    pagar(cliente, numero)
+    return numero
+
+
+def por_cobrar(cliente: TestClient) -> str:
+    numero = lista(cliente, flotilla=True)
+    exigir(cliente.post(f"/api/ordenes/{numero}/cargo-a-credito", headers=CAJA), 201)
+    return numero
+
+
 def revisar_plazos(cliente: TestClient) -> dict[str, Any]:
     return exigir(cliente.post("/api/revisiones/plazos", headers=SISTEMA), 200)
