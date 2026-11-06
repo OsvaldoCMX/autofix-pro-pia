@@ -2,14 +2,15 @@
 
 Sin `DATABASE_URL` se usa SQLite en memoria. Con ella se usa PostgreSQL, pero las pruebas trabajan
 en un esquema privado y temporal: su `search_path` solo ve ese esquema, así que ningún `DROP` o
-`TRUNCATE` alcanza las tablas de `public`. Nunca corren contra Supabase ni otro servidor remoto.
+`DELETE` alcanza las tablas de `public`. Nunca corren contra Supabase ni otro servidor remoto.
 """
 from __future__ import annotations
 
 from decimal import Decimal
 from pathlib import Path
+from uuid import uuid4
 
-from sqlalchemy import Engine, func, insert, make_url, select, text
+from sqlalchemy import Connection, Engine, func, insert, make_url, select, text
 
 from application.puertos import PublicadorDeEventos
 from domain.empleados.empleado import Empleado
@@ -31,6 +32,11 @@ from tests.unit.application.escenarios import Taller
 
 DATABASE = Path(__file__).resolve().parents[2] / "database"
 SERVIDORES_LOCALES = frozenset({"localhost", "127.0.0.1", "::1", "db", "postgres"})
+_REINICIAR_SECUENCIAS = """
+    SELECT setval(clase.oid::regclass, 1, false)
+    FROM pg_class AS clase
+    WHERE clase.relkind = 'S' AND clase.relnamespace = current_schema()::regnamespace
+"""
 
 
 class TallerEnBase(Taller):
@@ -105,8 +111,15 @@ def exigir_servidor_local(url: str) -> None:
         )
 
 
+def nombre_de_esquema(prefijo: str) -> str:
+    """Aleatorio: en un contenedor el pid se repite y una ejecución interrumpida deja su esquema."""
+    return f"{prefijo}_{uuid4().hex[:12]}"
+
+
 def url_con_esquema(url: str, esquema: str) -> str:
-    conectada = make_url(url).update_query_dict({"options": f"-csearch_path={esquema}"})
+    """`synchronous_commit=off` no cambia lo que se lee, y solo aplica a estas conexiones."""
+    opciones = f"-csearch_path={esquema} -csynchronous_commit=off"
+    conectada = make_url(url).update_query_dict({"options": opciones})
     return conectada.render_as_string(hide_password=False)
 
 
@@ -141,8 +154,7 @@ def preparar_base(motor: Engine, personal: tuple[Empleado, ...]) -> None:
     """Deja la base como la dejaría `01_esquema.sql`, más los empleados indicados."""
     with motor.begin() as conexion:
         if motor.dialect.name == "postgresql":
-            nombres = ", ".join(tabla.name for tabla in metadata.sorted_tables)
-            conexion.execute(text(f"TRUNCATE {nombres} RESTART IDENTITY CASCADE"))
+            _vaciar_postgresql(conexion)
         else:
             metadata.create_all(conexion)
         conexion.execute(
@@ -152,3 +164,14 @@ def preparar_base(motor: Engine, personal: tuple[Empleado, ...]) -> None:
             conexion.execute(
                 insert(empleados), [mapeo.fila_de_empleado(empleado) for empleado in personal]
             )
+
+
+def _vaciar_postgresql(conexion: Connection) -> None:
+    """Mismo resultado que `TRUNCATE ... RESTART IDENTITY`, pero mucho más rápido con pocas filas.
+
+    `TRUNCATE` crea archivos nuevos para cada tabla e índice. Todo va en una sola sentencia al
+    servidor para ahorrar una ida y vuelta por tabla.
+    """
+    borrados = "; ".join(f"DELETE FROM {tabla.name}" for tabla in reversed(metadata.sorted_tables))
+    conexion.exec_driver_sql(borrados)
+    conexion.execute(text(_REINICIAR_SECUENCIAS))

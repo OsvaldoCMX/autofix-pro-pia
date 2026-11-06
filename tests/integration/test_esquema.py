@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
+from datetime import UTC, datetime
 from decimal import Decimal
 
 import pytest
@@ -12,7 +13,10 @@ from sqlalchemy import (
     ForeignKeyConstraint,
     Table,
     UniqueConstraint,
+    func,
+    insert,
     inspect,
+    select,
     text,
 )
 from sqlalchemy.dialects import postgresql
@@ -25,12 +29,23 @@ from application.comandos import (
 from domain.compartido.valores import NumeroOrden
 from domain.ordenes.estados import EstadoOrden
 from domain.ordenes.valores import NivelDeCombustible
-from infrastructure.base_de_datos.tablas import metadata
+from infrastructure.base_de_datos.tablas import (
+    alertas_internas,
+    fallas_adicionales,
+    fotos_de_danos,
+    lineas_de_cotizacion,
+    metadata,
+    recontactos,
+    refacciones_cotizadas,
+    secuencias,
+)
 from tests.integration.apoyo_base import (
     DATABASE,
     TallerEnBase,
+    ejecutar_script,
+    preparar_base,
 )
-from tests.unit.application.escenarios import ASESOR, TECNICO
+from tests.unit.application.escenarios import ASESOR, EMPLEADOS, TECNICO, pausada
 
 _TIPOS_EQUIVALENTES = {
     "TIMESTAMPTZ": "TIMESTAMP WITH TIME ZONE",
@@ -205,6 +220,87 @@ def test_tablas_coincide_con_postgresql_real(base_real: Engine, nombre: str) -> 
         for fk in tabla.foreign_key_constraints
     }
     assert foraneas_reales == foraneas_esperadas
+
+
+_SECUENCIAS_DE_ID = (
+    "fotos_de_danos_id_seq",
+    "refacciones_cotizadas_id_seq",
+    "recontactos_id_seq",
+    "alertas_internas_id_seq",
+    "eventos_id_seq",
+)
+
+
+def _conteos(motor: Engine) -> dict[str, int]:
+    with motor.connect() as conexion:
+        return {
+            tabla.name: conexion.execute(select(func.count()).select_from(tabla)).scalar_one()
+            for tabla in metadata.sorted_tables
+        }
+
+
+def _llenar_todas_las_tablas(motor: Engine) -> None:
+    """Datos del profesor más una orden real con hijos: las llaves foráneas exigen buen orden."""
+    preparar_base(motor, ())
+    ejecutar_script(motor, "02_datos_iniciales.sql")
+    numero = pausada(TallerEnBase(motor))
+    with motor.begin() as conexion:
+        linea = conexion.execute(
+            select(lineas_de_cotizacion.c.id_cotizacion, lineas_de_cotizacion.c.numero)
+        ).first()
+        ahora = datetime.now(UTC)
+        conexion.execute(
+            insert(fallas_adicionales).values(
+                numero_orden=numero, id=1, descripcion="Falla", tecnico=TECNICO, reportada_en=ahora
+            )
+        )
+        conexion.execute(
+            insert(fotos_de_danos).values(
+                numero_orden=numero,
+                nombre_archivo="dano.png",
+                tipo_mime="image/png",
+                tamano_bytes=1,
+                contenido=b"x",
+            )
+        )
+        conexion.execute(
+            insert(refacciones_cotizadas).values(
+                id_cotizacion=linea.id_cotizacion,
+                numero_linea=linea.numero,
+                posicion=1,
+                descripcion="Balatas",
+                cantidad=1,
+                precio_unitario=Decimal("100.00"),
+            )
+        )
+        conexion.execute(
+            insert(recontactos).values(
+                id_cotizacion=linea.id_cotizacion, asesor=ASESOR, registrado_en=ahora
+            )
+        )
+        conexion.execute(
+            insert(alertas_internas).values(destinatario=ASESOR, tipo="Prueba", mensaje="Alerta")
+        )
+
+
+def test_preparar_base_deja_la_base_como_recien_creada(base_real: Engine) -> None:
+    _llenar_todas_las_tablas(base_real)
+    with base_real.begin() as conexion:
+        for secuencia in _SECUENCIAS_DE_ID:
+            conexion.execute(text(f"SELECT nextval('{secuencia}')"))
+    assert [nombre for nombre, filas in _conteos(base_real).items() if filas == 0] == []
+
+    preparar_base(base_real, EMPLEADOS)
+
+    conteos = _conteos(base_real)
+    assert conteos.pop("empleados") == len(EMPLEADOS)
+    assert conteos.pop("secuencias") == 4
+    assert set(conteos.values()) == {0}
+    with base_real.connect() as conexion:
+        assert conexion.execute(select(func.sum(secuencias.c.ultimo_valor))).scalar_one() == 0
+        for secuencia in _SECUENCIAS_DE_ID:
+            estado = conexion.execute(text(f"SELECT last_value, is_called FROM {secuencia}")).one()
+            assert tuple(estado) == (1, False), secuencia
 
 
 # ------------------------------------------------------------------ datos iniciales del profesor

@@ -1,7 +1,6 @@
 """Base de datos de las pruebas de integración y de API: SQLite en memoria o PostgreSQL local."""
 from __future__ import annotations
 
-import os
 from collections.abc import Iterator
 
 import pytest
@@ -13,6 +12,7 @@ from tests.integration.apoyo_base import (
     crear_esquema,
     ejecutar_script,
     eliminar_esquema,
+    nombre_de_esquema,
     preparar_base,
     url_con_esquema,
     url_de_postgresql_para_pruebas,
@@ -35,7 +35,7 @@ def motor_postgresql(url_postgresql: str | None) -> Iterator[Engine | None]:
     if url_postgresql is None:
         yield None
         return
-    esquema = f"pruebas_{os.getpid()}"
+    esquema = nombre_de_esquema("pruebas")
     crear_esquema(url_postgresql, esquema)
     motor = crear_motor(url_con_esquema(url_postgresql, esquema))
     try:
@@ -67,7 +67,7 @@ def base_con_datos_iniciales(
     """Ejecuta `01` y `02` tal como se hace en Docker y en Supabase, en un esquema desechable."""
     if motor_postgresql is None or url_postgresql is None:
         pytest.skip("Requiere PostgreSQL: se ejecuta con DATABASE_URL (Docker o el CI).")
-    esquema = f"pruebas_datos_{os.getpid()}"
+    esquema = nombre_de_esquema("pruebas_datos")
     crear_esquema(url_postgresql, esquema)
     motor = crear_motor(url_con_esquema(url_postgresql, esquema))
     try:
