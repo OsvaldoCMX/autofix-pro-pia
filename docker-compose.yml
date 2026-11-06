@@ -1,0 +1,66 @@
+# Requiere .env: copia .env.example como .env y cambia los valores.
+#   docker compose up --build                      aplicación + base (Swagger en /docs)
+#   docker compose --profile tests run --rm tests  pruebas con cobertura contra PostgreSQL
+#
+# El repositorio debe estar en un disco fijo (C:, D:). Docker Desktop no ve las unidades USB: monta
+# database/ vacía y la base queda sin tablas, aunque la aplicación reporte que está sana. Si ya
+# pasó, tras mover el proyecto borra el volumen para que los scripts corran: docker compose down -v
+name: autofix-pro
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?Copia .env.example como .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Copia .env.example como .env}
+      POSTGRES_DB: ${POSTGRES_DB:?Copia .env.example como .env}
+    volumes:
+      - datos_db:/var/lib/postgresql/data
+      # Los scripts solo corren al crear el volumen, en orden: 01, 02 y 03.
+      - ./database:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      # Con -h usa TCP: mientras corren los scripts, el servidor temporal solo abre el socket
+      # local, así que no se reporta «sano» hasta que los datos iniciales ya están cargados.
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 3s
+      timeout: 3s
+      retries: 40
+
+  app:
+    build:
+      context: .
+      target: app
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file: .env
+    ports:
+      - "${PORT:-8000}:${PORT:-8000}"
+    healthcheck:
+      # La imagen slim no trae curl.
+      test:
+        - CMD
+        - python
+        - -c
+        - "import os, urllib.request as u; u.urlopen(f'http://127.0.0.1:{os.getenv(\"PORT\", \"8000\")}/health', timeout=3)"
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
+
+  tests:
+    build:
+      context: .
+      target: tests
+    profiles: [tests]
+    depends_on:
+      db:
+        condition: service_healthy
+    # Sin env_file a propósito: las pruebas solo conocen esta base, aunque .env apunte a otra.
+    # Trabajan en un esquema temporal, así que no tocan los datos de demostración.
+    environment:
+      APP_ENV: pruebas
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+
+volumes:
+  datos_db:

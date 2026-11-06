@@ -1,0 +1,26 @@
+# Secretos: nunca entran en la imagen
+.env
+.env.*
+
+# Control de versiones y material local
+.git
+.github
+.claude
+_referencia
+CLAUDE.md
+CLAUDE.local.md
+
+# Entorno virtual, cachés y reportes de cobertura
+.venv
+venv
+**/__pycache__
+**/*.py[cod]
+**/*.egg-info
+.pytest_cache
+.ruff_cache
+htmlcov
+.coverage
+.coverage.*
+coverage.xml
+build
+dist
