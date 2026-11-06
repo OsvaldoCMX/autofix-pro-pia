@@ -1,9 +1,7 @@
 """`tablas.py` debe coincidir con `database/01_esquema.sql`, que es el esquema oficial (ADR-009)."""
 from __future__ import annotations
 
-import os
 import re
-from collections.abc import Iterator
 from dataclasses import dataclass, field
 from decimal import Decimal
 
@@ -27,15 +25,10 @@ from application.comandos import (
 from domain.compartido.valores import NumeroOrden
 from domain.ordenes.estados import EstadoOrden
 from domain.ordenes.valores import NivelDeCombustible
-from infrastructure.base_de_datos.motor import crear_motor
 from infrastructure.base_de_datos.tablas import metadata
 from tests.integration.apoyo_base import (
     DATABASE,
     TallerEnBase,
-    crear_esquema,
-    ejecutar_script,
-    eliminar_esquema,
-    url_con_esquema,
 )
 from tests.unit.application.escenarios import ASESOR, TECNICO
 
@@ -215,25 +208,6 @@ def test_tablas_coincide_con_postgresql_real(base_real: Engine, nombre: str) -> 
 
 
 # ------------------------------------------------------------------ datos iniciales del profesor
-@pytest.fixture
-def base_con_datos_iniciales(
-    motor_postgresql: Engine | None, url_postgresql: str | None
-) -> Iterator[Engine]:
-    """Ejecuta `01` y `02` tal como se hace en Docker y en Supabase, en un esquema desechable."""
-    if motor_postgresql is None or url_postgresql is None:
-        pytest.skip("Requiere PostgreSQL: se ejecuta con DATABASE_URL (Docker o el CI).")
-    esquema = f"pruebas_datos_{os.getpid()}"
-    crear_esquema(url_postgresql, esquema)
-    motor = crear_motor(url_con_esquema(url_postgresql, esquema))
-    try:
-        ejecutar_script(motor, "01_esquema.sql")
-        ejecutar_script(motor, "02_datos_iniciales.sql")
-        yield motor
-    finally:
-        motor.dispose()
-        eliminar_esquema(url_postgresql, esquema)
-
-
 def _consultas_de_verificacion() -> list[str]:
     script = (DATABASE / "03_verificacion.sql").read_text(encoding="utf-8")
     return [parte.strip() for parte in script.split(";") if "SELECT" in parte]

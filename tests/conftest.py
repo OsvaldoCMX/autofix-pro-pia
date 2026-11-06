@@ -58,3 +58,22 @@ def motor(motor_postgresql: Engine | None) -> Iterator[Engine]:
     preparar_base(sqlite, EMPLEADOS)
     yield sqlite
     sqlite.dispose()
+
+
+@pytest.fixture
+def base_con_datos_iniciales(
+    motor_postgresql: Engine | None, url_postgresql: str | None
+) -> Iterator[Engine]:
+    """Ejecuta `01` y `02` tal como se hace en Docker y en Supabase, en un esquema desechable."""
+    if motor_postgresql is None or url_postgresql is None:
+        pytest.skip("Requiere PostgreSQL: se ejecuta con DATABASE_URL (Docker o el CI).")
+    esquema = f"pruebas_datos_{os.getpid()}"
+    crear_esquema(url_postgresql, esquema)
+    motor = crear_motor(url_con_esquema(url_postgresql, esquema))
+    try:
+        ejecutar_script(motor, "01_esquema.sql")
+        ejecutar_script(motor, "02_datos_iniciales.sql")
+        yield motor
+    finally:
+        motor.dispose()
+        eliminar_esquema(url_postgresql, esquema)
