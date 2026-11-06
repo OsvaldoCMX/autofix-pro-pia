@@ -60,7 +60,7 @@ RUTAS = [
     ("GET", "/api/gerencia/ordenes", G, "Listado de órdenes abiertas y cerradas (filtro opcional `estado`).", "200", "401, 403", "ListarOrdenes", ["CA-030"], "P1", "Consultas"),
     ("GET", "/api/gerencia/ingresos-del-dia", G, "Total de pagos de contado de hoy (zona America/Monterrey).", "200", "401, 403", "ConsultarIngresosDelDia", ["CA-031"], "P1", "Consultas"),
     ("GET", "/api/consulta-de-estado?orden=&placas=", P, "Consulta pública del cliente (sin token).", "200", "404, 422", "ConsultarEstadoDeOrden", ["CA-037", "CA-038"], "P1", "Consultas"),
-    ("GET", "/api/alertas", TODOS, "Alertas internas del empleado que hace la petición.", "200", "401", "ListarAlertas",
+    ("GET", "/api/alertas", TODOS, "Alertas internas del empleado que hace la petición (el token de Sistema responde 403: no es un empleado).", "200", "401, 403", "ListarAlertas",
      ["CA-007", "CA-008", "CA-009", "CA-015", "CA-017", "CA-022", "CA-023", "CA-032", "CA-034", "CA-040"], "P1", "Consultas"),
     ("POST", "/api/revisiones/plazos", S, "Revisión de plazos de 3 días hábiles y 48 h (la llama un workflow programado).", "200", "401, 403", "ServicioDeRevisionDePlazos.revisar", ["CA-023", "CA-040"], "P1", "Sistema"),
 ]

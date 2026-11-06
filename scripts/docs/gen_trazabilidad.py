@@ -168,6 +168,7 @@ api = ["# API REST — contrato planeado (PIA)\n",
        "- Autenticación: `Authorization: Bearer <token>` del empleado (ADR-012). Públicas: `/health`, `/docs`, `/openapi.json`, `/api/consulta-de-estado`.",
        "- Errores con el formato `{\"error\": \"<TipoDeError>\", \"detalle\": \"<mensaje para el usuario>\", \"codigo\": <http>}`.",
        "- **201** crea · **200** acción o consulta · **400** JSON mal formado · **401** sin token o token inválido · **403** rol no permitido o trabajo de otro técnico · **404** no existe · **409** regla o transición violada · **422** dato inválido · **501** función P2 aún no implementada.",
+       "- Además de los errores que lista cada ruta, cualquier ruta con cuerpo JSON responde **400** si está mal formado, y cualquier ruta que reciba datos (cuerpo, ruta o parámetros) responde **422** si uno es inválido. FastAPI lee el JSON antes de revisar el token: un JSON mal formado responde 400 aunque falte el token.",
        "- Importes como texto con dos decimales (`\"1500.00\"`); fechas ISO 8601 con zona horaria.\n",
        f"## Rutas ({len(RUTAS)})\n"]
 areas = []
@@ -181,6 +182,8 @@ for area in areas:
                   for m, r, rol, d, ok, err, s, cas, p, a in RUTAS if a == area])
     api.append("")
 api += ["## Ejemplos\n",
+        "**Registrar una orden** (`POST /api/ordenes`, token de Asesor) → respuesta `201` con el mensaje de éxito de CA-001:\n",
+        "```json\n{\"numero_orden\": \"OS-0001\", \"estado\": \"Recibida\", \"id_cliente\": \"CLI-0001\", \"placas\": \"ABC123\",\n \"fecha_ingreso\": \"2026-10-05T15:00:00Z\", \"mensaje\": \"Orden OS-0001 registrada correctamente.\"}\n```\n",
         "**Generar la cotización inicial** (`POST /api/ordenes/AUT-O007/cotizaciones`, token de Asesor):\n",
         "```json\n{\n  \"trabajos\": [\n    {\"numero\": 1, \"descripcion\": \"Afinación 07 (AUT-P007) x1\", \"mano_de_obra\": \"785.00\", \"refacciones\": []},\n    {\"numero\": 2, \"descripcion\": \"Cambio aceite 12 (AUT-P012) x2\", \"mano_de_obra\": \"2280.00\", \"refacciones\": []}\n  ]\n}\n```\n",
         "Respuesta `201`:\n",

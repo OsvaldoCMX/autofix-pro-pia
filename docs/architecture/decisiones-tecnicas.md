@@ -68,6 +68,8 @@ autofix-pro/
 
 Toda la configuración viene del entorno; `.env.example` se sube al repositorio **sin secretos reales** y `.env` está en `.gitignore`.
 
+**Arranque sin `DATABASE_URL`:** en `desarrollo` y `pruebas` la aplicación usa los adaptadores en memoria con los 6 empleados de §6 (los datos se pierden al reiniciar), para poder probarla en Swagger sin base de datos. En `produccion` no arranca y muestra un mensaje claro.
+
 | Variable | Ejemplo en `.env.example` | Uso |
 |---|---|---|
 | `APP_ENV` | `desarrollo` | `desarrollo`, `pruebas` o `produccion`. |

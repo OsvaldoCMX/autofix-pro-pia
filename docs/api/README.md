@@ -8,6 +8,7 @@ Contrato de la API que se implementa con FastAPI (ADR-008). Cuando la API esté 
 - Autenticación: `Authorization: Bearer <token>` del empleado (ADR-012). Públicas: `/health`, `/docs`, `/openapi.json`, `/api/consulta-de-estado`.
 - Errores con el formato `{"error": "<TipoDeError>", "detalle": "<mensaje para el usuario>", "codigo": <http>}`.
 - **201** crea · **200** acción o consulta · **400** JSON mal formado · **401** sin token o token inválido · **403** rol no permitido o trabajo de otro técnico · **404** no existe · **409** regla o transición violada · **422** dato inválido · **501** función P2 aún no implementada.
+- Además de los errores que lista cada ruta, cualquier ruta con cuerpo JSON responde **400** si está mal formado, y cualquier ruta que reciba datos (cuerpo, ruta o parámetros) responde **422** si uno es inválido. FastAPI lee el JSON antes de revisar el token: un JSON mal formado responde 400 aunque falte el token.
 - Importes como texto con dos decimales (`"1500.00"`); fechas ISO 8601 con zona horaria.
 
 ## Rutas (43)
@@ -113,9 +114,16 @@ Contrato de la API que se implementa con FastAPI (ADR-008). Cuando la API esté 
 | GET | `/api/gerencia/ordenes` | Gerente | Listado de órdenes abiertas y cerradas (filtro opcional `estado`). | 200 | 401, 403 | `ListarOrdenes` | CA-030 | P1 |
 | GET | `/api/gerencia/ingresos-del-dia` | Gerente | Total de pagos de contado de hoy (zona America/Monterrey). | 200 | 401, 403 | `ConsultarIngresosDelDia` | CA-031 | P1 |
 | GET | `/api/consulta-de-estado?orden=&placas=` | Público | Consulta pública del cliente (sin token). | 200 | 404, 422 | `ConsultarEstadoDeOrden` | CA-037, CA-038 | P1 |
-| GET | `/api/alertas` | Cualquier empleado | Alertas internas del empleado que hace la petición. | 200 | 401 | `ListarAlertas` | CA-007, CA-008, CA-009, CA-015, CA-017, CA-022, CA-023, CA-032, CA-034, CA-040 | P1 |
+| GET | `/api/alertas` | Cualquier empleado | Alertas internas del empleado que hace la petición (el token de Sistema responde 403: no es un empleado). | 200 | 401, 403 | `ListarAlertas` | CA-007, CA-008, CA-009, CA-015, CA-017, CA-022, CA-023, CA-032, CA-034, CA-040 | P1 |
 
 ## Ejemplos
+
+**Registrar una orden** (`POST /api/ordenes`, token de Asesor) → respuesta `201` con el mensaje de éxito de CA-001:
+
+```json
+{"numero_orden": "OS-0001", "estado": "Recibida", "id_cliente": "CLI-0001", "placas": "ABC123",
+ "fecha_ingreso": "2026-10-05T15:00:00Z", "mensaje": "Orden OS-0001 registrada correctamente."}
+```
 
 **Generar la cotización inicial** (`POST /api/ordenes/AUT-O007/cotizaciones`, token de Asesor):
 
