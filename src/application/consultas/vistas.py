@@ -1,11 +1,22 @@
 """Vistas de lectura (DTO): modelos planos que no exponen los Aggregates (ADR-003).
 
-Los importes viajan como texto con dos decimales («1500.00»).
+Los importes viajan como texto con dos decimales («1500.00»). Las funciones `vista_de_…` arman
+cada vista desde su Aggregate, para que todos los lectores calculen lo mismo.
 """
 from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date, datetime
+
+from domain.clientes.cliente import Cliente
+from domain.cotizaciones.cotizacion import Cotizacion
+from domain.ordenes.estados import EstadoOrden, EstadoTrabajo
+from domain.ordenes.orden_de_servicio import OrdenDeServicio
+from domain.ordenes.solicitud_de_compra import SolicitudDeCompra
+from domain.ordenes.trabajo import Trabajo
+from domain.vehiculos.vehiculo import Vehiculo
+
+_TRABAJOS_ABIERTOS = (EstadoTrabajo.PENDIENTE, EstadoTrabajo.EN_PROGRESO)
 
 
 @dataclass(frozen=True)
@@ -182,3 +193,156 @@ class EstadoDeOrdenVista:
     estado: str
     fecha_ingreso: datetime
     ultima_actualizacion: datetime
+
+
+def vista_de_cliente(cliente: Cliente) -> ClienteVista:
+    responsable = cliente.responsable
+    return ClienteVista(
+        cliente.id_cliente,
+        cliente.nombre,
+        cliente.tipo.value,
+        cliente.telefono,
+        cliente.correo,
+        cliente.empresa,
+        responsable.nombre if responsable else None,
+        responsable.telefono if responsable else None,
+        responsable.correo if responsable else None,
+    )
+
+
+def vista_de_trabajo(trabajo: Trabajo) -> TrabajoVista:
+    return TrabajoVista(
+        trabajo.id,
+        trabajo.descripcion,
+        str(trabajo.importe.monto),
+        trabajo.estado.value,
+        trabajo.tecnico,
+    )
+
+
+def vista_de_solicitud(orden: OrdenDeServicio, solicitud: SolicitudDeCompra) -> SolicitudVista:
+    return SolicitudVista(
+        str(orden.numero),
+        solicitud.id,
+        solicitud.id_trabajo,
+        solicitud.refaccion,
+        solicitud.cantidad,
+        solicitud.estado.value,
+        solicitud.fecha_solicitud,
+        solicitud.fecha_llegada,
+        solicitud.fecha_aviso_al_cliente,
+    )
+
+
+def vista_de_cotizacion(cotizacion: Cotizacion) -> CotizacionVista:
+    decision = cotizacion.decision
+    return CotizacionVista(
+        cotizacion.id,
+        str(cotizacion.numero_orden),
+        cotizacion.tipo.value,
+        str(cotizacion.version),
+        cotizacion.estado.value,
+        str(cotizacion.total.monto),
+        cotizacion.generada_en,
+        cotizacion.fecha_aprobacion_gerencial,
+        cotizacion.observaciones_del_gerente,
+        cotizacion.fecha_presentacion,
+        decision.autorizante.nombre if decision else None,
+        decision.registrada_en if decision else None,
+        tuple(
+            LineaVista(
+                linea.numero,
+                linea.descripcion,
+                str(linea.mano_de_obra.monto),
+                tuple(
+                    RefaccionVista(
+                        refaccion.descripcion,
+                        refaccion.cantidad,
+                        str(refaccion.precio_unitario.monto),
+                        str(refaccion.importe.monto),
+                    )
+                    for refaccion in linea.refacciones
+                ),
+                str(linea.subtotal.monto),
+                linea.decision.value if linea.decision else None,
+            )
+            for linea in cotizacion.lineas
+        ),
+    )
+
+
+def vista_de_expediente(
+    orden: OrdenDeServicio, cotizaciones: list[Cotizacion]
+) -> ExpedienteDeOrdenVista:
+    recepcion = orden.estado_de_recepcion
+    diagnostico = orden.diagnostico
+    pago = orden.pago
+    credito = orden.cargo_a_credito
+    nota = orden.nota_de_responsabilidad
+    return ExpedienteDeOrdenVista(
+        str(orden.numero),
+        orden.estado.value,
+        orden.id_cliente,
+        str(orden.placas),
+        orden.asesor,
+        orden.motivo_de_ingreso,
+        orden.fecha_ingreso,
+        orden.ultima_actualizacion,
+        recepcion.kilometraje if recepcion else None,
+        recepcion.nivel_de_combustible.value if recepcion else None,
+        orden.tecnico_de_diagnostico,
+        diagnostico.fallas if diagnostico else None,
+        diagnostico.recomendaciones if diagnostico else None,
+        orden.rechazo_total,
+        str(orden.total_autorizado.monto),
+        str(pago.monto.monto) if pago else None,
+        pago.forma.value if pago else None,
+        pago.registrado_en if pago else None,
+        str(credito.monto.monto) if credito else None,
+        credito.fecha_vencimiento if credito else None,
+        nota.fecha_salida if nota else None,
+        nota.firmada if nota else False,
+        orden.fecha_entrega,
+        orden.cancelacion.motivo if orden.cancelacion else None,
+        tuple(vista_de_cotizacion(cotizacion) for cotizacion in cotizaciones),
+        tuple(vista_de_trabajo(trabajo) for trabajo in orden.trabajos),
+        tuple(vista_de_solicitud(orden, solicitud) for solicitud in orden.solicitudes),
+        tuple(
+            FallaAdicionalVista(falla.id, falla.descripcion, falla.tecnico, falla.reportada_en)
+            for falla in orden.fallas_adicionales
+        ),
+    )
+
+
+def vista_de_vehiculo(vehiculo: Vehiculo, cliente: Cliente) -> VehiculoConClienteVista:
+    return VehiculoConClienteVista(
+        str(vehiculo.placas),
+        str(vehiculo.vin),
+        vehiculo.marca,
+        vehiculo.modelo,
+        vehiculo.anio,
+        vista_de_cliente(cliente),
+    )
+
+
+def vista_del_panel(orden: OrdenDeServicio, id_tecnico: str) -> OrdenDelPanelVista | None:
+    """Lo que el técnico ve de la orden, o `None` si no tiene nada asignado o no está en la fila."""
+    trabajos = tuple(
+        vista_de_trabajo(trabajo)
+        for trabajo in orden.trabajos
+        if trabajo.tecnico == id_tecnico and trabajo.estado in _TRABAJOS_ABIERTOS
+    )
+    diagnostico_asignado = (
+        orden.estado is EstadoOrden.EN_DIAGNOSTICO and orden.tecnico_de_diagnostico == id_tecnico
+    )
+    if orden.fecha_ingreso_a_fila is None or not (trabajos or diagnostico_asignado):
+        return None
+    return OrdenDelPanelVista(
+        str(orden.numero),
+        orden.estado.value,
+        str(orden.placas),
+        orden.motivo_de_ingreso,
+        orden.fecha_ingreso_a_fila,
+        diagnostico_asignado,
+        trabajos,
+    )
