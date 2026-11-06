@@ -10,6 +10,7 @@ from sqlalchemy import Engine
 from infrastructure.base_de_datos.motor import URL_DE_SQLITE_EN_MEMORIA, crear_motor
 from tests.integration.apoyo_base import (
     ServidorNoPermitido,
+    TallerEnBase,
     crear_esquema,
     ejecutar_script,
     eliminar_esquema,
@@ -17,11 +18,12 @@ from tests.integration.apoyo_base import (
     url_con_esquema,
     url_de_postgresql_para_pruebas,
 )
-from tests.unit.application.escenarios import EMPLEADOS
+from tests.unit.application.escenarios import EMPLEADOS, Taller
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="session", autouse=True)
 def url_postgresql() -> str | None:
+    """Corre antes que cualquier prueba: una base remota detiene toda la ejecución."""
     try:
         return url_de_postgresql_para_pruebas()
     except ServidorNoPermitido as error:
@@ -56,3 +58,16 @@ def motor(motor_postgresql: Engine | None) -> Iterator[Engine]:
     preparar_base(sqlite, EMPLEADOS)
     yield sqlite
     sqlite.dispose()
+
+
+@pytest.fixture
+def taller_en_base(motor: Engine) -> TallerEnBase:
+    return TallerEnBase(motor)
+
+
+@pytest.fixture(params=["memoria", "base_de_datos"])
+def taller(request: pytest.FixtureRequest) -> Taller:
+    """Las pruebas de contrato reciben esta fixture y corren una vez con cada implementación."""
+    if request.param == "memoria":
+        return Taller()
+    return TallerEnBase(request.getfixturevalue("motor"))

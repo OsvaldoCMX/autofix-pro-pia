@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import copy
 
-from application.unidad_de_trabajo import RegistroDeBitacora, UnidadDeTrabajo
+from application.unidad_de_trabajo import RegistroDeBitacora, UnidadDeTrabajo, eventos_de
 from domain.compartido.eventos import EventoDeDominio, RaizDeAgregado
 from infrastructure.memoria.almacen import AlmacenEnMemoria, DatosEnMemoria
 from infrastructure.memoria.repositorios import (
@@ -34,9 +34,7 @@ class UnidadDeTrabajoEnMemoria(UnidadDeTrabajo):
         self.alertas = RepositorioDeAlertasEnMemoria(self._copia)
 
     def _recolectar_eventos(self) -> list[EventoDeDominio]:
-        unicos = {id(agregado): agregado for agregado in self._vistos}
-        eventos = [evento for agregado in unicos.values() for evento in agregado.extraer_eventos()]
-        return sorted(eventos, key=lambda evento: evento.ocurrido_en)
+        return eventos_de(self._vistos)
 
     def _guardar_bitacora(self, registros: list[RegistroDeBitacora]) -> None:
         self._copia.bitacora.extend(registros)

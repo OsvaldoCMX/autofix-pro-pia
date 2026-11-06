@@ -5,7 +5,6 @@ en producción; `metadata.create_all()` solo se usa en las pruebas con SQLite. C
 primero en `scripts/db/esquema.py`, y una prueba de integración compara este archivo con el SQL.
 Los dos CHECK con expresiones regulares (`~`) solo existen en PostgreSQL.
 """
-
 from __future__ import annotations
 
 from datetime import UTC, datetime

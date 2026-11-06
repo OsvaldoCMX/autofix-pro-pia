@@ -12,6 +12,7 @@ Si ocurre un error antes de confirmar, `__exit__` deshace todos los cambios.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from collections.abc import Iterable
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from types import TracebackType
@@ -19,7 +20,7 @@ from typing import Any, Self
 
 from application.puertos import RepositorioDeAlertas
 from domain.clientes.repositorio import RepositorioDeClientes
-from domain.compartido.eventos import EventoDeDominio
+from domain.compartido.eventos import EventoDeDominio, RaizDeAgregado
 from domain.cotizaciones.eventos import EventoDeCotizacion
 from domain.cotizaciones.repositorio import RepositorioDeCotizaciones
 from domain.empleados.repositorio import RepositorioDeEmpleados
@@ -56,6 +57,13 @@ def registro_de_bitacora(evento: EventoDeDominio) -> RegistroDeBitacora:
         {campo: list(v) if isinstance(v, tuple) else v for campo, v in datos.items()},
         evento.ocurrido_en,
     )
+
+
+def eventos_de(agregados: Iterable[RaizDeAgregado]) -> list[EventoDeDominio]:
+    """Extrae los eventos de cada Aggregate una sola vez, en el orden en que ocurrieron."""
+    unicos = {id(agregado): agregado for agregado in agregados}
+    eventos = [evento for agregado in unicos.values() for evento in agregado.extraer_eventos()]
+    return sorted(eventos, key=lambda evento: evento.ocurrido_en)
 
 
 class UnidadDeTrabajo(ABC):

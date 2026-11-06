@@ -8,16 +8,44 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from sqlalchemy import Engine, insert, make_url, text
+from sqlalchemy import Engine, func, insert, make_url, select, text
 
+from application.puertos import PublicadorDeEventos
 from domain.empleados.empleado import Empleado
 from infrastructure.base_de_datos import mapeo
+from infrastructure.base_de_datos.lector import LectorDeOrdenesSqlAlchemy
 from infrastructure.base_de_datos.motor import crear_motor
-from infrastructure.base_de_datos.tablas import SECUENCIAS, empleados, metadata, secuencias
+from infrastructure.base_de_datos.tablas import (
+    SECUENCIAS,
+    empleados,
+    metadata,
+    ordenes,
+    secuencias,
+)
+from infrastructure.base_de_datos.unidad_de_trabajo import UnidadDeTrabajoSqlAlchemy
 from infrastructure.config import Configuracion
+from tests.unit.application.escenarios import Taller
 
 DATABASE = Path(__file__).resolve().parents[2] / "database"
 SERVIDORES_LOCALES = frozenset({"localhost", "127.0.0.1", "::1", "db", "postgres"})
+
+
+class TallerEnBase(Taller):
+    """El mismo taller de las pruebas de aplicación, pero guardando en la base de datos."""
+
+    def __init__(self, motor: Engine, publicador: PublicadorDeEventos | None = None) -> None:
+        super().__init__(publicador)
+        self.motor = motor
+
+    def uow(self) -> UnidadDeTrabajoSqlAlchemy:
+        return UnidadDeTrabajoSqlAlchemy(self.motor)
+
+    def lector(self) -> LectorDeOrdenesSqlAlchemy:
+        return LectorDeOrdenesSqlAlchemy(self.motor)
+
+    def ordenes_registradas(self) -> int:
+        with self.motor.connect() as conexion:
+            return conexion.execute(select(func.count()).select_from(ordenes)).scalar_one()
 
 
 class ServidorNoPermitido(Exception):

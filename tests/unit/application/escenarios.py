@@ -25,6 +25,7 @@ from application.comandos import (
     SolicitarRefaccion,
     TrabajoPropuesto,
 )
+from application.consultas.lector import LectorDeOrdenes
 from application.puertos import PublicadorDeEventos, Reloj
 from application.resultados import ResultadoDeDecision
 from application.servicios.servicio_de_aprobacion_gerencial import ServicioDeAprobacionGerencial
@@ -39,6 +40,7 @@ from application.servicios.servicio_de_refacciones import ServicioDeRefacciones
 from application.servicios.servicio_de_reparacion import ServicioDeReparacion
 from application.servicios.servicio_de_retiro import ServicioDeRetiro
 from application.servicios.servicio_de_revision_de_plazos import ServicioDeRevisionDePlazos
+from application.unidad_de_trabajo import UnidadDeTrabajo
 from domain.clientes.cliente import TipoCliente
 from domain.cotizaciones.valores import RolDeAutorizante
 from domain.empleados.empleado import Empleado, RolDeEmpleado
@@ -95,8 +97,14 @@ class Taller:
         poner_hora(self.reloj, AHORA)
         self.publicador = publicador or Mock(spec=PublicadorDeEventos)
 
-    def uow(self) -> UnidadDeTrabajoEnMemoria:
+    def uow(self) -> UnidadDeTrabajo:
         return UnidadDeTrabajoEnMemoria(self.almacen)
+
+    def lector(self) -> LectorDeOrdenes:
+        return LectorEnMemoria(self.almacen)
+
+    def ordenes_registradas(self) -> int:
+        return len(self.datos.ordenes)
 
     @property
     def datos(self) -> DatosEnMemoria:
@@ -151,12 +159,12 @@ class Taller:
 
     @property
     def revision(self) -> ServicioDeRevisionDePlazos:
-        return ServicioDeRevisionDePlazos(self.uow(), LectorEnMemoria(self.almacen), self.reloj)
+        return ServicioDeRevisionDePlazos(self.uow(), self.lector(), self.reloj)
 
 
 # ------------------------------------------------------------------ pasos para llegar a un estado
 def recibida(taller: Taller, flotilla: bool = False) -> str:
-    consecutivo = len(taller.datos.ordenes) + 1
+    consecutivo = taller.ordenes_registradas() + 1
     resultado = taller.recepcion.registrar_orden(
         RegistrarOrden(
             ASESOR,
