@@ -2,8 +2,80 @@
 from __future__ import annotations
 
 from datetime import datetime
+from decimal import Decimal
 
-from api.esquemas.comunes import ModeloDeSalida
+from api.esquemas.comunes import (
+    EnteroPositivo,
+    Importe,
+    ModeloDeEntrada,
+    ModeloDeSalida,
+    TextoDeRefaccion,
+)
+from application.comandos import RefaccionPropuesta, TrabajoPropuesto
+
+
+class NuevaRefaccion(ModeloDeEntrada):
+    descripcion: TextoDeRefaccion
+    cantidad: EnteroPositivo
+    precio_unitario: Importe
+
+    def a_comando(self) -> RefaccionPropuesta:
+        return RefaccionPropuesta(
+            self.descripcion, self.cantidad, Decimal(self.precio_unitario)
+        )
+
+
+class NuevoTrabajo(ModeloDeEntrada):
+    numero: EnteroPositivo
+    descripcion: str
+    mano_de_obra: Importe
+    refacciones: list[NuevaRefaccion] = []
+
+    def a_comando(self) -> TrabajoPropuesto:
+        return TrabajoPropuesto(
+            self.numero,
+            self.descripcion,
+            Decimal(self.mano_de_obra),
+            tuple(refaccion.a_comando() for refaccion in self.refacciones),
+        )
+
+
+class DatosDeCotizacion(ModeloDeEntrada):
+    trabajos: list[NuevoTrabajo]
+
+    def a_trabajos(self) -> tuple[TrabajoPropuesto, ...]:
+        return tuple(trabajo.a_comando() for trabajo in self.trabajos)
+
+
+class DatosDeRevision(ModeloDeEntrada):
+    aprobada: bool
+    observaciones: str = ""
+
+
+class CotizacionRegistrada(ModeloDeSalida):
+    """Las fechas solo aparecen cuando ya existen, como en el ejemplo de `docs/api/README.md`."""
+
+    id: str
+    numero_orden: str
+    version: str
+    tipo: str
+    estado: str
+    total: str
+    fecha_presentacion: datetime | None = None
+    fecha_aprobacion_gerencial: datetime | None = None
+
+
+class RecontactoRegistrado(ModeloDeSalida):
+    id_cotizacion: str
+    estado: str
+    registrado_en: datetime
+
+
+class CotizacionPorAprobar(ModeloDeSalida):
+    id_cotizacion: str
+    numero_orden: str
+    version: str
+    total: str
 
 
 class RefaccionDeLinea(ModeloDeSalida):

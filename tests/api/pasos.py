@@ -50,6 +50,8 @@ CLIENTE_DE_FLOTILLA = {
 }
 
 DIAGNOSTICO = {"fallas": "Balatas gastadas", "recomendaciones": "Cambiar balatas"}
+AUTORIZANTE_PARTICULAR = ("Luis Peña", "Cliente")
+AUTORIZANTE_DE_FLOTILLA = ("Ana Torres", "Responsable de Flotilla")
 
 _consecutivo = count(1)
 
@@ -120,3 +122,66 @@ def diagnosticada(cliente: TestClient, flotilla: bool = False) -> str:
     numero = en_diagnostico(cliente, flotilla)
     exigir(cliente.post(f"/api/ordenes/{numero}/diagnostico", json=DIAGNOSTICO, headers=TECNICO), 201)
     return numero
+
+
+def trabajos(*importes: str) -> dict[str, Any]:
+    """Cuerpo de una cotización con un trabajo de mano de obra por importe."""
+    return {
+        "trabajos": [
+            {"numero": numero, "descripcion": f"Trabajo {numero}", "mano_de_obra": importe}
+            for numero, importe in enumerate(importes, start=1)
+        ]
+    }
+
+
+def cotizada(
+    cliente: TestClient, flotilla: bool = False, importes: tuple[str, ...] = ("1000.00", "2000.00")
+) -> tuple[str, str]:
+    """Devuelve el número de la orden y el id de su cotización inicial."""
+    numero = diagnosticada(cliente, flotilla)
+    cotizacion = exigir(
+        cliente.post(f"/api/ordenes/{numero}/cotizaciones", json=trabajos(*importes), headers=ASESOR),
+        201,
+    )
+    return numero, cotizacion["id"]
+
+
+def por_aprobar(cliente: TestClient) -> tuple[str, str]:
+    """Orden con una cotización inicial de $20,000 que espera al Gerente."""
+    return cotizada(cliente, importes=("20000.00",))
+
+
+def presentada(cliente: TestClient) -> tuple[str, str]:
+    numero, id_cotizacion = cotizada(cliente)
+    exigir(cliente.post(f"/api/cotizaciones/{id_cotizacion}/presentacion", headers=ASESOR), 200)
+    return numero, id_cotizacion
+
+
+def decision(lineas: list[int], flotilla: bool = False) -> dict[str, Any]:
+    nombre, rol = AUTORIZANTE_DE_FLOTILLA if flotilla else AUTORIZANTE_PARTICULAR
+    return {"lineas_autorizadas": lineas, "nombre_del_autorizante": nombre, "rol_del_autorizante": rol}
+
+
+def decidir(
+    cliente: TestClient, id_cotizacion: str, lineas: list[int], flotilla: bool = False
+) -> dict[str, Any]:
+    return exigir(
+        cliente.post(
+            f"/api/cotizaciones/{id_cotizacion}/decision",
+            json=decision(lineas, flotilla),
+            headers=ASESOR,
+        ),
+        200,
+    )
+
+
+def autorizada(
+    cliente: TestClient, flotilla: bool = False, lineas: tuple[int, ...] = (1, 2)
+) -> tuple[str, str]:
+    numero, id_cotizacion = cotizada(cliente, flotilla)
+    decidir(cliente, id_cotizacion, list(lineas), flotilla)
+    return numero, id_cotizacion
+
+
+def revisar_plazos(cliente: TestClient) -> dict[str, Any]:
+    return exigir(cliente.post("/api/revisiones/plazos", headers=SISTEMA), 200)

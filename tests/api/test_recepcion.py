@@ -12,7 +12,9 @@ from tests.api.pasos import (
     GERENTE,
     ID_ASESOR,
     TECNICO,
+    cotizada,
     datos_de_orden,
+    decision,
     exigir,
     recibida,
 )
@@ -153,6 +155,31 @@ def test_ca_028_flotilla_sin_responsable_responde_422(cliente: TestClient) -> No
 
     assert respuesta.status_code == 422
     assert "Responsable de Flotilla" in respuesta.json()["detalle"]
+
+
+def test_ca_029_flotilla_rechaza_al_conductor_como_autorizante(cliente: TestClient) -> None:
+    _, id_cotizacion = cotizada(cliente, flotilla=True)
+
+    conductor = cliente.post(
+        f"/api/cotizaciones/{id_cotizacion}/decision",
+        json={
+            "lineas_autorizadas": [1, 2],
+            "nombre_del_autorizante": "Conductor del Camión",
+            "rol_del_autorizante": "Cliente",
+        },
+        headers=ASESOR,
+    )
+    responsable = cliente.post(
+        f"/api/cotizaciones/{id_cotizacion}/decision",
+        json=decision([1, 2], flotilla=True),
+        headers=ASESOR,
+    )
+
+    assert conductor.status_code == 409
+    assert conductor.json()["error"] == "AutorizanteNoValido"
+    assert responsable.status_code == 200
+    detalle = exigir(cliente.get(f"/api/cotizaciones/{id_cotizacion}", headers=ASESOR), 200)
+    assert detalle["autorizante"] == "Ana Torres"
 
 
 def test_buscar_clientes_con_tipo_desconocido_responde_422(cliente: TestClient) -> None:

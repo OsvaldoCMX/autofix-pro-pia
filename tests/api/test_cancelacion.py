@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from fastapi.testclient import TestClient
 
-from tests.api.pasos import ASESOR, TECNICO, en_diagnostico, exigir, panel_de, recibida
+from tests.api.pasos import ASESOR, TECNICO, cotizada, en_diagnostico, exigir, panel_de, recibida
 
 
 def test_ca_044_cancela_orden_recibida_con_motivo(cliente: TestClient) -> None:
@@ -31,6 +31,18 @@ def test_ca_044_quita_la_orden_del_panel_del_tecnico(cliente: TestClient) -> Non
 
     assert respuesta.status_code == 200
     assert panel_de(cliente, TECNICO) == []
+
+
+def test_ca_045_orden_con_cotizacion_no_se_cancela_responde_409(cliente: TestClient) -> None:
+    numero, _ = cotizada(cliente)
+
+    respuesta = cliente.post(
+        f"/api/ordenes/{numero}/cancelacion", json={"motivo": "Desistió"}, headers=ASESOR
+    )
+
+    assert respuesta.status_code == 409
+    assert respuesta.json()["error"] == "CancelacionNoPermitida"
+    assert "se registra el rechazo total" in respuesta.json()["detalle"]
 
 
 def test_rn_19_cancelar_sin_motivo_responde_422(cliente: TestClient) -> None:

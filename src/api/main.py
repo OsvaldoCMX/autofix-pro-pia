@@ -8,13 +8,25 @@ from fastapi import Depends, FastAPI
 from api.dependencias import Contenedor, crear_contenedor
 from api.errores import registrar_manejadores
 from api.esquemas.comunes import rechazar_caracteres_no_validos
-from api.rutas import alertas, cancelacion, diagnostico, recepcion, salud
+from api.rutas import (
+    alertas,
+    autorizacion,
+    cancelacion,
+    cotizaciones,
+    diagnostico,
+    recepcion,
+    revisiones,
+    salud,
+)
 
 ROUTERS = (
     salud.router,
+    revisiones.router,
     recepcion.router,
     cancelacion.router,
     diagnostico.router,
+    cotizaciones.router,
+    autorizacion.router,
     alertas.router,
 )
 

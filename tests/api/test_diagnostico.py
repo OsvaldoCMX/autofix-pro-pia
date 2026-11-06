@@ -17,6 +17,7 @@ from tests.api.pasos import (
     SISTEMA,
     TECNICO,
     alertas_de,
+    cotizada,
     en_diagnostico,
     expediente_de,
     panel_de,
@@ -98,6 +99,29 @@ def test_ca_032_otro_tecnico_no_registra_el_diagnostico_responde_403(
 
     assert respuesta.status_code == 403
     assert respuesta.json()["error"] == "TrabajoDeOtroTecnico"
+
+
+def test_ca_033_diagnostico_no_cambia_despues_de_cotizar_responde_409(
+    cliente: TestClient,
+) -> None:
+    numero, _ = cotizada(cliente)
+
+    respuesta = cliente.post(
+        f"/api/ordenes/{numero}/diagnostico", json=DIAGNOSTICO, headers=TECNICO
+    )
+
+    assert respuesta.status_code == 409
+    assert respuesta.json()["error"] == "DiagnosticoNoModificable"
+
+
+def test_rn_03_mensaje_indica_registrar_falla_adicional(cliente: TestClient) -> None:
+    numero, _ = cotizada(cliente)
+
+    respuesta = cliente.post(
+        f"/api/ordenes/{numero}/diagnostico", json=DIAGNOSTICO, headers=TECNICO
+    )
+
+    assert "falla adicional" in respuesta.json()["detalle"]
 
 
 def test_ca_013_panel_ordenado_por_la_fila_de_trabajo(cliente: TestClient, reloj: Mock) -> None:
