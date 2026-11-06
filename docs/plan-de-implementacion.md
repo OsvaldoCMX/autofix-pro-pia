@@ -24,7 +24,7 @@ Orden en que se construye el sistema a partir de esta documentación. Cada fase 
 | 6 | Pruebas con los datos del profesor y trazabilidad | Terminada | 05/11/2026 | `docs: cerrar la Fase 6` |
 | 7 | Docker Compose | Terminada | 05/11/2026 | `docs: cerrar la Fase 7` |
 | 8 | CI/CD con GitHub Actions | Terminada | 05/11/2026 | `docs: cerrar la Fase 8` |
-| 9 | Despliegue en Render con Supabase | Pendiente | | |
+| 9 | Despliegue en Render con Supabase | Terminada | 06/11/2026 | `docs: agregar la URL de producción` |
 | 10 | P2: documentos PDF y fotos de daños | Pendiente | | |
 | 11 | README técnico, evidencias y cierre | Pendiente | | |
 
