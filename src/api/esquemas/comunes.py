@@ -62,6 +62,13 @@ class ModeloDeSalida(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class EstadoDeLaOrden(ModeloDeSalida):
+    """Para las acciones cuyo único resultado es el nuevo estado de la orden."""
+
+    numero_orden: str
+    estado: str
+
+
 class RespuestaDeError(BaseModel):
     """Formato único de los errores de la API."""
 

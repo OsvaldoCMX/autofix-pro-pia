@@ -17,7 +17,9 @@ MENSAJE_SECRETO = "postgresql://usuario:clave-secreta@servidor/base"
 
 
 def _subclases_de_error() -> set[type[ErrorDeDominio]]:
-    return set(ErrorDeDominio.__subclasses__())
+    return {
+        tipo for tipo in ErrorDeDominio.__subclasses__() if tipo.__module__ == ErrorDeDominio.__module__
+    }
 
 
 def _codigos_documentados() -> dict[str, int]:

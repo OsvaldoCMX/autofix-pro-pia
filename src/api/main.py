@@ -8,9 +8,9 @@ from fastapi import Depends, FastAPI
 from api.dependencias import Contenedor, crear_contenedor
 from api.errores import registrar_manejadores
 from api.esquemas.comunes import rechazar_caracteres_no_validos
-from api.rutas import salud
+from api.rutas import cancelacion, recepcion, salud
 
-ROUTERS = (salud.router,)
+ROUTERS = (salud.router, recepcion.router, cancelacion.router)
 
 
 def crear_app(contenedor: Contenedor | None = None) -> FastAPI:
