@@ -207,11 +207,7 @@ def _plantilla_de(tipo: str, ubicacion: Sequence[str | int], contexto: Mapping[s
 
 def _opciones_en_espanol(esperado: str) -> str:
     """Pydantic escribe `'A', 'B' or 'C'`; aquí queda «A», «B» o «C»."""
-    opciones = [f"«{opcion}»" for opcion in re.findall(r"'([^']*)'", esperado)]
-    if not opciones:
-        return esperado
-    *primeras, ultima = opciones
-    return f"{', '.join(primeras)} o {ultima}" if primeras else ultima
+    return re.sub(r"'([^']*)'", r"«\1»", esperado).replace(" or ", " o ")
 
 
 def registrar_manejadores(app: FastAPI) -> None:

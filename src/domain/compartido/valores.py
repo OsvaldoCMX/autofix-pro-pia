@@ -9,6 +9,7 @@ from domain.compartido.errores import ValorInvalido
 
 _CENTAVOS = Decimal("0.01")
 _IMPORTE_MAXIMO = Decimal("9999999999.99")  # NUMERIC(12,2) en la base de datos
+_IMPORTE_EXCEDIDO = "El importe es mayor al máximo permitido. Revise la cantidad capturada."
 _LARGO_MAXIMO_DE_PLACAS = 15  # VARCHAR(15) en la base de datos
 _FORMATO_DE_PLACAS = re.compile(r"[A-Z0-9]+")
 _FORMATO_DE_VIN = re.compile(r"[A-HJ-NPR-Z0-9]{17}")
@@ -38,9 +39,9 @@ def _redondear(monto: Decimal) -> Decimal:
     try:
         redondeado = monto.quantize(_CENTAVOS, rounding=ROUND_HALF_UP)
     except InvalidOperation as error:
-        raise ValorInvalido("El importe es mayor al máximo permitido. Revise la cantidad capturada.") from error
+        raise ValorInvalido(_IMPORTE_EXCEDIDO) from error
     if redondeado > _IMPORTE_MAXIMO:
-        raise ValorInvalido("El importe es mayor al máximo permitido. Revise la cantidad capturada.")
+        raise ValorInvalido(_IMPORTE_EXCEDIDO)
     return redondeado
 
 
