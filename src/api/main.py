@@ -13,6 +13,7 @@ from api.rutas import (
     autorizacion,
     caja,
     cancelacion,
+    consultas,
     cotizaciones,
     diagnostico,
     entrega,
@@ -37,6 +38,7 @@ ROUTERS = (
     retiro.router,
     caja.router,
     entrega.router,
+    consultas.router,
     alertas.router,
 )
 
