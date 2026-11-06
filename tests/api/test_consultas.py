@@ -26,7 +26,10 @@ from tests.unit.application.escenarios import AHORA, poner_hora
 ZONA = ZoneInfo("America/Monterrey")
 SIN_COINCIDENCIA = {
     "error": "OrdenNoEncontrada",
-    "detalle": "No se encontró una orden con esos datos",
+    "detalle": (
+        "No se encontró una orden con esos datos. "
+        "Revise el número de orden y las placas e intente de nuevo."
+    ),
     "codigo": 404,
 }
 

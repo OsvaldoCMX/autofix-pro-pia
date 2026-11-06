@@ -425,13 +425,19 @@ def test_ca_037_muestra_estado_y_fechas(taller: Taller) -> None:
     assert vista.ultima_actualizacion == AHORA
 
 
+MENSAJE_SIN_COINCIDENCIA = (
+    "No se encontró una orden con esos datos. "
+    "Revise el número de orden y las placas e intente de nuevo."
+)
+
+
 def test_ca_038_no_coincide_con_mensaje_exacto(taller: Taller) -> None:
     with pytest.raises(OrdenNoEncontrada) as error:
         ManejadorConsultarEstadoDeOrden(_lector(taller)).ejecutar(
             ConsultarEstadoDeOrden("OS-9999", "XXX000")
         )
 
-    assert str(error.value) == "No se encontró una orden con esos datos"
+    assert str(error.value) == MENSAJE_SIN_COINCIDENCIA
 
 
 def test_rn_20_folio_valido_con_otras_placas_no_revela_nada(taller: Taller) -> None:
@@ -442,7 +448,7 @@ def test_rn_20_folio_valido_con_otras_placas_no_revela_nada(taller: Taller) -> N
             ConsultarEstadoDeOrden(numero, "XXX000")
         )
 
-    assert str(error.value) == "No se encontró una orden con esos datos"
+    assert str(error.value) == MENSAJE_SIN_COINCIDENCIA
 
 
 def test_rn_20_datos_vacios_son_invalidos(taller: Taller) -> None:

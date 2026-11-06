@@ -48,6 +48,8 @@ from domain.ordenes.valores import (
 )
 
 _O = EstadoOrden
+_ORDEN_CERRADA = (_O.CERRADA, _O.CERRADA_SIN_REPARACION)
+_REGRESO_DEL_VEHICULO = "Cuando regrese, reactive la orden para continuar."
 
 
 class OrdenDeServicio(RaizDeAgregado):
@@ -139,6 +141,11 @@ class OrdenDeServicio(RaizDeAgregado):
 
     # ------------------------------------------------------------------ diagnóstico
     def asignar_tecnico_para_diagnostico(self, tecnico: str, fecha: datetime) -> None:
+        if not MAQUINA_DE_ORDEN.permite(self.estado, _O.EN_DIAGNOSTICO):
+            raise TransicionDeEstadoNoPermitida(
+                f"Solo se asigna técnico de diagnóstico a una orden «{_O.RECIBIDA.value}»; "
+                f"la orden {self.numero} está en «{self.estado.value}»."
+            )
         self._cambiar_estado(_O.EN_DIAGNOSTICO, fecha)
         self.tecnico_de_diagnostico = tecnico
         self._registrar(ev.TecnicoAsignadoParaDiagnostico(fecha, str(self.numero), tecnico))
@@ -179,7 +186,17 @@ class OrdenDeServicio(RaizDeAgregado):
     def marcar_cotizada(self, fecha: datetime) -> None:
         if self.diagnostico is None:
             raise DiagnosticoRequerido(
-                "No se puede cotizar una orden sin diagnóstico registrado por el técnico."
+                f"Todavía no se puede cotizar la orden {self.numero}: "
+                "falta que el técnico registre el diagnóstico."
+            )
+        if self.estado is _O.COTIZADA:
+            raise TransicionDeEstadoNoPermitida(
+                f"La orden {self.numero} ya tiene su cotización inicial."
+            )
+        if not MAQUINA_DE_ORDEN.permite(self.estado, _O.COTIZADA):
+            raise TransicionDeEstadoNoPermitida(
+                f"Solo se cotiza una orden «{_O.EN_DIAGNOSTICO.value}»; "
+                f"la orden {self.numero} está en «{self.estado.value}»."
             )
         self._cambiar_estado(_O.COTIZADA, fecha)
         self.cotizada = True
@@ -225,9 +242,14 @@ class OrdenDeServicio(RaizDeAgregado):
     # ------------------------------------------------------------------ reparación
     def asignar_trabajos(self, ids: Iterable[int], tecnico: str, fecha: datetime) -> None:
         if not any(trabajo.esta_autorizado for trabajo in self._trabajos.values()):
-            raise TrabajoNoAutorizado(f"La orden {self.numero} no tiene trabajos autorizados.")
+            raise TrabajoNoAutorizado(
+                f"La orden {self.numero} no tiene trabajos autorizados: "
+                "el cliente rechazó la cotización o aún no decide."
+            )
         if self.estado is _O.PAUSADA_POR_RETIRO_DE_VEHICULO:
-            raise TrabajoNoPermitido("No se asignan trabajos: el vehículo no está en el taller.")
+            raise TrabajoNoPermitido(
+                f"No se asignan trabajos: el vehículo no está en el taller. {_REGRESO_DEL_VEHICULO}"
+            )
         seleccion = tuple(self._trabajo(id_trabajo) for id_trabajo in ids)
         if not seleccion:
             raise ValorInvalido("Debe seleccionar al menos un trabajo para asignar.")
@@ -255,9 +277,10 @@ class OrdenDeServicio(RaizDeAgregado):
         self._exigir_vehiculo_en_el_taller()
         if self._es_el_ultimo_abierto(trabajo) and self._hay_solicitudes_pendientes():
             raise TransicionDeEstadoNoPermitida(
-                "No se puede completar el último trabajo mientras haya refacciones pendientes: "
-                "la orden no puede quedar lista para entrega."
+                "No se puede completar el último trabajo mientras haya refacciones pendientes. "
+                "Podrá completarlo cuando se registre su llegada."
             )
+        self._exigir_completable(trabajo)
         trabajo.completar()
         self.ultima_actualizacion = fecha
         self._pasar_a_lista_si_corresponde(fecha)
@@ -326,7 +349,11 @@ class OrdenDeServicio(RaizDeAgregado):
         return self.nota_de_responsabilidad
 
     def confirmar_firma_de_nota(self, fecha: datetime) -> None:
-        MAQUINA_DE_ORDEN.validar(self.estado, _O.PAUSADA_POR_RETIRO_DE_VEHICULO)
+        if not MAQUINA_DE_ORDEN.permite(self.estado, _O.PAUSADA_POR_RETIRO_DE_VEHICULO):
+            raise TransicionDeEstadoNoPermitida(
+                f"Solo se confirma la firma de una orden «{_O.EN_ESPERA_DE_REFACCION.value}» "
+                f"con salida registrada; la orden {self.numero} está en «{self.estado.value}»."
+            )
         if self.nota_de_responsabilidad is None:
             raise TransicionDeEstadoNoPermitida(
                 "Primero debe registrarse la salida para generar la Nota de Responsabilidad."
@@ -353,15 +380,15 @@ class OrdenDeServicio(RaizDeAgregado):
 
     # ------------------------------------------------------------------ caja
     def registrar_pago(self, pago: Pago) -> None:
-        MAQUINA_DE_ORDEN.validar(self.estado, _O.PAGADA)
+        self._exigir_cobrable(_O.PAGADA)
         if self.es_cliente_de_flotilla:
             raise PagoNoPermitido(
-                "Las órdenes de flotilla se registran como cargo a crédito, "
-                "no como pago de contado."
+                "Las órdenes de flotilla no se pagan de contado: registre el cargo a crédito."
             )
         if pago.monto != self.total_autorizado:
             raise PagoNoPermitido(
-                f"El pago debe cubrir el total autorizado de {self.total_autorizado}."
+                "El monto no coincide: el pago debe cubrir el total autorizado de "
+                f"{self.total_autorizado}. Corríjalo e intente de nuevo."
             )
         self._cambiar_estado(_O.PAGADA, pago.registrado_en)
         self.pago = pago
@@ -372,9 +399,12 @@ class OrdenDeServicio(RaizDeAgregado):
         )
 
     def registrar_cargo_a_credito(self, fecha: datetime) -> None:
-        MAQUINA_DE_ORDEN.validar(self.estado, _O.POR_COBRAR_CREDITO)
+        self._exigir_cobrable(_O.POR_COBRAR_CREDITO)
         if not self.es_cliente_de_flotilla:
-            raise PagoNoPermitido("El cargo a crédito solo aplica a clientes de flotilla.")
+            raise PagoNoPermitido(
+                "El cargo a crédito solo aplica a clientes de flotilla. "
+                "Para este cliente, registre el pago de contado."
+            )
         self._cambiar_estado(_O.POR_COBRAR_CREDITO, fecha)
         self.cargo_a_credito = CargoACredito(self.total_autorizado, fecha)
         self._registrar(
@@ -384,6 +414,11 @@ class OrdenDeServicio(RaizDeAgregado):
     # ------------------------------------------------------------------ entrega y cancelación
     def entregar(self, fecha: datetime) -> None:
         self._exigir_que_pueda_entregarse()
+        if not MAQUINA_DE_ORDEN.permite(self.estado, _O.CERRADA):
+            raise TransicionDeEstadoNoPermitida(
+                f"El cliente de la orden {self.numero} rechazó toda la cotización: "
+                "use «Entregar sin reparación»."
+            )
         self._cambiar_estado(_O.CERRADA, fecha)
         self.fecha_entrega = fecha
         vence = None
@@ -394,17 +429,18 @@ class OrdenDeServicio(RaizDeAgregado):
 
     def entregar_sin_reparacion(self, fecha: datetime) -> None:
         self._exigir_que_pueda_entregarse()
+        if not MAQUINA_DE_ORDEN.permite(self.estado, _O.CERRADA_SIN_REPARACION):
+            raise TransicionDeEstadoNoPermitida(
+                f"La orden {self.numero} ya tiene pago o cargo a crédito: "
+                "registre la entrega normal, no «Entregar sin reparación»."
+            )
         self._cambiar_estado(_O.CERRADA_SIN_REPARACION, fecha)
         self.fecha_entrega = fecha
         self._registrar(ev.VehiculoEntregado(fecha, str(self.numero), sin_reparacion=True))
 
     def cancelar(self, motivo: str, asesor: str, fecha: datetime) -> None:
         if not PuedeCancelarse().es_satisfecha_por(self):
-            raise CancelacionNoPermitida(
-                f"La orden {self.numero} (estado «{self.estado.value}») no se puede cancelar: "
-                "una orden con cotización no se cancela; si el cliente no desea la reparación, "
-                "se registra el rechazo total de la cotización."
-            )
+            raise CancelacionNoPermitida(self._motivo_de_no_cancelar())
         cancelacion = Cancelacion(motivo, fecha, asesor)
         self._cambiar_estado(_O.CANCELADA, fecha)
         self.cancelacion = cancelacion
@@ -467,14 +503,26 @@ class OrdenDeServicio(RaizDeAgregado):
     def _exigir_tecnico_asignado(self, trabajo: Trabajo, tecnico: str) -> None:
         if trabajo.tecnico != tecnico:
             raise TrabajoDeOtroTecnico(
-                f"El trabajo «{trabajo.descripcion}» no está asignado a este técnico."
+                f"El trabajo «{trabajo.descripcion}» no está asignado a usted. "
+                "Solicite que se lo asignen."
             )
 
     def _exigir_vehiculo_en_el_taller(self) -> None:
         if self.estado is _O.PAUSADA_POR_RETIRO_DE_VEHICULO:
             raise TrabajoNoPermitido(
                 f"El vehículo de la orden {self.numero} no está en el taller: "
-                "se retiró con Nota de Responsabilidad."
+                f"se retiró con Nota de Responsabilidad. {_REGRESO_DEL_VEHICULO}"
+            )
+
+    def _exigir_completable(self, trabajo: Trabajo) -> None:
+        if trabajo.estado is EstadoTrabajo.PENDIENTE:
+            raise TransicionDeEstadoNoPermitida(
+                f"El trabajo «{trabajo.descripcion}» aún no se inicia: "
+                "inícielo antes de marcarlo como completado."
+            )
+        if trabajo.esta_completado:
+            raise TransicionDeEstadoNoPermitida(
+                f"El trabajo «{trabajo.descripcion}» ya está completado."
             )
 
     def _rechazar_inicio(self, trabajo: Trabajo, tecnico: str) -> NoReturn:
@@ -487,11 +535,74 @@ class OrdenDeServicio(RaizDeAgregado):
 
     def _exigir_que_pueda_entregarse(self) -> None:
         if not PuedeEntregarse().es_satisfecha_por(self):
-            raise EntregaNoPermitida(
-                f"No se puede entregar el vehículo de la orden {self.numero} "
-                f"(estado «{self.estado.value}»): primero debe registrarse el pago "
-                "o el cargo a crédito."
+            raise EntregaNoPermitida(self._motivo_de_no_entregar())
+
+    def _motivo_de_no_entregar(self) -> str:
+        """El mensaje solo pide el pago si la orden todavía puede llegar a cobrarse."""
+        if self.estado is _O.CANCELADA:
+            return (
+                f"La orden {self.numero} está cancelada, "
+                "así que ya no se registra su entrega ni su cobro."
             )
+        if self.estado in _ORDEN_CERRADA:
+            return (
+                f"El vehículo de la orden {self.numero} ya fue entregado; "
+                "no hay nada más que registrar."
+            )
+        inicio = f"El vehículo de la orden {self.numero} todavía no se puede entregar: "
+        if self.estado is _O.LISTA_PARA_ENTREGA:
+            return f"{inicio}primero debe registrarse el pago o el cargo a crédito en Caja."
+        if self.estado is _O.COTIZADA:
+            return (
+                f"{inicio}el cliente aún no decide sobre la cotización. "
+                "Si la rechaza por completo, registre el rechazo total; si la autoriza, "
+                "al terminar la reparación primero debe registrarse el pago o el cargo a crédito."
+            )
+        return (
+            f"{inicio}su servicio sigue en proceso (estado «{self.estado.value}»). "
+            f"Cuando esté «{_O.LISTA_PARA_ENTREGA.value}», "
+            "primero debe registrarse el pago o el cargo a crédito."
+        )
+
+    def _exigir_cobrable(self, nuevo: EstadoOrden) -> None:
+        if not MAQUINA_DE_ORDEN.permite(self.estado, nuevo):
+            raise TransicionDeEstadoNoPermitida(self._motivo_de_no_cobrar())
+
+    def _motivo_de_no_cobrar(self) -> str:
+        if self.estado is _O.CANCELADA:
+            return f"La orden {self.numero} está cancelada: no genera ningún cobro."
+        if self.estado in _ORDEN_CERRADA:
+            return f"La orden {self.numero} ya está cerrada: no hay cobro pendiente."
+        if self.estado is _O.PAGADA:
+            return f"La orden {self.numero} ya tiene su pago registrado."
+        if self.estado is _O.POR_COBRAR_CREDITO:
+            return f"La orden {self.numero} ya tiene registrado un cargo a crédito."
+        return (
+            f"Todavía no se puede cobrar la orden {self.numero}: debe estar "
+            f"«{_O.LISTA_PARA_ENTREGA.value}» y ahora está en «{self.estado.value}»."
+        )
+
+    def _motivo_de_no_cancelar(self) -> str:
+        """Solo sugiere el rechazo total mientras todavía se puede registrar (CA-045)."""
+        if self.estado is _O.CANCELADA:
+            return f"La orden {self.numero} ya está cancelada."
+        if self.estado in _ORDEN_CERRADA:
+            return (
+                f"La orden {self.numero} ya está cerrada y su vehículo fue entregado: "
+                "no se puede cancelar."
+            )
+        if self.estado is not _O.COTIZADA:
+            return (
+                f"La orden {self.numero} (estado «{self.estado.value}») no se puede cancelar: "
+                "el cliente ya autorizó trabajos."
+            )
+        inicio = f"La orden {self.numero} ya tiene cotización, por lo que no se cancela. "
+        if self.rechazo_total:
+            return f"{inicio}El rechazo total ya está registrado: use «Entregar sin reparación»."
+        return (
+            f"{inicio}Si el cliente no desea la reparación, "
+            "se registra el rechazo total de la cotización."
+        )
 
     def _hay_solicitudes_pendientes(self) -> bool:
         return any(solicitud.esta_pendiente for solicitud in self._solicitudes.values())

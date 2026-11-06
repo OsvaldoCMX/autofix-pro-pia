@@ -38,9 +38,9 @@ def _redondear(monto: Decimal) -> Decimal:
     try:
         redondeado = monto.quantize(_CENTAVOS, rounding=ROUND_HALF_UP)
     except InvalidOperation as error:
-        raise ValorInvalido("El importe excede el máximo permitido.") from error
+        raise ValorInvalido("El importe es mayor al máximo permitido. Revise la cantidad capturada.") from error
     if redondeado > _IMPORTE_MAXIMO:
-        raise ValorInvalido("El importe excede el máximo permitido.")
+        raise ValorInvalido("El importe es mayor al máximo permitido. Revise la cantidad capturada.")
     return redondeado
 
 
@@ -53,7 +53,7 @@ class Dinero:
     def __post_init__(self) -> None:
         monto = _a_decimal_finito(self.monto)
         if monto < 0:
-            raise ValorInvalido("Un importe en MXN no puede ser negativo.")
+            raise ValorInvalido("Un importe no puede ser negativo.")
         object.__setattr__(self, "monto", _redondear(monto))
 
     @staticmethod
@@ -117,7 +117,7 @@ class VIN:
     def __post_init__(self) -> None:
         normalizado = self.valor.strip().upper()
         if not _FORMATO_DE_VIN.fullmatch(normalizado):
-            raise ValorInvalido("El VIN debe tener 17 caracteres alfanuméricos, sin I, O ni Q.")
+            raise ValorInvalido("El VIN debe tener 17 letras y números, sin las letras I, O ni Q.")
         object.__setattr__(self, "valor", normalizado)
 
     def __str__(self) -> str:

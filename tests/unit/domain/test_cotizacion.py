@@ -410,7 +410,7 @@ def test_rn_22_decision_con_gerente_pendiente_se_rechaza() -> None:
 def test_rn_08_linea_inexistente_se_rechaza() -> None:
     cotizacion = _inicial()
 
-    with pytest.raises(ValorInvalido, match=r"\[9\]"):
+    with pytest.raises(ValorInvalido, match="los trabajos: 9. Revise"):
         cotizacion.registrar_decision({1, 9}, CLIENTE, DESPUES)
 
     assert cotizacion.estado is _E.PENDIENTE_DE_AUTORIZACION_DEL_CLIENTE

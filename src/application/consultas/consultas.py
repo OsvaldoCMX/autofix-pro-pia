@@ -29,7 +29,10 @@ from domain.compartido.valores import Dinero, NumeroOrden, Placas
 from domain.empleados.empleado import RolDeEmpleado
 from domain.ordenes.estados import EstadoOrden
 
-MENSAJE_SIN_COINCIDENCIA = "No se encontró una orden con esos datos"
+MENSAJE_SIN_COINCIDENCIA = (
+    "No se encontró una orden con esos datos. "
+    "Revise el número de orden y las placas e intente de nuevo."
+)
 
 
 # ------------------------------------------------------------------ recepción
@@ -46,7 +49,10 @@ class ManejadorBuscarVehiculoPorPlacas:
         placas = Placas(consulta.placas)
         vista = self._lector.vehiculo_por_placas(placas)
         if vista is None:
-            raise VehiculoNoEncontrado(f"No hay un vehículo con las placas {placas}.")
+            raise VehiculoNoEncontrado(
+                f"No hay un vehículo con las placas {placas}. "
+                "Revíselas o registre el vehículo."
+            )
         return vista
 
 
@@ -135,7 +141,10 @@ class ManejadorConsultarCotizacion:
     def ejecutar(self, consulta: ConsultarCotizacion) -> CotizacionVista:
         vista = self._lector.cotizacion(consulta.id_cotizacion)
         if vista is None:
-            raise CotizacionNoEncontrada(f"No existe la cotización {consulta.id_cotizacion}.")
+            raise CotizacionNoEncontrada(
+                f"No se encontró la cotización {consulta.id_cotizacion}. "
+                "Revise el número e intente de nuevo."
+            )
         return vista
 
 
@@ -153,7 +162,10 @@ class ManejadorConsultarExpedienteDeOrden:
         numero = NumeroOrden(consulta.numero_orden)
         vista = self._lector.expediente(numero)
         if vista is None:
-            raise OrdenNoEncontrada(f"No existe la orden de servicio {numero}.")
+            raise OrdenNoEncontrada(
+                f"No se encontró la orden de servicio {numero}. "
+                "Revise el número e intente de nuevo."
+            )
         return vista
 
 

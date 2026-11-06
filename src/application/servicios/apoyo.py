@@ -10,4 +10,6 @@ def exigir_tecnico(uow: UnidadDeTrabajo, id_empleado: str) -> None:
     """Solo se asignan órdenes y trabajos a un empleado con rol Técnico (CA-035, CA-036)."""
     empleado = uow.empleados.obtener(id_empleado)
     if not empleado.tiene_rol(RolDeEmpleado.TECNICO):
-        raise ValorInvalido(f"{empleado.nombre} no es Técnico: no se le puede asignar trabajo.")
+        raise ValorInvalido(
+            f"{empleado.nombre} no es Técnico: no se le puede asignar trabajo. Elija a un Técnico."
+        )

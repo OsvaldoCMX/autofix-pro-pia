@@ -37,5 +37,6 @@ class MaquinaDeEstados(Generic[E]):
     def validar(self, actual: E, nuevo: E) -> None:
         if not self.permite(actual, nuevo):
             raise TransicionDeEstadoNoPermitida(
-                f"{self._nombre} no puede pasar de «{actual.value}» a «{nuevo.value}»"
+                f"{self._nombre} no puede pasar de «{actual.value}» a «{nuevo.value}». "
+                "Revise su estado actual."
             )

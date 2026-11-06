@@ -438,7 +438,7 @@ def test_rn_14_no_se_completa_con_el_vehiculo_fuera() -> None:
 def test_rn_22_trabajo_pendiente_no_se_completa() -> None:
     orden = c.en_reparacion(trabajos=2)
 
-    with pytest.raises(TransicionDeEstadoNoPermitida, match="«Pendiente» a «Completado»"):
+    with pytest.raises(TransicionDeEstadoNoPermitida, match="aún no se inicia"):
         orden.completar_trabajo(2, c.TECNICO, DESPUES)
 
 
@@ -672,7 +672,7 @@ def test_rn_22_llegada_repetida_se_rechaza() -> None:
     orden.crear_solicitud_de_compra(1, "Discos", 1, DESPUES)
     orden.registrar_llegada_de_refaccion(1, DESPUES)
 
-    with pytest.raises(TransicionDeEstadoNoPermitida, match="«Disponible»"):
+    with pytest.raises(TransicionDeEstadoNoPermitida, match="«Balatas» ya estaba registrada"):
         orden.registrar_llegada_de_refaccion(1, DESPUES)
 
 
@@ -976,7 +976,8 @@ def test_rn_18_mensaje_nombra_la_orden_y_su_estado() -> None:
         c.autorizada().entregar(DESPUES)
 
     assert str(error.value) == (
-        "No se puede entregar el vehículo de la orden OS-1 (estado «Autorizada»): "
+        "El vehículo de la orden OS-1 todavía no se puede entregar: su servicio sigue "
+        "en proceso (estado «Autorizada»). Cuando esté «Lista para Entrega», "
         "primero debe registrarse el pago o el cargo a crédito."
     )
 
@@ -992,7 +993,7 @@ def test_rn_18_rechazo_total_se_entrega_sin_cobro() -> None:
 def test_rn_18_rechazo_total_no_usa_la_entrega_normal() -> None:
     orden = c.con_rechazo_total()
 
-    with pytest.raises(TransicionDeEstadoNoPermitida, match="«Cotizada» a «Cerrada»"):
+    with pytest.raises(TransicionDeEstadoNoPermitida, match="«Entregar sin reparación»"):
         orden.entregar(DESPUES)
 
 
@@ -1014,7 +1015,7 @@ def test_ca_043_cotizada_sin_rechazo_no_se_entrega_sin_reparacion() -> None:
 
 
 def test_rn_18_orden_pagada_no_se_entrega_sin_reparacion() -> None:
-    with pytest.raises(TransicionDeEstadoNoPermitida, match="«Pagada» a «Cerrada sin Reparación»"):
+    with pytest.raises(TransicionDeEstadoNoPermitida, match="registre la entrega normal"):
         c.pagada().entregar_sin_reparacion(DESPUES)
 
 
@@ -1056,16 +1057,137 @@ def test_rn_19_motivo_vacio_se_rechaza(motivo: str) -> None:
     assert orden.estado is _O.RECIBIDA
 
 
-@pytest.mark.parametrize("constructor", [c.cotizada, c.autorizada, c.en_reparacion, c.pagada])
-def test_ca_045_con_cotizacion_no_se_cancela(constructor: c.Constructor) -> None:
+def test_ca_045_cotizada_no_se_cancela_y_sugiere_el_rechazo_total() -> None:
+    orden = c.cotizada()
+
+    with pytest.raises(CancelacionNoPermitida, match="se registra el rechazo total"):
+        orden.cancelar("Ya no quiere", c.ASESOR, DESPUES)
+
+    assert orden.estado is _O.COTIZADA
+    assert orden.cancelacion is None
+
+
+def test_ca_045_con_rechazo_total_no_se_cancela_y_orienta_a_la_entrega() -> None:
+    orden = c.con_rechazo_total()
+
+    with pytest.raises(CancelacionNoPermitida, match="«Entregar sin reparación»"):
+        orden.cancelar("Ya no quiere", c.ASESOR, DESPUES)
+
+    assert orden.estado is _O.COTIZADA
+    assert orden.cancelacion is None
+
+
+@pytest.mark.parametrize("constructor", [c.autorizada, c.en_reparacion, c.pagada])
+def test_ca_045_con_trabajos_autorizados_no_se_cancela_ni_sugiere_rechazo(
+    constructor: c.Constructor,
+) -> None:
     orden = constructor()
     estado = orden.estado
 
-    with pytest.raises(CancelacionNoPermitida, match="rechazo total"):
+    with pytest.raises(CancelacionNoPermitida, match="ya autorizó trabajos") as error:
         orden.cancelar("Ya no quiere", c.ASESOR, DESPUES)
 
+    assert "rechazo total" not in str(error.value)
     assert orden.estado is estado
     assert orden.cancelacion is None
+
+
+@pytest.mark.parametrize(
+    ("constructor", "fragmento"),
+    [
+        (c.cancelada, "ya está cancelada"),
+        (c.cerrada, "ya está cerrada"),
+        (c.cerrada_sin_reparacion, "ya está cerrada"),
+    ],
+)
+def test_rn_19_orden_terminada_no_se_cancela_ni_sugiere_rechazo(
+    constructor: c.Constructor, fragmento: str
+) -> None:
+    orden = constructor()
+
+    with pytest.raises(CancelacionNoPermitida, match=fragmento) as error:
+        orden.cancelar("Ya no quiere", c.ASESOR, DESPUES)
+
+    assert "rechazo total" not in str(error.value)
+
+
+# ------------------------------------------------------------------ mensajes según el estado
+
+
+@pytest.mark.parametrize(
+    ("constructor", "fragmento"),
+    [
+        (c.cancelada, "está cancelada"),
+        (c.cerrada, "ya fue entregado"),
+        (c.cerrada_sin_reparacion, "ya fue entregado"),
+    ],
+)
+def test_ca_042_orden_terminada_no_pide_registrar_el_pago(
+    constructor: c.Constructor, fragmento: str
+) -> None:
+    with pytest.raises(EntregaNoPermitida, match=fragmento) as error:
+        constructor().entregar(DESPUES)
+
+    assert "pago" not in str(error.value)
+
+
+def test_ca_042_orden_lista_pide_el_pago_en_caja() -> None:
+    with pytest.raises(EntregaNoPermitida, match="cargo a crédito en Caja"):
+        c.lista().entregar(DESPUES)
+
+
+def test_ca_042_cotizada_sin_decision_explica_que_falta_la_del_cliente() -> None:
+    with pytest.raises(EntregaNoPermitida, match="el cliente aún no decide"):
+        c.cotizada().entregar(DESPUES)
+
+
+@pytest.mark.parametrize(
+    ("constructor", "fragmento"),
+    [
+        (c.cancelada, "no genera ningún cobro"),
+        (c.cerrada, "no hay cobro pendiente"),
+        (c.cerrada_sin_reparacion, "no hay cobro pendiente"),
+        (c.pagada, "ya tiene su pago registrado"),
+        (c.por_cobrar, "ya tiene registrado un cargo a crédito"),
+        (c.autorizada, "debe estar «Lista para Entrega» y ahora está en «Autorizada»"),
+    ],
+)
+def test_rn_22_cobro_en_estado_incorrecto_explica_la_situacion(
+    constructor: c.Constructor, fragmento: str
+) -> None:
+    orden = constructor()
+    estado = orden.estado
+
+    with pytest.raises(TransicionDeEstadoNoPermitida, match=fragmento):
+        orden.registrar_pago(c.pago_del_total())
+    with pytest.raises(TransicionDeEstadoNoPermitida, match=fragmento):
+        orden.registrar_cargo_a_credito(DESPUES)
+
+    assert orden.estado is estado
+
+
+def test_rn_22_asignar_tecnico_a_orden_no_recibida_explica_el_estado() -> None:
+    with pytest.raises(TransicionDeEstadoNoPermitida, match="OS-1 está en «Cancelada»"):
+        c.cancelada().asignar_tecnico_para_diagnostico(c.TECNICO, DESPUES)
+
+
+def test_rn_22_cotizar_dos_veces_avisa_que_ya_tiene_cotizacion() -> None:
+    with pytest.raises(TransicionDeEstadoNoPermitida, match="ya tiene su cotización inicial"):
+        c.cotizada().marcar_cotizada(DESPUES)
+
+
+def test_rn_22_cotizar_en_otro_estado_explica_el_estado() -> None:
+    with pytest.raises(TransicionDeEstadoNoPermitida, match="OS-1 está en «Autorizada»"):
+        c.autorizada().marcar_cotizada(DESPUES)
+
+
+def test_rn_22_completar_dos_veces_avisa_que_ya_esta_completado() -> None:
+    orden = c.en_reparacion(trabajos=2)
+    orden.iniciar_trabajo(2, c.TECNICO, DESPUES)
+    orden.completar_trabajo(1, c.TECNICO, DESPUES)
+
+    with pytest.raises(TransicionDeEstadoNoPermitida, match="ya está completado"):
+        orden.completar_trabajo(1, c.TECNICO, DESPUES)
 
 
 # ------------------------------------------------------------------ estados finales y flujos

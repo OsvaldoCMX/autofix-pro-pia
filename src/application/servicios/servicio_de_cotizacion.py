@@ -102,8 +102,8 @@ def _exigir_servicios_habilitados(uow: UnidadDeTrabajo, numero: NumeroOrden) -> 
     inhabilitados = uow.catalogo.servicios_inhabilitados_de_la_orden(numero)
     if inhabilitados:
         raise ValorInvalido(
-            f"No se puede cotizar la orden {numero}: incluye servicios inhabilitados "
-            f"({', '.join(inhabilitados)})."
+            f"No se puede cotizar la orden {numero}: incluye servicios que el taller "
+            f"no ofrece por ahora ({', '.join(inhabilitados)}). Informe al cliente."
         )
 
 

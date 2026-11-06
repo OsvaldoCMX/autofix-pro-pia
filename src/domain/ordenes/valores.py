@@ -96,5 +96,5 @@ class Cancelacion:
     asesor: str
 
     def __post_init__(self) -> None:
-        motivo = texto_requerido(self.motivo, "La cancelación debe indicar el motivo.")
+        motivo = texto_requerido(self.motivo, "Escriba el motivo de la cancelación para poder registrarla.")
         object.__setattr__(self, "motivo", motivo)

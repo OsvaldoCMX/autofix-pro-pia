@@ -156,7 +156,11 @@ class Cotizacion(RaizDeAgregado):
         autorizadas = set(lineas_autorizadas)
         desconocidas = autorizadas - set(self._lineas)
         if desconocidas:
-            raise ValorInvalido(f"La cotización no tiene los trabajos: {sorted(desconocidas)}.")
+            numeros = ", ".join(str(numero) for numero in sorted(desconocidas))
+            raise ValorInvalido(
+                f"La cotización no tiene los trabajos: {numeros}. "
+                "Revise los números seleccionados."
+            )
 
         for linea in self.lineas:
             linea.decision = (

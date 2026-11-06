@@ -35,7 +35,10 @@ class RepositorioDeOrdenesEnMemoria(RepositorioDeOrdenes):
         try:
             orden = self._datos.ordenes[str(numero)]
         except KeyError:
-            raise OrdenNoEncontrada(f"No existe la orden de servicio {numero}.") from None
+            raise OrdenNoEncontrada(
+                f"No se encontró la orden de servicio {numero}. "
+                "Revise el número e intente de nuevo."
+            ) from None
         self._vistos.append(orden)
         return orden
 
@@ -63,7 +66,10 @@ class RepositorioDeCotizacionesEnMemoria(RepositorioDeCotizaciones):
         try:
             cotizacion = self._datos.cotizaciones[id_cotizacion]
         except KeyError:
-            raise CotizacionNoEncontrada(f"No existe la cotización {id_cotizacion}.") from None
+            raise CotizacionNoEncontrada(
+                f"No se encontró la cotización {id_cotizacion}. "
+                "Revise el número e intente de nuevo."
+            ) from None
         self._vistos.append(cotizacion)
         return cotizacion
 
@@ -101,7 +107,10 @@ class RepositorioDeClientesEnMemoria(RepositorioDeClientes):
         try:
             return self._datos.clientes[id_cliente]
         except KeyError:
-            raise ClienteNoEncontrado(f"No existe el cliente {id_cliente}.") from None
+            raise ClienteNoEncontrado(
+                f"No se encontró el cliente {id_cliente}. "
+                "Revise la clave e intente de nuevo."
+            ) from None
 
     def agregar(self, cliente: Cliente) -> None:
         if cliente.id_cliente in self._datos.clientes:
@@ -131,11 +140,17 @@ class RepositorioDeVehiculosEnMemoria(RepositorioDeVehiculos):
         try:
             return self._datos.vehiculos[str(placas)]
         except KeyError:
-            raise VehiculoNoEncontrado(f"No hay un vehículo con las placas {placas}.") from None
+            raise VehiculoNoEncontrado(
+                f"No hay un vehículo con las placas {placas}. "
+                "Revíselas o registre el vehículo."
+            ) from None
 
     def agregar(self, vehiculo: Vehiculo) -> None:
         if str(vehiculo.placas) in self._datos.vehiculos:
-            raise ValorInvalido(f"Ya existe un vehículo con las placas {vehiculo.placas}.")
+            raise ValorInvalido(
+                f"Ya existe un vehículo con las placas {vehiculo.placas}. "
+                "Revise el dato capturado."
+            )
         self._exigir_vin_libre(vehiculo)
         self._datos.vehiculos[str(vehiculo.placas)] = vehiculo
 
@@ -147,7 +162,10 @@ class RepositorioDeVehiculosEnMemoria(RepositorioDeVehiculos):
         """El VIN es único en la base (UNIQUE), así que aquí se rechaza igual."""
         for otro in self._datos.vehiculos.values():
             if otro.vin == vehiculo.vin and otro.placas != vehiculo.placas:
-                raise ValorInvalido(f"Ya existe un vehículo con el VIN {vehiculo.vin}.")
+                raise ValorInvalido(
+                    f"Ya existe un vehículo con el VIN {vehiculo.vin}. "
+                    "Revise el dato capturado."
+                )
 
 
 class RepositorioDeEmpleadosEnMemoria(RepositorioDeEmpleados):
@@ -158,7 +176,10 @@ class RepositorioDeEmpleadosEnMemoria(RepositorioDeEmpleados):
         try:
             return self._datos.empleados[id_empleado]
         except KeyError:
-            raise EmpleadoNoEncontrado(f"No existe el empleado {id_empleado}.") from None
+            raise EmpleadoNoEncontrado(
+                f"No se encontró el empleado {id_empleado}. "
+                "Revise la clave e intente de nuevo."
+            ) from None
 
 
 class RepositorioDeAlertasEnMemoria(RepositorioDeAlertas):

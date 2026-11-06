@@ -148,7 +148,10 @@ class RepositorioDeOrdenesSqlAlchemy(RepositorioDeOrdenes):
             return self._cargadas[clave]
         orden = cargar_orden(self._conexion, clave, bloquear=True)
         if orden is None:
-            raise OrdenNoEncontrada(f"No existe la orden de servicio {numero}.")
+            raise OrdenNoEncontrada(
+                f"No se encontró la orden de servicio {numero}. "
+                "Revise el número e intente de nuevo."
+            )
         self._recordar(orden)
         return orden
 
@@ -195,7 +198,10 @@ class RepositorioDeCotizacionesSqlAlchemy(RepositorioDeCotizaciones):
             return self._cargadas[id_cotizacion]
         cotizacion = cargar_cotizacion(self._conexion, id_cotizacion, bloquear=True)
         if cotizacion is None:
-            raise CotizacionNoEncontrada(f"No existe la cotización {id_cotizacion}.")
+            raise CotizacionNoEncontrada(
+                f"No se encontró la cotización {id_cotizacion}. "
+                "Revise el número e intente de nuevo."
+            )
         self._recordar(cotizacion)
         return cotizacion
 
@@ -265,7 +271,10 @@ class RepositorioDeClientesSqlAlchemy(RepositorioDeClientes):
             .first()
         )
         if fila is None:
-            raise ClienteNoEncontrado(f"No existe el cliente {id_cliente}.")
+            raise ClienteNoEncontrado(
+                f"No se encontró el cliente {id_cliente}. "
+                "Revise la clave e intente de nuevo."
+            )
         cliente = mapeo.cliente_desde_fila(fila)
         self._cargados[id_cliente] = cliente
         return cliente
@@ -318,7 +327,10 @@ class RepositorioDeVehiculosSqlAlchemy(RepositorioDeVehiculos):
             .first()
         )
         if fila is None:
-            raise VehiculoNoEncontrado(f"No hay un vehículo con las placas {placas}.")
+            raise VehiculoNoEncontrado(
+                f"No hay un vehículo con las placas {placas}. "
+                "Revíselas o registre el vehículo."
+            )
         vehiculo = mapeo.vehiculo_desde_fila(fila)
         self._cargados[clave] = vehiculo
         return vehiculo
@@ -327,7 +339,10 @@ class RepositorioDeVehiculosSqlAlchemy(RepositorioDeVehiculos):
         if self._conexion.execute(
             select(vehiculos.c.placas).where(vehiculos.c.placas == str(vehiculo.placas))
         ).first():
-            raise ValorInvalido(f"Ya existe un vehículo con las placas {vehiculo.placas}.")
+            raise ValorInvalido(
+                f"Ya existe un vehículo con las placas {vehiculo.placas}. "
+                "Revise el dato capturado."
+            )
         self.guardar(vehiculo)
 
     def guardar(self, vehiculo: Vehiculo) -> None:
@@ -348,7 +363,10 @@ class RepositorioDeVehiculosSqlAlchemy(RepositorioDeVehiculos):
                 vehiculos.c.vin == str(vehiculo.vin), vehiculos.c.placas != str(vehiculo.placas)
             )
         ).first():
-            raise ValorInvalido(f"Ya existe un vehículo con el VIN {vehiculo.vin}.")
+            raise ValorInvalido(
+                f"Ya existe un vehículo con el VIN {vehiculo.vin}. "
+                "Revise el dato capturado."
+            )
 
 
 class RepositorioDeEmpleadosSqlAlchemy(RepositorioDeEmpleados):
@@ -362,7 +380,10 @@ class RepositorioDeEmpleadosSqlAlchemy(RepositorioDeEmpleados):
             .first()
         )
         if fila is None:
-            raise EmpleadoNoEncontrado(f"No existe el empleado {id_empleado}.")
+            raise EmpleadoNoEncontrado(
+                f"No se encontró el empleado {id_empleado}. "
+                "Revise la clave e intente de nuevo."
+            )
         return mapeo.empleado_desde_fila(fila)
 
 

@@ -70,7 +70,10 @@ def _reutilizar_vehiculo(
 ) -> Cliente:
     """Cliente recurrente (CA-003): se usan sus registros y se actualiza lo que el asesor envió."""
     if comando.id_cliente is not None and comando.id_cliente != vehiculo.id_cliente:
-        raise ValorInvalido(f"El vehículo con placas {vehiculo.placas} pertenece a otro cliente.")
+        raise ValorInvalido(
+            f"El vehículo con placas {vehiculo.placas} pertenece a otro cliente. "
+            "Revise las placas o el cliente seleccionado."
+        )
     cliente = uow.clientes.obtener(vehiculo.id_cliente)
     if comando.cliente is not None:
         _actualizar_cliente(uow, cliente, comando.cliente)

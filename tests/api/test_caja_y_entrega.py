@@ -105,7 +105,8 @@ def test_ca_042_entrega_sin_pago_responde_409_con_el_mensaje_del_contrato(
     assert respuesta.json() == {
         "error": "EntregaNoPermitida",
         "detalle": (
-            f"No se puede entregar el vehículo de la orden {numero} (estado «Autorizada»): "
+            f"El vehículo de la orden {numero} todavía no se puede entregar: su servicio sigue "
+            "en proceso (estado «Autorizada»). Cuando esté «Lista para Entrega», "
             "primero debe registrarse el pago o el cargo a crédito."
         ),
         "codigo": 409,

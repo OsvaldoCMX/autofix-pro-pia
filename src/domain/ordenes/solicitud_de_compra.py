@@ -3,7 +3,11 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from domain.compartido.errores import SolicitudNoPermitida, ValorInvalido
+from domain.compartido.errores import (
+    SolicitudNoPermitida,
+    TransicionDeEstadoNoPermitida,
+    ValorInvalido,
+)
 from domain.compartido.valores import texto_requerido
 from domain.ordenes.estados import MAQUINA_DE_SOLICITUD, EstadoSolicitud
 
@@ -35,6 +39,10 @@ class SolicitudDeCompra:
         return self.estado is _S.SOLICITADA
 
     def marcar_disponible(self, fecha: datetime) -> None:
+        if not self.esta_pendiente:
+            raise TransicionDeEstadoNoPermitida(
+                f"La llegada de la refacción «{self.refaccion}» ya estaba registrada."
+            )
         MAQUINA_DE_SOLICITUD.validar(self.estado, _S.DISPONIBLE)
         self.estado = _S.DISPONIBLE
         self.fecha_llegada = fecha

@@ -64,7 +64,9 @@ def test_rn_22_mensaje_nombra_el_objeto_y_los_estados(
     with pytest.raises(TransicionDeEstadoNoPermitida) as error:
         maquina.validar(_Estado.RECIBIDA, _Estado.AUTORIZADA)
 
-    assert str(error.value) == "La orden no puede pasar de «Recibida» a «Autorizada»"
+    assert str(error.value) == (
+        "La orden no puede pasar de «Recibida» a «Autorizada». Revise su estado actual."
+    )
 
 
 def test_estado_final_con_destinos_es_error_de_configuracion() -> None:
