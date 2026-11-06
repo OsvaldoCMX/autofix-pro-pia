@@ -37,6 +37,8 @@ pythonpath = ["src"]
 filterwarnings = [
     # SQLite no tiene decimales exactos: SQLAlchemy convierte a float y redondea a 2 decimales al leer.
     "ignore:Dialect sqlite.pysqlite does .not. support Decimal objects natively:sqlalchemy.exc.SAWarning",
+    # El proyecto usa httpx (decisiones-tecnicas.md §1); Starlette ya sugiere otro cliente.
+    "ignore:Using .httpx. with .starlette.testclient. is deprecated",
 ]
 
 [tool.coverage.run]
