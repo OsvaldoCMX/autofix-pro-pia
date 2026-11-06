@@ -1,0 +1,5774 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "AutoFix Pro API",
+    "description": "Gestión de órdenes de servicio del taller AutoFix Pro. Use el botón **Authorize** con el token del empleado.",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": [
+          "Sistema"
+        ],
+        "summary": "Salud del servicio",
+        "operationId": "salud_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeSalud"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/revisiones/plazos": {
+      "post": {
+        "tags": [
+          "Sistema"
+        ],
+        "summary": "Revisión de plazos",
+        "operationId": "revisar_plazos_api_revisiones_plazos_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RevisionDePlazos"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Falta el token o no es válido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o trabajo de otro técnico.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "TokenDeEmpleado": []
+          }
+        ]
+      }
+    },
+    "/api/vehiculos/{placas}": {
+      "get": {
+        "tags": [
+          "Recepción"
+        ],
+        "summary": "Buscar vehículo y cliente por placas",
+        "operationId": "buscar_vehiculo_api_vehiculos__placas__get",
+        "security": [
+          {
+            "TokenDeEmpleado": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "placas",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Placas"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VehiculoEncontrado"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Falta el token o no es válido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o trabajo de otro técnico.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Un dato es inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/clientes": {
+      "get": {
+        "tags": [
+          "Recepción"
+        ],
+        "summary": "Buscar la empresa de flotilla y su Responsable",
+        "operationId": "buscar_clientes_api_clientes_get",
+        "security": [
+          {
+            "TokenDeEmpleado": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "tipo",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/TipoCliente"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Tipo"
+            }
+          },
+          {
+            "name": "empresa",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Empresa"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ClienteEncontrado"
+                  },
+                  "title": "Response Buscar Clientes Api Clientes Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Falta el token o no es válido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o trabajo de otro técnico.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Un dato es inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Recepción"
+        ],
+        "summary": "Registrar cliente particular o de flotilla",
+        "operationId": "registrar_cliente_api_clientes_post",
+        "security": [
+          {
+            "TokenDeEmpleado": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NuevoCliente"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClienteRegistrado"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "JSON mal formado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Falta el token o no es válido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o trabajo de otro técnico.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Un dato es inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ordenes": {
+      "post": {
+        "tags": [
+          "Recepción"
+        ],
+        "summary": "Registrar la orden de servicio",
+        "operationId": "registrar_orden_api_ordenes_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NuevaOrden"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrdenRegistrada"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "JSON mal formado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Falta el token o no es válido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o trabajo de otro técnico.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Un dato es inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "TokenDeEmpleado": []
+          }
+        ]
+      }
+    },
+    "/api/ordenes/{numero}/fotos": {
+      "post": {
+        "tags": [
+          "Recepción"
+        ],
+        "summary": "Adjuntar foto de daños (P2)",
+        "operationId": "adjuntar_foto_api_ordenes__numero__fotos_post",
+        "security": [
+          {
+            "TokenDeEmpleado": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "numero",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Numero"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_adjuntar_foto_api_ordenes__numero__fotos_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "401": {
+            "description": "Falta el token o no es válido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o trabajo de otro técnico.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Un dato es inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "Función P2 aún no implementada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ordenes/{numero}": {
+      "get": {
+        "tags": [
+          "Recepción"
+        ],
+        "summary": "Expediente completo de la orden",
+        "operationId": "consultar_expediente_api_ordenes__numero__get",
+        "security": [
+          {
+            "TokenDeEmpleado": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "numero",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Numero"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExpedienteDeOrden"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Falta el token o no es válido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o trabajo de otro técnico.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Un dato es inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ordenes/{numero}/cancelacion": {
+      "post": {
+        "tags": [
+          "Cancelación"
+        ],
+        "summary": "Cancelar la orden con motivo",
+        "operationId": "cancelar_api_ordenes__numero__cancelacion_post",
+        "security": [
+          {
+            "TokenDeEmpleado": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "numero",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Numero"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DatosDeCancelacion"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EstadoDeLaOrden"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "JSON mal formado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Falta el token o no es válido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o trabajo de otro técnico.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Viola una regla o transición del negocio.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Un dato es inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ordenes/{numero}/asignacion-diagnostico": {
+      "post": {
+        "tags": [
+          "Diagnóstico"
+        ],
+        "summary": "Asignar técnico para el diagnóstico",
+        "operationId": "asignar_tecnico_api_ordenes__numero__asignacion_diagnostico_post",
+        "security": [
+          {
+            "TokenDeEmpleado": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "numero",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Numero"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AsignacionDeDiagnostico"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EstadoDeLaOrden"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "JSON mal formado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Falta el token o no es válido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o trabajo de otro técnico.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Viola una regla o transición del negocio.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Un dato es inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ordenes/{numero}/diagnostico": {
+      "post": {
+        "tags": [
+          "Diagnóstico"
+        ],
+        "summary": "Registrar el diagnóstico",
+        "operationId": "registrar_diagnostico_api_ordenes__numero__diagnostico_post",
+        "security": [
+          {
+            "TokenDeEmpleado": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "numero",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Numero"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DatosDeDiagnostico"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DiagnosticoRegistrado"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "JSON mal formado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Falta el token o no es válido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o trabajo de otro técnico.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Viola una regla o transición del negocio.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Un dato es inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ordenes/{numero}/fallas-adicionales": {
+      "post": {
+        "tags": [
+          "Diagnóstico"
+        ],
+        "summary": "Reportar una falla adicional",
+        "operationId": "reportar_falla_adicional_api_ordenes__numero__fallas_adicionales_post",
+        "security": [
+          {
+            "TokenDeEmpleado": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "numero",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Numero"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DatosDeFallaAdicional"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FallaAdicionalRegistrada"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "JSON mal formado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Falta el token o no es válido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o trabajo de otro técnico.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Viola una regla o transición del negocio.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Un dato es inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/tecnicos/me/panel": {
+      "get": {
+        "tags": [
+          "Diagnóstico"
+        ],
+        "summary": "Órdenes y trabajos asignados, en orden de la fila",
+        "operationId": "consultar_panel_api_tecnicos_me_panel_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/OrdenDelPanel"
+                  },
+                  "type": "array",
+                  "title": "Response Consultar Panel Api Tecnicos Me Panel Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Falta el token o no es válido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o trabajo de otro técnico.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "TokenDeEmpleado": []
+          }
+        ]
+      }
+    },
+    "/api/ordenes/{numero}/cotizaciones": {
+      "post": {
+        "tags": [
+          "Cotización"
+        ],
+        "summary": "Generar la cotización inicial (v.1)",
+        "operationId": "generar_inicial_api_ordenes__numero__cotizaciones_post",
+        "security": [
+          {
+            "TokenDeEmpleado": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "numero",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Numero"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DatosDeCotizacion"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CotizacionRegistrada"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "JSON mal formado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Falta el token o no es válido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o trabajo de otro técnico.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Viola una regla o transición del negocio.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Un dato es inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ordenes/{numero}/cotizaciones-adicionales": {
+      "post": {
+        "tags": [
+          "Cotización"
+        ],
+        "summary": "Generar una cotización adicional (v.2, v.3…)",
+        "operationId": "generar_adicional_api_ordenes__numero__cotizaciones_adicionales_post",
+        "security": [
+          {
+            "TokenDeEmpleado": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "numero",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Numero"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DatosDeCotizacion"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CotizacionRegistrada"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "JSON mal formado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Falta el token o no es válido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o trabajo de otro técnico.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Viola una regla o transición del negocio.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Un dato es inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cotizaciones/{id}": {
+      "get": {
+        "tags": [
+          "Cotización"
+        ],
+        "summary": "Detalle de la cotización",
+        "operationId": "consultar_cotizacion_api_cotizaciones__id__get",
+        "security": [
+          {
+            "TokenDeEmpleado": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CotizacionDetallada"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Falta el token o no es válido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o trabajo de otro técnico.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Un dato es inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cotizaciones/{id}/pdf": {
+      "get": {
+        "tags": [
+          "Cotización"
+        ],
+        "summary": "PDF de la cotización (P2)",
+        "operationId": "pdf_de_cotizacion_api_cotizaciones__id__pdf_get",
+        "security": [
+          {
+            "TokenDeEmpleado": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "401": {
+            "description": "Falta el token o no es válido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o trabajo de otro técnico.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Un dato es inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "Función P2 aún no implementada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cotizaciones/{id}/presentacion": {
+      "post": {
+        "tags": [
+          "Cotización"
+        ],
+        "summary": "Marcar como presentada (inicia las 48 h)",
+        "operationId": "presentar_api_cotizaciones__id__presentacion_post",
+        "security": [
+          {
+            "TokenDeEmpleado": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CotizacionRegistrada"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Falta el token o no es válido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o trabajo de otro técnico.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Viola una regla o transición del negocio.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Un dato es inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cotizaciones/{id}/revision-gerencial": {
+      "post": {
+        "tags": [
+          "Cotización"
+        ],
+        "summary": "Aprobar o rechazar una cotización mayor a $15,000",
+        "operationId": "revisar_api_cotizaciones__id__revision_gerencial_post",
+        "security": [
+          {
+            "TokenDeEmpleado": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DatosDeRevision"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CotizacionRegistrada"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "JSON mal formado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Falta el token o no es válido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o trabajo de otro técnico.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Viola una regla o transición del negocio.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Un dato es inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cotizaciones/{id}/lineas": {
+      "put": {
+        "tags": [
+          "Cotización"
+        ],
+        "summary": "Guardar la cotización ajustada según el Gerente",
+        "operationId": "ajustar_api_cotizaciones__id__lineas_put",
+        "security": [
+          {
+            "TokenDeEmpleado": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DatosDeCotizacion"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CotizacionRegistrada"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "JSON mal formado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Falta el token o no es válido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o trabajo de otro técnico.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Viola una regla o transición del negocio.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Un dato es inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cotizaciones/{id}/recontactos": {
+      "post": {
+        "tags": [
+          "Cotización"
+        ],
+        "summary": "Registrar el recontacto al cliente (48 h)",
+        "operationId": "registrar_recontacto_api_cotizaciones__id__recontactos_post",
+        "security": [
+          {
+            "TokenDeEmpleado": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecontactoRegistrado"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Falta el token o no es válido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o trabajo de otro técnico.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Viola una regla o transición del negocio.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Un dato es inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/gerencia/cotizaciones-por-aprobar": {
+      "get": {
+        "tags": [
+          "Cotización"
+        ],
+        "summary": "Cotizaciones en «Pendiente de Aprobación Gerencial»",
+        "operationId": "cotizaciones_por_aprobar_api_gerencia_cotizaciones_por_aprobar_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CotizacionPorAprobar"
+                  },
+                  "type": "array",
+                  "title": "Response Cotizaciones Por Aprobar Api Gerencia Cotizaciones Por Aprobar Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Falta el token o no es válido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o trabajo de otro técnico.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "TokenDeEmpleado": []
+          }
+        ]
+      }
+    },
+    "/api/cotizaciones/{id}/decision": {
+      "post": {
+        "tags": [
+          "Autorización"
+        ],
+        "summary": "Registrar la decisión del cliente o del Responsable de Flotilla",
+        "operationId": "registrar_decision_api_cotizaciones__id__decision_post",
+        "security": [
+          {
+            "TokenDeEmpleado": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DatosDeDecision"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DecisionRegistrada"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "JSON mal formado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Falta el token o no es válido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o trabajo de otro técnico.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Viola una regla o transición del negocio.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Un dato es inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ordenes/{numero}/asignacion-trabajos": {
+      "post": {
+        "tags": [
+          "Reparación"
+        ],
+        "summary": "Asignar trabajos autorizados a un técnico",
+        "operationId": "asignar_trabajos_api_ordenes__numero__asignacion_trabajos_post",
+        "security": [
+          {
+            "TokenDeEmpleado": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "numero",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Numero"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AsignacionDeTrabajos"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrabajosAsignados"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "JSON mal formado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Falta el token o no es válido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o trabajo de otro técnico.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Viola una regla o transición del negocio.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Un dato es inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ordenes/{numero}/trabajos/{id}/inicio": {
+      "post": {
+        "tags": [
+          "Reparación"
+        ],
+        "summary": "Pasar un trabajo a «En Progreso»",
+        "operationId": "iniciar_trabajo_api_ordenes__numero__trabajos__id__inicio_post",
+        "security": [
+          {
+            "TokenDeEmpleado": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "numero",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Numero"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "maximum": 2147483647,
+              "minimum": 1,
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrabajoActualizado"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Falta el token o no es válido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o trabajo de otro técnico.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Viola una regla o transición del negocio.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Un dato es inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ordenes/{numero}/trabajos/{id}/completado": {
+      "post": {
+        "tags": [
+          "Reparación"
+        ],
+        "summary": "Pasar un trabajo a «Completado»",
+        "operationId": "completar_trabajo_api_ordenes__numero__trabajos__id__completado_post",
+        "security": [
+          {
+            "TokenDeEmpleado": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "numero",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Numero"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "maximum": 2147483647,
+              "minimum": 1,
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrabajoActualizado"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Falta el token o no es válido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o trabajo de otro técnico.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Viola una regla o transición del negocio.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Un dato es inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ordenes/{numero}/solicitudes-de-compra": {
+      "post": {
+        "tags": [
+          "Refacciones"
+        ],
+        "summary": "Crear solicitud de compra de una refacción no disponible",
+        "operationId": "solicitar_api_ordenes__numero__solicitudes_de_compra_post",
+        "security": [
+          {
+            "TokenDeEmpleado": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "numero",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Numero"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NuevaSolicitud"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SolicitudActualizada"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "JSON mal formado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Falta el token o no es válido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o trabajo de otro técnico.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Viola una regla o transición del negocio.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Un dato es inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/compras/solicitudes-pendientes": {
+      "get": {
+        "tags": [
+          "Refacciones"
+        ],
+        "summary": "Solicitudes «Solicitada» con días hábiles transcurridos",
+        "operationId": "solicitudes_pendientes_api_compras_solicitudes_pendientes_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SolicitudPendiente"
+                  },
+                  "type": "array",
+                  "title": "Response Solicitudes Pendientes Api Compras Solicitudes Pendientes Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Falta el token o no es válido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o trabajo de otro técnico.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "TokenDeEmpleado": []
+          }
+        ]
+      }
+    },
+    "/api/ordenes/{numero}/solicitudes-de-compra/{id}/llegada": {
+      "post": {
+        "tags": [
+          "Refacciones"
+        ],
+        "summary": "Registrar la llegada de la refacción",
+        "operationId": "registrar_llegada_api_ordenes__numero__solicitudes_de_compra__id__llegada_post",
+        "security": [
+          {
+            "TokenDeEmpleado": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "numero",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Numero"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "maximum": 2147483647,
+              "minimum": 1,
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SolicitudActualizada"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Falta el token o no es válido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o trabajo de otro técnico.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Viola una regla o transición del negocio.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Un dato es inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ordenes/{numero}/solicitudes-de-compra/{id}/aviso-al-cliente": {
+      "post": {
+        "tags": [
+          "Refacciones"
+        ],
+        "summary": "Registrar que se avisó al cliente del retraso",
+        "operationId": "registrar_aviso_al_cliente_api_ordenes__numero__solicitudes_de_compra__id__aviso_al_cliente_post",
+        "security": [
+          {
+            "TokenDeEmpleado": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "numero",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Numero"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "maximum": 2147483647,
+              "minimum": 1,
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SolicitudActualizada"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Falta el token o no es válido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o trabajo de otro técnico.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Viola una regla o transición del negocio.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Un dato es inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ordenes/{numero}/retiro": {
+      "post": {
+        "tags": [
+          "Retiro anticipado"
+        ],
+        "summary": "Registrar la salida del vehículo y generar la Nota de Responsabilidad",
+        "operationId": "registrar_salida_api_ordenes__numero__retiro_post",
+        "security": [
+          {
+            "TokenDeEmpleado": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "numero",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Numero"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotaDeResponsabilidad"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Falta el token o no es válido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o trabajo de otro técnico.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Viola una regla o transición del negocio.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Un dato es inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ordenes/{numero}/nota-de-responsabilidad/pdf": {
+      "get": {
+        "tags": [
+          "Retiro anticipado"
+        ],
+        "summary": "PDF de la Nota de Responsabilidad (P2)",
+        "operationId": "pdf_de_nota_api_ordenes__numero__nota_de_responsabilidad_pdf_get",
+        "security": [
+          {
+            "TokenDeEmpleado": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "numero",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Numero"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "401": {
+            "description": "Falta el token o no es válido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o trabajo de otro técnico.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Viola una regla o transición del negocio.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Un dato es inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "Función P2 aún no implementada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ordenes/{numero}/retiro/firma": {
+      "post": {
+        "tags": [
+          "Retiro anticipado"
+        ],
+        "summary": "Confirmar la firma de la nota",
+        "operationId": "confirmar_firma_api_ordenes__numero__retiro_firma_post",
+        "security": [
+          {
+            "TokenDeEmpleado": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "numero",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Numero"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EstadoDeLaOrden"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Falta el token o no es válido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o trabajo de otro técnico.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Viola una regla o transición del negocio.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Un dato es inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ordenes/{numero}/reactivacion": {
+      "post": {
+        "tags": [
+          "Retiro anticipado"
+        ],
+        "summary": "Reactivar la orden cuando el vehículo regresa",
+        "operationId": "reactivar_api_ordenes__numero__reactivacion_post",
+        "security": [
+          {
+            "TokenDeEmpleado": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "numero",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Numero"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EstadoDeLaOrden"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Falta el token o no es válido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o trabajo de otro técnico.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Viola una regla o transición del negocio.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Un dato es inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ordenes/{numero}/pago": {
+      "post": {
+        "tags": [
+          "Caja"
+        ],
+        "summary": "Registrar el pago de contado de un cliente particular",
+        "operationId": "registrar_pago_api_ordenes__numero__pago_post",
+        "security": [
+          {
+            "TokenDeEmpleado": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "numero",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Numero"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DatosDePago"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagoRegistrado"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "JSON mal formado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Falta el token o no es válido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o trabajo de otro técnico.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Viola una regla o transición del negocio.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Un dato es inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ordenes/{numero}/recibo/pdf": {
+      "get": {
+        "tags": [
+          "Caja"
+        ],
+        "summary": "PDF del recibo interno (P2)",
+        "operationId": "pdf_de_recibo_api_ordenes__numero__recibo_pdf_get",
+        "security": [
+          {
+            "TokenDeEmpleado": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "numero",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Numero"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "401": {
+            "description": "Falta el token o no es válido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o trabajo de otro técnico.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Viola una regla o transición del negocio.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Un dato es inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "Función P2 aún no implementada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ordenes/{numero}/cargo-a-credito": {
+      "post": {
+        "tags": [
+          "Caja"
+        ],
+        "summary": "Registrar el cargo a crédito de una flotilla",
+        "operationId": "registrar_cargo_a_credito_api_ordenes__numero__cargo_a_credito_post",
+        "security": [
+          {
+            "TokenDeEmpleado": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "numero",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Numero"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CargoRegistrado"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Falta el token o no es válido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o trabajo de otro técnico.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Viola una regla o transición del negocio.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Un dato es inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ordenes/{numero}/entrega": {
+      "post": {
+        "tags": [
+          "Entrega"
+        ],
+        "summary": "Entregar el vehículo y cerrar la orden",
+        "operationId": "entregar_api_ordenes__numero__entrega_post",
+        "security": [
+          {
+            "TokenDeEmpleado": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "numero",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Numero"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntregaRegistrada"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Falta el token o no es válido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o trabajo de otro técnico.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Viola una regla o transición del negocio.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Un dato es inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ordenes/{numero}/entrega-sin-reparacion": {
+      "post": {
+        "tags": [
+          "Entrega"
+        ],
+        "summary": "Entregar sin reparación tras un rechazo total",
+        "operationId": "entregar_sin_reparacion_api_ordenes__numero__entrega_sin_reparacion_post",
+        "security": [
+          {
+            "TokenDeEmpleado": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "numero",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Numero"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntregaRegistrada"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Falta el token o no es válido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o trabajo de otro técnico.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Viola una regla o transición del negocio.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Un dato es inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/gerencia/ordenes": {
+      "get": {
+        "tags": [
+          "Consultas"
+        ],
+        "summary": "Listado de órdenes abiertas y cerradas",
+        "operationId": "listar_ordenes_api_gerencia_ordenes_get",
+        "security": [
+          {
+            "TokenDeEmpleado": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "estado",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/EstadoOrden"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Estado"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OrdenResumida"
+                  },
+                  "title": "Response Listar Ordenes Api Gerencia Ordenes Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Falta el token o no es válido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o trabajo de otro técnico.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Un dato es inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/gerencia/ingresos-del-dia": {
+      "get": {
+        "tags": [
+          "Consultas"
+        ],
+        "summary": "Total de pagos de contado de hoy",
+        "operationId": "ingresos_del_dia_api_gerencia_ingresos_del_dia_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IngresosDelDia"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Falta el token o no es válido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o trabajo de otro técnico.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "TokenDeEmpleado": []
+          }
+        ]
+      }
+    },
+    "/api/consulta-de-estado": {
+      "get": {
+        "tags": [
+          "Consultas"
+        ],
+        "summary": "Consulta pública del cliente (sin token)",
+        "operationId": "consulta_de_estado_api_consulta_de_estado_get",
+        "parameters": [
+          {
+            "name": "orden",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Orden"
+            }
+          },
+          {
+            "name": "placas",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Placas"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EstadoParaElCliente"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Un dato es inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/alertas": {
+      "get": {
+        "tags": [
+          "Consultas"
+        ],
+        "summary": "Alertas internas del empleado",
+        "operationId": "listar_alertas_api_alertas_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AlertaDelEmpleado"
+                  },
+                  "type": "array",
+                  "title": "Response Listar Alertas Api Alertas Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Falta el token o no es válido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o trabajo de otro técnico.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "TokenDeEmpleado": []
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AlertaDelEmpleado": {
+        "properties": {
+          "tipo": {
+            "type": "string",
+            "title": "Tipo"
+          },
+          "mensaje": {
+            "type": "string",
+            "title": "Mensaje"
+          },
+          "creada_en": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Creada En"
+          },
+          "numero_orden": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Numero Orden"
+          },
+          "id_cotizacion": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id Cotizacion"
+          },
+          "leida": {
+            "type": "boolean",
+            "title": "Leida"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tipo",
+          "mensaje",
+          "creada_en",
+          "numero_orden",
+          "id_cotizacion",
+          "leida"
+        ],
+        "title": "AlertaDelEmpleado"
+      },
+      "AsignacionDeDiagnostico": {
+        "properties": {
+          "tecnico": {
+            "type": "string",
+            "maxLength": 20,
+            "title": "Tecnico"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "tecnico"
+        ],
+        "title": "AsignacionDeDiagnostico"
+      },
+      "AsignacionDeTrabajos": {
+        "properties": {
+          "ids_trabajos": {
+            "items": {
+              "type": "integer",
+              "maximum": 2147483647.0,
+              "minimum": 1.0
+            },
+            "type": "array",
+            "title": "Ids Trabajos"
+          },
+          "tecnico": {
+            "type": "string",
+            "maxLength": 20,
+            "title": "Tecnico"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "ids_trabajos",
+          "tecnico"
+        ],
+        "title": "AsignacionDeTrabajos"
+      },
+      "Body_adjuntar_foto_api_ordenes__numero__fotos_post": {
+        "properties": {
+          "archivo": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "Archivo"
+          }
+        },
+        "type": "object",
+        "required": [
+          "archivo"
+        ],
+        "title": "Body_adjuntar_foto_api_ordenes__numero__fotos_post"
+      },
+      "CargoRegistrado": {
+        "properties": {
+          "numero_orden": {
+            "type": "string",
+            "title": "Numero Orden"
+          },
+          "estado": {
+            "type": "string",
+            "title": "Estado"
+          },
+          "monto": {
+            "type": "string",
+            "title": "Monto"
+          },
+          "registrado_en": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Registrado En"
+          }
+        },
+        "type": "object",
+        "required": [
+          "numero_orden",
+          "estado",
+          "monto",
+          "registrado_en"
+        ],
+        "title": "CargoRegistrado"
+      },
+      "ClienteEncontrado": {
+        "properties": {
+          "id_cliente": {
+            "type": "string",
+            "title": "Id Cliente"
+          },
+          "nombre": {
+            "type": "string",
+            "title": "Nombre"
+          },
+          "tipo": {
+            "type": "string",
+            "title": "Tipo"
+          },
+          "telefono": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Telefono"
+          },
+          "correo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Correo"
+          },
+          "empresa": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Empresa"
+          },
+          "responsable_nombre": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Responsable Nombre"
+          },
+          "responsable_telefono": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Responsable Telefono"
+          },
+          "responsable_correo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Responsable Correo"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id_cliente",
+          "nombre",
+          "tipo",
+          "telefono",
+          "correo",
+          "empresa",
+          "responsable_nombre",
+          "responsable_telefono",
+          "responsable_correo"
+        ],
+        "title": "ClienteEncontrado"
+      },
+      "ClienteRegistrado": {
+        "properties": {
+          "id_cliente": {
+            "type": "string",
+            "title": "Id Cliente"
+          },
+          "nombre": {
+            "type": "string",
+            "title": "Nombre"
+          },
+          "tipo": {
+            "type": "string",
+            "title": "Tipo"
+          },
+          "empresa": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Empresa"
+          },
+          "responsable_nombre": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Responsable Nombre"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id_cliente",
+          "nombre",
+          "tipo",
+          "empresa",
+          "responsable_nombre"
+        ],
+        "title": "ClienteRegistrado"
+      },
+      "CotizacionDetallada": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "numero_orden": {
+            "type": "string",
+            "title": "Numero Orden"
+          },
+          "tipo": {
+            "type": "string",
+            "title": "Tipo"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version"
+          },
+          "estado": {
+            "type": "string",
+            "title": "Estado"
+          },
+          "total": {
+            "type": "string",
+            "title": "Total"
+          },
+          "generada_en": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generada En"
+          },
+          "fecha_aprobacion_gerencial": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fecha Aprobacion Gerencial"
+          },
+          "observaciones_del_gerente": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Observaciones Del Gerente"
+          },
+          "fecha_presentacion": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fecha Presentacion"
+          },
+          "autorizante": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Autorizante"
+          },
+          "fecha_decision": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fecha Decision"
+          },
+          "lineas": {
+            "items": {
+              "$ref": "#/components/schemas/LineaDetallada"
+            },
+            "type": "array",
+            "title": "Lineas"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "numero_orden",
+          "tipo",
+          "version",
+          "estado",
+          "total",
+          "generada_en",
+          "fecha_aprobacion_gerencial",
+          "observaciones_del_gerente",
+          "fecha_presentacion",
+          "autorizante",
+          "fecha_decision",
+          "lineas"
+        ],
+        "title": "CotizacionDetallada"
+      },
+      "CotizacionPorAprobar": {
+        "properties": {
+          "id_cotizacion": {
+            "type": "string",
+            "title": "Id Cotizacion"
+          },
+          "numero_orden": {
+            "type": "string",
+            "title": "Numero Orden"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version"
+          },
+          "total": {
+            "type": "string",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id_cotizacion",
+          "numero_orden",
+          "version",
+          "total"
+        ],
+        "title": "CotizacionPorAprobar"
+      },
+      "CotizacionRegistrada": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "numero_orden": {
+            "type": "string",
+            "title": "Numero Orden"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version"
+          },
+          "tipo": {
+            "type": "string",
+            "title": "Tipo"
+          },
+          "estado": {
+            "type": "string",
+            "title": "Estado"
+          },
+          "total": {
+            "type": "string",
+            "title": "Total"
+          },
+          "fecha_presentacion": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fecha Presentacion"
+          },
+          "fecha_aprobacion_gerencial": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fecha Aprobacion Gerencial"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "numero_orden",
+          "version",
+          "tipo",
+          "estado",
+          "total"
+        ],
+        "title": "CotizacionRegistrada",
+        "description": "Las fechas solo aparecen cuando ya existen, como en el ejemplo de `docs/api/README.md`."
+      },
+      "DatosDeCancelacion": {
+        "properties": {
+          "motivo": {
+            "type": "string",
+            "title": "Motivo"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "motivo"
+        ],
+        "title": "DatosDeCancelacion"
+      },
+      "DatosDeCotizacion": {
+        "properties": {
+          "trabajos": {
+            "items": {
+              "$ref": "#/components/schemas/NuevoTrabajo"
+            },
+            "type": "array",
+            "title": "Trabajos"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "trabajos"
+        ],
+        "title": "DatosDeCotizacion"
+      },
+      "DatosDeDecision": {
+        "properties": {
+          "lineas_autorizadas": {
+            "items": {
+              "type": "integer",
+              "maximum": 2147483647.0,
+              "minimum": 1.0
+            },
+            "type": "array",
+            "title": "Lineas Autorizadas"
+          },
+          "nombre_del_autorizante": {
+            "type": "string",
+            "maxLength": 120,
+            "title": "Nombre Del Autorizante"
+          },
+          "rol_del_autorizante": {
+            "$ref": "#/components/schemas/RolDeAutorizante"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "lineas_autorizadas",
+          "nombre_del_autorizante",
+          "rol_del_autorizante"
+        ],
+        "title": "DatosDeDecision",
+        "description": "Una lista vacía de líneas autorizadas es el rechazo total."
+      },
+      "DatosDeDiagnostico": {
+        "properties": {
+          "fallas": {
+            "type": "string",
+            "title": "Fallas"
+          },
+          "recomendaciones": {
+            "type": "string",
+            "title": "Recomendaciones"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "fallas",
+          "recomendaciones"
+        ],
+        "title": "DatosDeDiagnostico"
+      },
+      "DatosDeFallaAdicional": {
+        "properties": {
+          "descripcion": {
+            "type": "string",
+            "title": "Descripcion"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "descripcion"
+        ],
+        "title": "DatosDeFallaAdicional"
+      },
+      "DatosDePago": {
+        "properties": {
+          "monto": {
+            "type": "string",
+            "pattern": "^[0-9]{1,10}\\.[0-9]{2}$",
+            "title": "Monto",
+            "description": "Importe como texto con dos decimales.",
+            "examples": [
+              "1500.00"
+            ]
+          },
+          "forma": {
+            "$ref": "#/components/schemas/FormaDePago"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "monto",
+          "forma"
+        ],
+        "title": "DatosDePago"
+      },
+      "DatosDeRevision": {
+        "properties": {
+          "aprobada": {
+            "type": "boolean",
+            "title": "Aprobada"
+          },
+          "observaciones": {
+            "type": "string",
+            "title": "Observaciones",
+            "default": ""
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "aprobada"
+        ],
+        "title": "DatosDeRevision"
+      },
+      "DecisionRegistrada": {
+        "properties": {
+          "id_cotizacion": {
+            "type": "string",
+            "title": "Id Cotizacion"
+          },
+          "estado_cotizacion": {
+            "type": "string",
+            "title": "Estado Cotizacion"
+          },
+          "estado_orden": {
+            "type": "string",
+            "title": "Estado Orden"
+          },
+          "trabajos_autorizados": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Trabajos Autorizados"
+          },
+          "trabajos_no_autorizados": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Trabajos No Autorizados"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id_cotizacion",
+          "estado_cotizacion",
+          "estado_orden",
+          "trabajos_autorizados",
+          "trabajos_no_autorizados"
+        ],
+        "title": "DecisionRegistrada"
+      },
+      "DiagnosticoRegistrado": {
+        "properties": {
+          "numero_orden": {
+            "type": "string",
+            "title": "Numero Orden"
+          },
+          "estado": {
+            "type": "string",
+            "title": "Estado"
+          },
+          "tecnico": {
+            "type": "string",
+            "title": "Tecnico"
+          },
+          "registrado_en": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Registrado En"
+          }
+        },
+        "type": "object",
+        "required": [
+          "numero_orden",
+          "estado",
+          "tecnico",
+          "registrado_en"
+        ],
+        "title": "DiagnosticoRegistrado"
+      },
+      "EntregaRegistrada": {
+        "properties": {
+          "numero_orden": {
+            "type": "string",
+            "title": "Numero Orden"
+          },
+          "estado": {
+            "type": "string",
+            "title": "Estado"
+          },
+          "fecha_entrega": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Fecha Entrega"
+          },
+          "fecha_vencimiento_credito": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fecha Vencimiento Credito"
+          }
+        },
+        "type": "object",
+        "required": [
+          "numero_orden",
+          "estado",
+          "fecha_entrega",
+          "fecha_vencimiento_credito"
+        ],
+        "title": "EntregaRegistrada"
+      },
+      "EstadoDeLaOrden": {
+        "properties": {
+          "numero_orden": {
+            "type": "string",
+            "title": "Numero Orden"
+          },
+          "estado": {
+            "type": "string",
+            "title": "Estado"
+          }
+        },
+        "type": "object",
+        "required": [
+          "numero_orden",
+          "estado"
+        ],
+        "title": "EstadoDeLaOrden",
+        "description": "Para las acciones cuyo único resultado es el nuevo estado de la orden."
+      },
+      "EstadoOrden": {
+        "type": "string",
+        "enum": [
+          "Recibida",
+          "En Diagnóstico",
+          "Cotizada",
+          "Autorizada",
+          "En Reparación",
+          "En Espera de Refacción",
+          "Pausada por Retiro de Vehículo",
+          "Lista para Entrega",
+          "Pagada",
+          "Por Cobrar (Crédito)",
+          "Cerrada",
+          "Cerrada sin Reparación",
+          "Cancelada"
+        ],
+        "title": "EstadoOrden"
+      },
+      "EstadoParaElCliente": {
+        "properties": {
+          "numero_orden": {
+            "type": "string",
+            "title": "Numero Orden"
+          },
+          "estado": {
+            "type": "string",
+            "title": "Estado"
+          },
+          "fecha_ingreso": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Fecha Ingreso"
+          },
+          "ultima_actualizacion": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Ultima Actualizacion"
+          }
+        },
+        "type": "object",
+        "required": [
+          "numero_orden",
+          "estado",
+          "fecha_ingreso",
+          "ultima_actualizacion"
+        ],
+        "title": "EstadoParaElCliente",
+        "description": "Lo único que ve el cliente en la consulta pública (CA-037)."
+      },
+      "ExpedienteDeOrden": {
+        "properties": {
+          "numero_orden": {
+            "type": "string",
+            "title": "Numero Orden"
+          },
+          "estado": {
+            "type": "string",
+            "title": "Estado"
+          },
+          "id_cliente": {
+            "type": "string",
+            "title": "Id Cliente"
+          },
+          "placas": {
+            "type": "string",
+            "title": "Placas"
+          },
+          "asesor": {
+            "type": "string",
+            "title": "Asesor"
+          },
+          "motivo_de_ingreso": {
+            "type": "string",
+            "title": "Motivo De Ingreso"
+          },
+          "fecha_ingreso": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Fecha Ingreso"
+          },
+          "ultima_actualizacion": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Ultima Actualizacion"
+          },
+          "kilometraje": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kilometraje"
+          },
+          "nivel_de_combustible": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nivel De Combustible"
+          },
+          "tecnico_de_diagnostico": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tecnico De Diagnostico"
+          },
+          "diagnostico_fallas": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Diagnostico Fallas"
+          },
+          "diagnostico_recomendaciones": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Diagnostico Recomendaciones"
+          },
+          "rechazo_total": {
+            "type": "boolean",
+            "title": "Rechazo Total"
+          },
+          "total_autorizado": {
+            "type": "string",
+            "title": "Total Autorizado"
+          },
+          "pago_monto": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pago Monto"
+          },
+          "pago_forma": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pago Forma"
+          },
+          "pago_registrado_en": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pago Registrado En"
+          },
+          "credito_monto": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Credito Monto"
+          },
+          "credito_fecha_vencimiento": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Credito Fecha Vencimiento"
+          },
+          "nota_fecha_salida": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nota Fecha Salida"
+          },
+          "nota_firmada": {
+            "type": "boolean",
+            "title": "Nota Firmada"
+          },
+          "fecha_entrega": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fecha Entrega"
+          },
+          "cancelacion_motivo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cancelacion Motivo"
+          },
+          "cotizaciones": {
+            "items": {
+              "$ref": "#/components/schemas/CotizacionDetallada"
+            },
+            "type": "array",
+            "title": "Cotizaciones"
+          },
+          "trabajos": {
+            "items": {
+              "$ref": "#/components/schemas/TrabajoDeOrden"
+            },
+            "type": "array",
+            "title": "Trabajos"
+          },
+          "solicitudes": {
+            "items": {
+              "$ref": "#/components/schemas/SolicitudDeOrden"
+            },
+            "type": "array",
+            "title": "Solicitudes"
+          },
+          "fallas_adicionales": {
+            "items": {
+              "$ref": "#/components/schemas/FallaDeOrden"
+            },
+            "type": "array",
+            "title": "Fallas Adicionales"
+          }
+        },
+        "type": "object",
+        "required": [
+          "numero_orden",
+          "estado",
+          "id_cliente",
+          "placas",
+          "asesor",
+          "motivo_de_ingreso",
+          "fecha_ingreso",
+          "ultima_actualizacion",
+          "kilometraje",
+          "nivel_de_combustible",
+          "tecnico_de_diagnostico",
+          "diagnostico_fallas",
+          "diagnostico_recomendaciones",
+          "rechazo_total",
+          "total_autorizado",
+          "pago_monto",
+          "pago_forma",
+          "pago_registrado_en",
+          "credito_monto",
+          "credito_fecha_vencimiento",
+          "nota_fecha_salida",
+          "nota_firmada",
+          "fecha_entrega",
+          "cancelacion_motivo",
+          "cotizaciones",
+          "trabajos",
+          "solicitudes",
+          "fallas_adicionales"
+        ],
+        "title": "ExpedienteDeOrden"
+      },
+      "FallaAdicionalRegistrada": {
+        "properties": {
+          "numero_orden": {
+            "type": "string",
+            "title": "Numero Orden"
+          },
+          "id_falla": {
+            "type": "integer",
+            "title": "Id Falla"
+          },
+          "descripcion": {
+            "type": "string",
+            "title": "Descripcion"
+          },
+          "reportada_en": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Reportada En"
+          }
+        },
+        "type": "object",
+        "required": [
+          "numero_orden",
+          "id_falla",
+          "descripcion",
+          "reportada_en"
+        ],
+        "title": "FallaAdicionalRegistrada"
+      },
+      "FallaDeOrden": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "descripcion": {
+            "type": "string",
+            "title": "Descripcion"
+          },
+          "tecnico": {
+            "type": "string",
+            "title": "Tecnico"
+          },
+          "reportada_en": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Reportada En"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "descripcion",
+          "tecnico",
+          "reportada_en"
+        ],
+        "title": "FallaDeOrden"
+      },
+      "FormaDePago": {
+        "type": "string",
+        "enum": [
+          "Efectivo",
+          "Tarjeta",
+          "Transferencia"
+        ],
+        "title": "FormaDePago"
+      },
+      "IngresosDelDia": {
+        "properties": {
+          "fecha": {
+            "type": "string",
+            "format": "date",
+            "title": "Fecha"
+          },
+          "total": {
+            "type": "string",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "fecha",
+          "total"
+        ],
+        "title": "IngresosDelDia"
+      },
+      "LineaDetallada": {
+        "properties": {
+          "numero": {
+            "type": "integer",
+            "title": "Numero"
+          },
+          "descripcion": {
+            "type": "string",
+            "title": "Descripcion"
+          },
+          "mano_de_obra": {
+            "type": "string",
+            "title": "Mano De Obra"
+          },
+          "refacciones": {
+            "items": {
+              "$ref": "#/components/schemas/RefaccionDeLinea"
+            },
+            "type": "array",
+            "title": "Refacciones"
+          },
+          "subtotal": {
+            "type": "string",
+            "title": "Subtotal"
+          },
+          "decision": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decision"
+          }
+        },
+        "type": "object",
+        "required": [
+          "numero",
+          "descripcion",
+          "mano_de_obra",
+          "refacciones",
+          "subtotal",
+          "decision"
+        ],
+        "title": "LineaDetallada"
+      },
+      "NivelDeCombustible": {
+        "type": "string",
+        "enum": [
+          "Reserva",
+          "1/4",
+          "1/2",
+          "3/4",
+          "Lleno"
+        ],
+        "title": "NivelDeCombustible"
+      },
+      "NotaDeResponsabilidad": {
+        "properties": {
+          "numero_orden": {
+            "type": "string",
+            "title": "Numero Orden"
+          },
+          "estado": {
+            "type": "string",
+            "title": "Estado"
+          },
+          "fecha_salida": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Fecha Salida"
+          },
+          "firmada": {
+            "type": "boolean",
+            "title": "Firmada"
+          }
+        },
+        "type": "object",
+        "required": [
+          "numero_orden",
+          "estado",
+          "fecha_salida",
+          "firmada"
+        ],
+        "title": "NotaDeResponsabilidad"
+      },
+      "NuevaOrden": {
+        "properties": {
+          "placas": {
+            "type": "string",
+            "title": "Placas"
+          },
+          "motivo_de_ingreso": {
+            "type": "string",
+            "title": "Motivo De Ingreso"
+          },
+          "kilometraje": {
+            "type": "integer",
+            "maximum": 2147483647.0,
+            "minimum": 0.0,
+            "title": "Kilometraje"
+          },
+          "nivel_de_combustible": {
+            "$ref": "#/components/schemas/NivelDeCombustible"
+          },
+          "vehiculo": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NuevoVehiculo"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "id_cliente": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 20
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id Cliente"
+          },
+          "cliente": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NuevoCliente"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "placas",
+          "motivo_de_ingreso",
+          "kilometraje",
+          "nivel_de_combustible"
+        ],
+        "title": "NuevaOrden",
+        "description": "Con placas nuevas, `vehiculo` es obligatorio y el cliente se da por id o por sus datos."
+      },
+      "NuevaRefaccion": {
+        "properties": {
+          "descripcion": {
+            "type": "string",
+            "maxLength": 200,
+            "title": "Descripcion"
+          },
+          "cantidad": {
+            "type": "integer",
+            "maximum": 2147483647.0,
+            "minimum": 1.0,
+            "title": "Cantidad"
+          },
+          "precio_unitario": {
+            "type": "string",
+            "pattern": "^[0-9]{1,10}\\.[0-9]{2}$",
+            "title": "Precio Unitario",
+            "description": "Importe como texto con dos decimales.",
+            "examples": [
+              "1500.00"
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "descripcion",
+          "cantidad",
+          "precio_unitario"
+        ],
+        "title": "NuevaRefaccion"
+      },
+      "NuevaSolicitud": {
+        "properties": {
+          "id_trabajo": {
+            "type": "integer",
+            "maximum": 2147483647.0,
+            "minimum": 1.0,
+            "title": "Id Trabajo"
+          },
+          "refaccion": {
+            "type": "string",
+            "maxLength": 200,
+            "title": "Refaccion"
+          },
+          "cantidad": {
+            "type": "integer",
+            "maximum": 2147483647.0,
+            "minimum": 1.0,
+            "title": "Cantidad"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id_trabajo",
+          "refaccion",
+          "cantidad"
+        ],
+        "title": "NuevaSolicitud"
+      },
+      "NuevoCliente": {
+        "properties": {
+          "nombre": {
+            "type": "string",
+            "maxLength": 120,
+            "title": "Nombre"
+          },
+          "tipo": {
+            "$ref": "#/components/schemas/TipoCliente",
+            "default": "Particular"
+          },
+          "telefono": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 20
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Telefono"
+          },
+          "correo": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 120
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Correo"
+          },
+          "empresa": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 120
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Empresa"
+          },
+          "responsable_nombre": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 120
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Responsable Nombre"
+          },
+          "responsable_telefono": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 20
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Responsable Telefono"
+          },
+          "responsable_correo": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 120
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Responsable Correo"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "nombre"
+        ],
+        "title": "NuevoCliente"
+      },
+      "NuevoTrabajo": {
+        "properties": {
+          "numero": {
+            "type": "integer",
+            "maximum": 2147483647.0,
+            "minimum": 1.0,
+            "title": "Numero"
+          },
+          "descripcion": {
+            "type": "string",
+            "title": "Descripcion"
+          },
+          "mano_de_obra": {
+            "type": "string",
+            "pattern": "^[0-9]{1,10}\\.[0-9]{2}$",
+            "title": "Mano De Obra",
+            "description": "Importe como texto con dos decimales.",
+            "examples": [
+              "1500.00"
+            ]
+          },
+          "refacciones": {
+            "items": {
+              "$ref": "#/components/schemas/NuevaRefaccion"
+            },
+            "type": "array",
+            "title": "Refacciones",
+            "default": []
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "numero",
+          "descripcion",
+          "mano_de_obra"
+        ],
+        "title": "NuevoTrabajo"
+      },
+      "NuevoVehiculo": {
+        "properties": {
+          "vin": {
+            "type": "string",
+            "maxLength": 17,
+            "title": "Vin"
+          },
+          "marca": {
+            "type": "string",
+            "maxLength": 60,
+            "title": "Marca"
+          },
+          "modelo": {
+            "type": "string",
+            "maxLength": 60,
+            "title": "Modelo"
+          },
+          "anio": {
+            "type": "integer",
+            "maximum": 2100.0,
+            "minimum": 1900.0,
+            "title": "Anio"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "vin",
+          "marca",
+          "modelo",
+          "anio"
+        ],
+        "title": "NuevoVehiculo"
+      },
+      "OrdenDelPanel": {
+        "properties": {
+          "numero_orden": {
+            "type": "string",
+            "title": "Numero Orden"
+          },
+          "estado": {
+            "type": "string",
+            "title": "Estado"
+          },
+          "placas": {
+            "type": "string",
+            "title": "Placas"
+          },
+          "motivo_de_ingreso": {
+            "type": "string",
+            "title": "Motivo De Ingreso"
+          },
+          "fecha_ingreso_a_fila": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Fecha Ingreso A Fila"
+          },
+          "diagnostico_asignado": {
+            "type": "boolean",
+            "title": "Diagnostico Asignado"
+          },
+          "trabajos": {
+            "items": {
+              "$ref": "#/components/schemas/TrabajoDeOrden"
+            },
+            "type": "array",
+            "title": "Trabajos"
+          }
+        },
+        "type": "object",
+        "required": [
+          "numero_orden",
+          "estado",
+          "placas",
+          "motivo_de_ingreso",
+          "fecha_ingreso_a_fila",
+          "diagnostico_asignado",
+          "trabajos"
+        ],
+        "title": "OrdenDelPanel"
+      },
+      "OrdenRegistrada": {
+        "properties": {
+          "numero_orden": {
+            "type": "string",
+            "title": "Numero Orden"
+          },
+          "estado": {
+            "type": "string",
+            "title": "Estado"
+          },
+          "id_cliente": {
+            "type": "string",
+            "title": "Id Cliente"
+          },
+          "placas": {
+            "type": "string",
+            "title": "Placas"
+          },
+          "fecha_ingreso": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Fecha Ingreso"
+          },
+          "mensaje": {
+            "type": "string",
+            "title": "Mensaje"
+          }
+        },
+        "type": "object",
+        "required": [
+          "numero_orden",
+          "estado",
+          "id_cliente",
+          "placas",
+          "fecha_ingreso",
+          "mensaje"
+        ],
+        "title": "OrdenRegistrada"
+      },
+      "OrdenResumida": {
+        "properties": {
+          "numero_orden": {
+            "type": "string",
+            "title": "Numero Orden"
+          },
+          "estado": {
+            "type": "string",
+            "title": "Estado"
+          },
+          "abierta": {
+            "type": "boolean",
+            "title": "Abierta"
+          },
+          "id_cliente": {
+            "type": "string",
+            "title": "Id Cliente"
+          },
+          "placas": {
+            "type": "string",
+            "title": "Placas"
+          },
+          "fecha_ingreso": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Fecha Ingreso"
+          },
+          "ultima_actualizacion": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Ultima Actualizacion"
+          }
+        },
+        "type": "object",
+        "required": [
+          "numero_orden",
+          "estado",
+          "abierta",
+          "id_cliente",
+          "placas",
+          "fecha_ingreso",
+          "ultima_actualizacion"
+        ],
+        "title": "OrdenResumida"
+      },
+      "PagoRegistrado": {
+        "properties": {
+          "numero_orden": {
+            "type": "string",
+            "title": "Numero Orden"
+          },
+          "estado": {
+            "type": "string",
+            "title": "Estado"
+          },
+          "monto": {
+            "type": "string",
+            "title": "Monto"
+          },
+          "forma": {
+            "type": "string",
+            "title": "Forma"
+          },
+          "registrado_en": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Registrado En"
+          }
+        },
+        "type": "object",
+        "required": [
+          "numero_orden",
+          "estado",
+          "monto",
+          "forma",
+          "registrado_en"
+        ],
+        "title": "PagoRegistrado"
+      },
+      "RecontactoRegistrado": {
+        "properties": {
+          "id_cotizacion": {
+            "type": "string",
+            "title": "Id Cotizacion"
+          },
+          "estado": {
+            "type": "string",
+            "title": "Estado"
+          },
+          "registrado_en": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Registrado En"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id_cotizacion",
+          "estado",
+          "registrado_en"
+        ],
+        "title": "RecontactoRegistrado"
+      },
+      "RefaccionDeLinea": {
+        "properties": {
+          "descripcion": {
+            "type": "string",
+            "title": "Descripcion"
+          },
+          "cantidad": {
+            "type": "integer",
+            "title": "Cantidad"
+          },
+          "precio_unitario": {
+            "type": "string",
+            "title": "Precio Unitario"
+          },
+          "importe": {
+            "type": "string",
+            "title": "Importe"
+          }
+        },
+        "type": "object",
+        "required": [
+          "descripcion",
+          "cantidad",
+          "precio_unitario",
+          "importe"
+        ],
+        "title": "RefaccionDeLinea"
+      },
+      "RespuestaDeError": {
+        "properties": {
+          "error": {
+            "type": "string",
+            "title": "Error"
+          },
+          "detalle": {
+            "type": "string",
+            "title": "Detalle"
+          },
+          "codigo": {
+            "type": "integer",
+            "title": "Codigo"
+          }
+        },
+        "type": "object",
+        "required": [
+          "error",
+          "detalle",
+          "codigo"
+        ],
+        "title": "RespuestaDeError",
+        "description": "Formato único de los errores de la API."
+      },
+      "RespuestaDeSalud": {
+        "properties": {
+          "estado": {
+            "type": "string",
+            "title": "Estado"
+          }
+        },
+        "type": "object",
+        "required": [
+          "estado"
+        ],
+        "title": "RespuestaDeSalud"
+      },
+      "RevisionDePlazos": {
+        "properties": {
+          "alertas_de_refaccion": {
+            "type": "integer",
+            "title": "Alertas De Refaccion"
+          },
+          "alertas_de_recontacto": {
+            "type": "integer",
+            "title": "Alertas De Recontacto"
+          }
+        },
+        "type": "object",
+        "required": [
+          "alertas_de_refaccion",
+          "alertas_de_recontacto"
+        ],
+        "title": "RevisionDePlazos"
+      },
+      "RolDeAutorizante": {
+        "type": "string",
+        "enum": [
+          "Cliente",
+          "Responsable de Flotilla"
+        ],
+        "title": "RolDeAutorizante"
+      },
+      "SolicitudActualizada": {
+        "properties": {
+          "numero_orden": {
+            "type": "string",
+            "title": "Numero Orden"
+          },
+          "id_solicitud": {
+            "type": "integer",
+            "title": "Id Solicitud"
+          },
+          "estado_solicitud": {
+            "type": "string",
+            "title": "Estado Solicitud"
+          },
+          "estado_orden": {
+            "type": "string",
+            "title": "Estado Orden"
+          }
+        },
+        "type": "object",
+        "required": [
+          "numero_orden",
+          "id_solicitud",
+          "estado_solicitud",
+          "estado_orden"
+        ],
+        "title": "SolicitudActualizada"
+      },
+      "SolicitudDeOrden": {
+        "properties": {
+          "numero_orden": {
+            "type": "string",
+            "title": "Numero Orden"
+          },
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "id_trabajo": {
+            "type": "integer",
+            "title": "Id Trabajo"
+          },
+          "refaccion": {
+            "type": "string",
+            "title": "Refaccion"
+          },
+          "cantidad": {
+            "type": "integer",
+            "title": "Cantidad"
+          },
+          "estado": {
+            "type": "string",
+            "title": "Estado"
+          },
+          "fecha_solicitud": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Fecha Solicitud"
+          },
+          "fecha_llegada": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fecha Llegada"
+          },
+          "fecha_aviso_al_cliente": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fecha Aviso Al Cliente"
+          }
+        },
+        "type": "object",
+        "required": [
+          "numero_orden",
+          "id",
+          "id_trabajo",
+          "refaccion",
+          "cantidad",
+          "estado",
+          "fecha_solicitud",
+          "fecha_llegada",
+          "fecha_aviso_al_cliente"
+        ],
+        "title": "SolicitudDeOrden"
+      },
+      "SolicitudPendiente": {
+        "properties": {
+          "numero_orden": {
+            "type": "string",
+            "title": "Numero Orden"
+          },
+          "id_solicitud": {
+            "type": "integer",
+            "title": "Id Solicitud"
+          },
+          "refaccion": {
+            "type": "string",
+            "title": "Refaccion"
+          },
+          "cantidad": {
+            "type": "integer",
+            "title": "Cantidad"
+          },
+          "fecha_solicitud": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Fecha Solicitud"
+          },
+          "dias_habiles_transcurridos": {
+            "type": "integer",
+            "title": "Dias Habiles Transcurridos"
+          }
+        },
+        "type": "object",
+        "required": [
+          "numero_orden",
+          "id_solicitud",
+          "refaccion",
+          "cantidad",
+          "fecha_solicitud",
+          "dias_habiles_transcurridos"
+        ],
+        "title": "SolicitudPendiente"
+      },
+      "TipoCliente": {
+        "type": "string",
+        "enum": [
+          "Particular",
+          "Flotilla"
+        ],
+        "title": "TipoCliente"
+      },
+      "TrabajoActualizado": {
+        "properties": {
+          "numero_orden": {
+            "type": "string",
+            "title": "Numero Orden"
+          },
+          "id_trabajo": {
+            "type": "integer",
+            "title": "Id Trabajo"
+          },
+          "estado_trabajo": {
+            "type": "string",
+            "title": "Estado Trabajo"
+          },
+          "estado_orden": {
+            "type": "string",
+            "title": "Estado Orden"
+          }
+        },
+        "type": "object",
+        "required": [
+          "numero_orden",
+          "id_trabajo",
+          "estado_trabajo",
+          "estado_orden"
+        ],
+        "title": "TrabajoActualizado"
+      },
+      "TrabajoDeOrden": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "descripcion": {
+            "type": "string",
+            "title": "Descripcion"
+          },
+          "importe": {
+            "type": "string",
+            "title": "Importe"
+          },
+          "estado": {
+            "type": "string",
+            "title": "Estado"
+          },
+          "tecnico": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tecnico"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "descripcion",
+          "importe",
+          "estado",
+          "tecnico"
+        ],
+        "title": "TrabajoDeOrden"
+      },
+      "TrabajosAsignados": {
+        "properties": {
+          "numero_orden": {
+            "type": "string",
+            "title": "Numero Orden"
+          },
+          "estado": {
+            "type": "string",
+            "title": "Estado"
+          },
+          "ids_trabajos": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Ids Trabajos"
+          },
+          "tecnico": {
+            "type": "string",
+            "title": "Tecnico"
+          }
+        },
+        "type": "object",
+        "required": [
+          "numero_orden",
+          "estado",
+          "ids_trabajos",
+          "tecnico"
+        ],
+        "title": "TrabajosAsignados"
+      },
+      "VehiculoEncontrado": {
+        "properties": {
+          "placas": {
+            "type": "string",
+            "title": "Placas"
+          },
+          "vin": {
+            "type": "string",
+            "title": "Vin"
+          },
+          "marca": {
+            "type": "string",
+            "title": "Marca"
+          },
+          "modelo": {
+            "type": "string",
+            "title": "Modelo"
+          },
+          "anio": {
+            "type": "integer",
+            "title": "Anio"
+          },
+          "cliente": {
+            "$ref": "#/components/schemas/ClienteEncontrado"
+          }
+        },
+        "type": "object",
+        "required": [
+          "placas",
+          "vin",
+          "marca",
+          "modelo",
+          "anio",
+          "cliente"
+        ],
+        "title": "VehiculoEncontrado"
+      }
+    },
+    "securitySchemes": {
+      "TokenDeEmpleado": {
+        "type": "http",
+        "description": "Token del empleado (variables TOKEN_ASESOR, TOKEN_TECNICO, …).",
+        "scheme": "bearer"
+      }
+    }
+  }
+}

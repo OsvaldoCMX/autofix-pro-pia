@@ -1,6 +1,7 @@
 """Compara la API real con el contrato de `docs/api/README.md`: las 43 rutas y sus roles."""
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -9,11 +10,13 @@ import pytest
 from fastapi.testclient import TestClient
 
 from api.dependencias import crear_contenedor
+from api.exportar_openapi import exportar
 from api.main import crear_app
 from infrastructure.config import Configuracion
 from tests.api.pasos import ASESOR, CAJA, COMPRAS, GERENTE, SISTEMA, TECNICO, TOKENS
 
 CONTRATO = Path(__file__).resolve().parents[2] / "docs/api/README.md"
+OPENAPI = CONTRATO.parent / "openapi.json"
 TOTAL_DE_RUTAS = 43
 TOKENS_POR_ROL = {
     "Asesor": ASESOR,
@@ -100,6 +103,20 @@ def documento(cliente: TestClient) -> dict[str, Any]:
 
 def _operacion(documento: dict[str, Any], ruta: Ruta) -> dict[str, Any]:
     return documento["paths"][ruta.ruta][ruta.metodo.lower()]
+
+
+def test_openapi_exportado_esta_al_dia(documento: dict[str, Any]) -> None:
+    exportado = json.loads(OPENAPI.read_text(encoding="utf-8"))
+
+    assert exportado == documento, "Ejecute: python -m api.exportar_openapi"
+
+
+def test_exportar_escribe_un_json_valido(tmp_path: Path) -> None:
+    destino = tmp_path / "openapi.json"
+
+    exportar(destino)
+
+    assert len(json.loads(destino.read_text(encoding="utf-8"))["paths"]) > 0
 
 
 def test_el_contrato_tiene_las_43_rutas() -> None:
