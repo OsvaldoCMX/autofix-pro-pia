@@ -183,5 +183,82 @@ def autorizada(
     return numero, id_cotizacion
 
 
+def asignar(
+    cliente: TestClient, numero: str, ids: tuple[int, ...] = (1, 2), tecnico: str = ID_TECNICO
+) -> None:
+    exigir(
+        cliente.post(
+            f"/api/ordenes/{numero}/asignacion-trabajos",
+            json={"ids_trabajos": list(ids), "tecnico": tecnico},
+            headers=ASESOR,
+        ),
+        200,
+    )
+
+
+def asignada(cliente: TestClient, flotilla: bool = False) -> str:
+    """Orden «Autorizada» con los trabajos 1 y 2 asignados al técnico."""
+    numero, _ = autorizada(cliente, flotilla)
+    asignar(cliente, numero)
+    return numero
+
+
+def iniciar(cliente: TestClient, numero: str, id_trabajo: int = 1) -> None:
+    exigir(cliente.post(f"/api/ordenes/{numero}/trabajos/{id_trabajo}/inicio", headers=TECNICO), 200)
+
+
+def completar(cliente: TestClient, numero: str, id_trabajo: int = 1) -> None:
+    exigir(
+        cliente.post(f"/api/ordenes/{numero}/trabajos/{id_trabajo}/completado", headers=TECNICO),
+        200,
+    )
+
+
+def en_reparacion(cliente: TestClient, flotilla: bool = False) -> str:
+    """El trabajo 1 queda «En Progreso» y el 2 «Pendiente»."""
+    numero = asignada(cliente, flotilla)
+    iniciar(cliente, numero)
+    return numero
+
+
+def solicitar(cliente: TestClient, numero: str, id_trabajo: int = 2) -> int:
+    respuesta = exigir(
+        cliente.post(
+            f"/api/ordenes/{numero}/solicitudes-de-compra",
+            json={"id_trabajo": id_trabajo, "refaccion": "Balatas", "cantidad": 2},
+            headers=TECNICO,
+        ),
+        201,
+    )
+    return respuesta["id_solicitud"]
+
+
+def en_espera(cliente: TestClient) -> tuple[str, int]:
+    """Orden «En Espera de Refacción» con una solicitud del trabajo 2."""
+    numero = asignada(cliente)
+    return numero, solicitar(cliente, numero)
+
+
+def pausada(cliente: TestClient) -> tuple[str, int]:
+    numero, id_solicitud = en_espera(cliente)
+    exigir(cliente.post(f"/api/ordenes/{numero}/retiro", headers=ASESOR), 201)
+    exigir(cliente.post(f"/api/ordenes/{numero}/retiro/firma", headers=ASESOR), 200)
+    return numero, id_solicitud
+
+
+def con_adicional(cliente: TestClient) -> tuple[str, str]:
+    """Orden «En Reparación» con una cotización adicional v.2 de dos trabajos, sin decisión."""
+    numero = en_reparacion(cliente)
+    adicional = exigir(
+        cliente.post(
+            f"/api/ordenes/{numero}/cotizaciones-adicionales",
+            json=trabajos("500.00", "700.00"),
+            headers=ASESOR,
+        ),
+        201,
+    )
+    return numero, adicional["id"]
+
+
 def revisar_plazos(cliente: TestClient) -> dict[str, Any]:
     return exigir(cliente.post("/api/revisiones/plazos", headers=SISTEMA), 200)

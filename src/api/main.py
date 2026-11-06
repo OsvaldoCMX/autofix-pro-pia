@@ -15,6 +15,9 @@ from api.rutas import (
     cotizaciones,
     diagnostico,
     recepcion,
+    refacciones,
+    reparacion,
+    retiro,
     revisiones,
     salud,
 )
@@ -27,6 +30,9 @@ ROUTERS = (
     diagnostico.router,
     cotizaciones.router,
     autorizacion.router,
+    reparacion.router,
+    refacciones.router,
+    retiro.router,
     alertas.router,
 )
 

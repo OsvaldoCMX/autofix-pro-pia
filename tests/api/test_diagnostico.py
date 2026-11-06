@@ -17,8 +17,10 @@ from tests.api.pasos import (
     SISTEMA,
     TECNICO,
     alertas_de,
+    autorizada,
     cotizada,
     en_diagnostico,
+    en_reparacion,
     expediente_de,
     panel_de,
     recibida,
@@ -122,6 +124,41 @@ def test_rn_03_mensaje_indica_registrar_falla_adicional(cliente: TestClient) -> 
     )
 
     assert "falla adicional" in respuesta.json()["detalle"]
+
+
+def test_ca_034_falla_adicional_se_vincula_y_alerta_al_asesor(cliente: TestClient) -> None:
+    numero = en_reparacion(cliente)
+
+    respuesta = cliente.post(
+        f"/api/ordenes/{numero}/fallas-adicionales",
+        json={"descripcion": "Fuga de aceite"},
+        headers=TECNICO,
+    )
+
+    assert respuesta.status_code == 201
+    assert respuesta.json()["id_falla"] == 1
+    falla = expediente_de(cliente, numero)["fallas_adicionales"][0]
+    assert falla["descripcion"] == "Fuga de aceite"
+    assert falla["tecnico"] == ID_TECNICO
+    alerta = next(
+        alerta for alerta in alertas_de(cliente, ASESOR) if alerta["tipo"] == "FallaAdicionalReportada"
+    )
+    assert "cotización adicional" in alerta["mensaje"]
+
+
+def test_ca_036_trabajos_asignados_aparecen_pendientes_en_el_panel(cliente: TestClient) -> None:
+    numero, _ = autorizada(cliente)
+
+    respuesta = cliente.post(
+        f"/api/ordenes/{numero}/asignacion-trabajos",
+        json={"ids_trabajos": [1, 2], "tecnico": ID_OTRO_TECNICO},
+        headers=ASESOR,
+    )
+
+    assert respuesta.status_code == 200
+    panel = panel_de(cliente, OTRO_TECNICO)
+    assert [trabajo["id"] for trabajo in panel[0]["trabajos"]] == [1, 2]
+    assert {trabajo["estado"] for trabajo in panel[0]["trabajos"]} == {"Pendiente"}
 
 
 def test_ca_013_panel_ordenado_por_la_fila_de_trabajo(cliente: TestClient, reloj: Mock) -> None:
