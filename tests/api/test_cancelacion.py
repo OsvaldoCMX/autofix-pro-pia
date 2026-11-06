@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from fastapi.testclient import TestClient
 
-from tests.api.pasos import ASESOR, TECNICO, exigir, recibida
+from tests.api.pasos import ASESOR, TECNICO, en_diagnostico, exigir, panel_de, recibida
 
 
 def test_ca_044_cancela_orden_recibida_con_motivo(cliente: TestClient) -> None:
@@ -19,6 +19,18 @@ def test_ca_044_cancela_orden_recibida_con_motivo(cliente: TestClient) -> None:
     assert expediente["cancelacion_motivo"] == "Desistió"
     assert expediente["pago_monto"] is None
     assert expediente["credito_monto"] is None
+
+
+def test_ca_044_quita_la_orden_del_panel_del_tecnico(cliente: TestClient) -> None:
+    numero = en_diagnostico(cliente)
+    assert [orden["numero_orden"] for orden in panel_de(cliente, TECNICO)] == [numero]
+
+    respuesta = cliente.post(
+        f"/api/ordenes/{numero}/cancelacion", json={"motivo": "Desistió"}, headers=ASESOR
+    )
+
+    assert respuesta.status_code == 200
+    assert panel_de(cliente, TECNICO) == []
 
 
 def test_rn_19_cancelar_sin_motivo_responde_422(cliente: TestClient) -> None:

@@ -49,6 +49,8 @@ CLIENTE_DE_FLOTILLA = {
     "responsable_correo": "ana@norte.test",
 }
 
+DIAGNOSTICO = {"fallas": "Balatas gastadas", "recomendaciones": "Cambiar balatas"}
+
 _consecutivo = count(1)
 
 
@@ -77,6 +79,44 @@ def exigir(respuesta: Any, codigo: int) -> dict[str, Any]:
     return respuesta.json()
 
 
+def alertas_de(cliente: TestClient, encabezados: dict[str, str]) -> list[dict[str, Any]]:
+    return exigir(cliente.get("/api/alertas", headers=encabezados), 200)
+
+
+def tipos_de_alertas(cliente: TestClient, encabezados: dict[str, str]) -> list[str]:
+    return [alerta["tipo"] for alerta in alertas_de(cliente, encabezados)]
+
+
+def panel_de(cliente: TestClient, encabezados: dict[str, str]) -> list[dict[str, Any]]:
+    return exigir(cliente.get("/api/tecnicos/me/panel", headers=encabezados), 200)
+
+
+def expediente_de(cliente: TestClient, numero: str) -> dict[str, Any]:
+    return exigir(cliente.get(f"/api/ordenes/{numero}", headers=ASESOR), 200)
+
+
+# ------------------------------------------------------------------ pasos para llegar a un estado
 def recibida(cliente: TestClient, flotilla: bool = False) -> str:
     cuerpo = datos_de_orden(flotilla)
     return exigir(cliente.post("/api/ordenes", json=cuerpo, headers=ASESOR), 201)["numero_orden"]
+
+
+def en_diagnostico(
+    cliente: TestClient, flotilla: bool = False, tecnico: str = ID_TECNICO
+) -> str:
+    numero = recibida(cliente, flotilla)
+    exigir(
+        cliente.post(
+            f"/api/ordenes/{numero}/asignacion-diagnostico",
+            json={"tecnico": tecnico},
+            headers=ASESOR,
+        ),
+        200,
+    )
+    return numero
+
+
+def diagnosticada(cliente: TestClient, flotilla: bool = False) -> str:
+    numero = en_diagnostico(cliente, flotilla)
+    exigir(cliente.post(f"/api/ordenes/{numero}/diagnostico", json=DIAGNOSTICO, headers=TECNICO), 201)
+    return numero
