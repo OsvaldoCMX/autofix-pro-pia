@@ -2,15 +2,20 @@
 
 Es idempotente: cada alerta lleva una clave y no se repite aunque la revisión corra varias veces.
 Una solicitud genera una sola alerta; una cotización, una por cada periodo de 48 horas.
+
+Los candidatos se leen antes de abrir la Unidad de Trabajo: el lector usa su propia conexión y
+no debe intercalarse con la transacción. Cada candidato se vuelve a evaluar ya dentro de ella.
 """
 from __future__ import annotations
 
+from collections.abc import Iterable
 from datetime import UTC, datetime
 
 from application.consultas.lector import LectorDeOrdenes
 from application.puertos import AlertaInterna, Reloj
 from application.resultados import ResultadoDeRevisionDePlazos
 from application.unidad_de_trabajo import UnidadDeTrabajo
+from domain.compartido.valores import NumeroOrden
 from domain.cotizaciones.cotizacion import Cotizacion
 from domain.cotizaciones.especificaciones import RequiereRecontacto
 from domain.ordenes.especificaciones import RequiereAlertaDeRefaccion
@@ -26,34 +31,42 @@ class ServicioDeRevisionDePlazos:
 
     def revisar(self) -> ResultadoDeRevisionDePlazos:
         ahora = self._reloj.ahora_en_el_taller()
+        ordenes = self._lector.ordenes_con_solicitudes_pendientes()
+        cotizaciones = self._lector.cotizaciones_presentadas_sin_decision()
         with self._uow as uow:
-            refacciones = self._revisar_refacciones(uow, ahora)
-            recontactos = self._revisar_cotizaciones(uow, ahora)
+            refacciones = _revisar_refacciones(uow, ordenes, ahora)
+            recontactos = _revisar_cotizaciones(uow, cotizaciones, ahora)
             uow.confirmar()
         return ResultadoDeRevisionDePlazos(refacciones, recontactos)
 
-    def _revisar_refacciones(self, uow: UnidadDeTrabajo, ahora: datetime) -> int:
-        regla = RequiereAlertaDeRefaccion(ahora)
-        creadas = 0
-        for numero in self._lector.ordenes_con_solicitudes_pendientes():
-            orden = uow.ordenes.obtener(numero)
-            for solicitud in orden.solicitudes:
-                if regla.es_satisfecha_por(solicitud):
-                    alerta = _alerta_de_refaccion(orden, solicitud, ahora)
-                    creadas += _crear_si_es_nueva(uow, alerta)
-        return creadas
 
-    def _revisar_cotizaciones(self, uow: UnidadDeTrabajo, ahora: datetime) -> int:
-        regla = RequiereRecontacto(ahora)
-        creadas = 0
-        for id_cotizacion in self._lector.cotizaciones_presentadas_sin_decision():
-            cotizacion = uow.cotizaciones.obtener(id_cotizacion)
-            if regla.es_satisfecha_por(cotizacion):
-                orden = uow.ordenes.obtener(cotizacion.numero_orden)
-                creadas += _crear_si_es_nueva(
-                    uow, _alerta_de_recontacto(orden.asesor, cotizacion, ahora)
-                )
-        return creadas
+def _revisar_refacciones(
+    uow: UnidadDeTrabajo, ordenes: Iterable[NumeroOrden], ahora: datetime
+) -> int:
+    regla = RequiereAlertaDeRefaccion(ahora)
+    creadas = 0
+    for numero in ordenes:
+        orden = uow.ordenes.obtener(numero)
+        for solicitud in orden.solicitudes:
+            if regla.es_satisfecha_por(solicitud):
+                alerta = _alerta_de_refaccion(orden, solicitud, ahora)
+                creadas += _crear_si_es_nueva(uow, alerta)
+    return creadas
+
+
+def _revisar_cotizaciones(
+    uow: UnidadDeTrabajo, cotizaciones: Iterable[str], ahora: datetime
+) -> int:
+    regla = RequiereRecontacto(ahora)
+    creadas = 0
+    for id_cotizacion in cotizaciones:
+        cotizacion = uow.cotizaciones.obtener(id_cotizacion)
+        if regla.es_satisfecha_por(cotizacion):
+            orden = uow.ordenes.obtener(cotizacion.numero_orden)
+            creadas += _crear_si_es_nueva(
+                uow, _alerta_de_recontacto(orden.asesor, cotizacion, ahora)
+            )
+    return creadas
 
 
 def _crear_si_es_nueva(uow: UnidadDeTrabajo, alerta: AlertaInterna) -> int:
