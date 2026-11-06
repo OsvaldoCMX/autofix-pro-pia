@@ -8,6 +8,7 @@ Generan los documentos que deben coincidir entre sí, a partir de una sola fuent
 | `gen_trazabilidad.py docs` | `docs/trazabilidad/matriz-trazabilidad.md` y `.xlsx`, `docs/api/README.md` |
 | `gen_adr.py docs` | `docs/architecture/adr/*.md` |
 | `gen_datos_profesor.py datos/profesor docs` | `docs/datos-profesor/` (README y oráculos CSV) |
+| `gen_evidencia.py` | `docs/trazabilidad/evidencia-pruebas.md`, corriendo pytest con cobertura (usa una base local desechable, nunca Supabase) |
 
 Uso (desde la raíz del repositorio, requiere `openpyxl`):
 

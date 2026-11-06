@@ -26,7 +26,7 @@ Orden en que se construye el sistema a partir de esta documentación. Cada fase 
 | 8 | CI/CD con GitHub Actions | Terminada | 05/11/2026 | `docs: cerrar la Fase 8` |
 | 9 | Despliegue en Render con Supabase | Terminada | 06/11/2026 | `docs: agregar la URL de producción` |
 | 10 | P2: documentos PDF y fotos de daños | Omitida | 06/11/2026 | `docs: registrar la omisión de la Fase 10` |
-| 11 | README técnico, evidencias y cierre | Pendiente | | |
+| 11 | README técnico, evidencias y cierre | Terminada | 06/11/2026 | `docs: README técnico, guion de demostración y evidencia de pruebas` |
 
 ---
 
