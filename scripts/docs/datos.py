@@ -446,7 +446,7 @@ ca("CA-037", "US-021", [
 ca("CA-038", "US-021", [
     (D, "que un cliente está en la pantalla «Consulta tu vehículo»"),
     (C, "el número de orden y las placas no coinciden con ninguna orden"),
-    (E, "el sistema debe mostrar el mensaje «No se encontró una orden con esos datos» sin revelar ninguna información"),
+    (E, "el sistema debe mostrar el mensaje «No se encontró una orden con esos datos. Revise el número de orden y las placas e intente de nuevo.» sin revelar ninguna información"),
 ], TRANS, ["RN-20"], "Modelo de lectura EstadoDeOrdenVista", "Consulta ConsultarEstadoDeOrden",
    "GET /api/consulta-de-estado?orden=&placas= (404)", PUB, nombre="Consulta de estado con datos que no coinciden")
 
@@ -487,7 +487,8 @@ ca("CA-042", "US-024", [
     (D, "que una orden no está en «Pagada» ni en «Por Cobrar (Crédito)»"),
     (C, "el asesor intenta registrar la entrega"),
     (E, "el sistema no debe permitirlo"),
-    (Y, "debe indicar que primero debe registrarse el pago o el cargo a crédito"),
+    (Y, "si la orden todavía puede cobrarse, debe indicar que primero debe registrarse el pago o el cargo a crédito"),
+    (Y, "si la orden está «Cancelada», «Cerrada» o «Cerrada sin Reparación», debe indicar esa situación sin pedir el pago"),
 ], F6, ["RN-18"], "spec PuedeEntregarse, error EntregaNoPermitida", "ServicioDeEntrega.entregar",
    "POST /api/ordenes/{numero}/entrega (409)", ASE, nombre="No se entrega sin pago ni cargo a crédito")
 
@@ -517,7 +518,8 @@ ca("CA-045", "US-025", [
     (D, "que una orden ya tiene una cotización generada («Cotizada» o un estado posterior)"),
     (C, "el asesor intenta cancelarla"),
     (E, "el sistema no debe permitirlo"),
-    (Y, "debe indicar que una orden con cotización no se cancela: si el cliente no desea la reparación, se registra el rechazo total de la cotización"),
+    (Y, "debe indicar que la orden no se puede cancelar"),
+    (Y, "si la orden está «Cotizada» y el cliente aún no decide, debe indicar que, si no desea la reparación, se registra el rechazo total de la cotización"),
 ], DG2C, ["RN-19"], "spec PuedeCancelarse, error CancelacionNoPermitida", "ServicioDeCancelacion.cancelar",
    "POST /api/ordenes/{numero}/cancelacion (409)", ASE, cambio="H-PIA-01",
    nombre="No se cancela una orden que ya tiene cotización")

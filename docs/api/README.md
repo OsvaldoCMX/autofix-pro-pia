@@ -147,13 +147,13 @@ Respuesta `201`:
 
 ```json
 {"error": "EntregaNoPermitida", "codigo": 409,
- "detalle": "No se puede entregar el vehículo de la orden AUT-O006 (estado «Autorizada»): primero debe registrarse el pago o el cargo a crédito."}
+ "detalle": "El vehículo de la orden AUT-O006 todavía no se puede entregar: su servicio sigue en proceso (estado «Autorizada»). Cuando esté «Lista para Entrega», primero debe registrarse el pago o el cargo a crédito."}
 ```
 
 **Consulta pública con datos que no coinciden** (`GET /api/consulta-de-estado?orden=AUT-O007&placas=XXX000`) → `404`:
 
 ```json
-{"error": "OrdenNoEncontrada", "detalle": "No se encontró una orden con esos datos", "codigo": 404}
+{"error": "OrdenNoEncontrada", "detalle": "No se encontró una orden con esos datos. Revise el número de orden y las placas e intente de nuevo.", "codigo": 404}
 ```
 
 Los importes del ejemplo salen de los datos del profesor: AUT-O007 tiene AUT-P007 × 1 ($785.00) y AUT-P012 × 2 ($1,140.00) = $785.00 + $2,280.00 = **$3,065.00**.
@@ -162,5 +162,5 @@ Los importes del ejemplo salen de los datos del profesor: AUT-O007 tiene AUT-P00
 
 ```json
 {"error": "ValorInvalido", "codigo": 422,
- "detalle": "No se puede cotizar la orden AUT-O005: incluye servicios inhabilitados (AUT-P011)."}
+ "detalle": "No se puede cotizar la orden AUT-O005: incluye servicios que el taller no ofrece por ahora (AUT-P011). Informe al cliente."}
 ```

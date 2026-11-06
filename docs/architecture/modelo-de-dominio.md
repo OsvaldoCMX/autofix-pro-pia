@@ -213,4 +213,6 @@ Las alertas por tiempo (CA-023 y CA-040) no vienen de un evento sino de la revis
 | `CancelacionNoPermitida` | E4 no se cumple. | 409 |
 | `OrdenNoEncontrada`, `CotizacionNoEncontrada`, `ClienteNoEncontrado`, `VehiculoNoEncontrado`, `EmpleadoNoEncontrado`, `TrabajoNoEncontrado`, `SolicitudNoEncontrada` | El identificador no existe. | 404 |
 
-Todos heredan de `ErrorDeDominio` y su mensaje está escrito para el usuario del taller (se devuelve tal cual en el campo `detalle` de la respuesta).
+Todos heredan de `ErrorDeDominio` y su mensaje está escrito para el usuario del taller (se devuelve tal cual en el campo `detalle` de la respuesta): dice qué pasó y qué puede hacer, sin términos internos («inhabilitado» es un término de este modelo; el usuario lee «servicios que el taller no ofrece por ahora»).
+
+El mismo error puede tener mensajes distintos según el estado de la orden, para no sugerir acciones que no aplican: `EntregaNoPermitida` no pide el pago de una orden cancelada o cerrada, y `CancelacionNoPermitida` solo sugiere el rechazo total si la orden está «Cotizada» y el cliente aún no decide. El estado solo cambia el texto: el código HTTP y el tipo de error son los de la tabla.

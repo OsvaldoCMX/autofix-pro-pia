@@ -253,7 +253,7 @@ Los criterios marcados con **(v3.0)** se agregaron o se precisaron en el PIA; el
 | ID | Criterio de aceptación |
 |---|---|
 | **CA-037**<br>Consulta de estado con datos correctos | **Dado** que un cliente entra a la pantalla «Consulta tu vehículo»<br>**Cuando** escribe su número de orden y sus placas y ambos coinciden<br>**Entonces** el sistema debe mostrar el estado actual de la orden, la fecha de ingreso y la fecha de su última actualización<br>**Y** no debe permitir modificar nada |
-| **CA-038**<br>Consulta de estado con datos que no coinciden | **Dado** que un cliente está en la pantalla «Consulta tu vehículo»<br>**Cuando** el número de orden y las placas no coinciden con ninguna orden<br>**Entonces** el sistema debe mostrar el mensaje «No se encontró una orden con esos datos» sin revelar ninguna información |
+| **CA-038**<br>Consulta de estado con datos que no coinciden | **Dado** que un cliente está en la pantalla «Consulta tu vehículo»<br>**Cuando** el número de orden y las placas no coinciden con ninguna orden<br>**Entonces** el sistema debe mostrar el mensaje «No se encontró una orden con esos datos. Revise el número de orden y las placas e intente de nuevo.» sin revelar ninguna información |
 
 ### US-022
 
@@ -278,7 +278,7 @@ Los criterios marcados con **(v3.0)** se agregaron o se precisaron en el PIA; el
 | ID | Criterio de aceptación |
 |---|---|
 | **CA-041**<br>Entregar el vehículo y cerrar la orden **(v3.0, H-PIA-02)** | **Dado** que una orden está en «Pagada» o en «Por Cobrar (Crédito)»<br>**Cuando** el asesor registra la entrega del vehículo<br>**Entonces** el sistema debe cambiar la orden a «Cerrada»<br>**Y** debe guardar la fecha y hora de entrega<br>**Y** si la orden tiene cargo a crédito, debe registrar su fecha de vencimiento: 15 días naturales después de la entrega |
-| **CA-042**<br>No se entrega sin pago ni cargo a crédito | **Dado** que una orden no está en «Pagada» ni en «Por Cobrar (Crédito)»<br>**Cuando** el asesor intenta registrar la entrega<br>**Entonces** el sistema no debe permitirlo<br>**Y** debe indicar que primero debe registrarse el pago o el cargo a crédito |
+| **CA-042**<br>No se entrega sin pago ni cargo a crédito | **Dado** que una orden no está en «Pagada» ni en «Por Cobrar (Crédito)»<br>**Cuando** el asesor intenta registrar la entrega<br>**Entonces** el sistema no debe permitirlo<br>**Y** si la orden todavía puede cobrarse, debe indicar que primero debe registrarse el pago o el cargo a crédito<br>**Y** si la orden está «Cancelada», «Cerrada» o «Cerrada sin Reparación», debe indicar esa situación sin pedir el pago |
 | **CA-043**<br>Entregar el vehículo sin reparación | **Dado** que el cliente rechazó toda la cotización<br>**Cuando** el asesor selecciona «Entregar sin reparación»<br>**Entonces** el sistema debe cambiar la orden a «Cerrada sin Reparación»<br>**Y** debe guardar la fecha y hora de entrega<br>**Y** no debe generar ningún cobro |
 
 ### US-025
@@ -288,7 +288,7 @@ Los criterios marcados con **(v3.0)** se agregaron o se precisaron en el PIA; el
 | ID | Criterio de aceptación |
 |---|---|
 | **CA-044**<br>Cancelar la orden antes de la cotización **(v3.0, H-PIA-01)** | **Dado** que una orden está en «Recibida» o «En Diagnóstico»<br>**Y** el cliente decide no continuar con el servicio<br>**Cuando** el asesor registra la cancelación indicando el motivo<br>**Entonces** el sistema debe cambiar la orden a «Cancelada»<br>**Y** debe guardar la fecha, la hora y el motivo<br>**Y** debe quitarla del panel del técnico asignado, si tenía uno<br>**Y** no debe generar ningún cobro |
-| **CA-045**<br>No se cancela una orden que ya tiene cotización **(v3.0, H-PIA-01)** | **Dado** que una orden ya tiene una cotización generada («Cotizada» o un estado posterior)<br>**Cuando** el asesor intenta cancelarla<br>**Entonces** el sistema no debe permitirlo<br>**Y** debe indicar que una orden con cotización no se cancela: si el cliente no desea la reparación, se registra el rechazo total de la cotización |
+| **CA-045**<br>No se cancela una orden que ya tiene cotización **(v3.0, H-PIA-01)** | **Dado** que una orden ya tiene una cotización generada («Cotizada» o un estado posterior)<br>**Cuando** el asesor intenta cancelarla<br>**Entonces** el sistema no debe permitirlo<br>**Y** debe indicar que la orden no se puede cancelar<br>**Y** si la orden está «Cotizada» y el cliente aún no decide, debe indicar que, si no desea la reparación, se registra el rechazo total de la cotización |
 
 ## 4. Validación y trazabilidad
 

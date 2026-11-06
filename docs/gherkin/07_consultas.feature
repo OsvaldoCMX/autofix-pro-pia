@@ -37,4 +37,4 @@ Característica: Consultas del gerente y del cliente
   Escenario: CA-038 Consulta de estado con datos que no coinciden
     Dado que un cliente está en la pantalla «Consulta tu vehículo»
     Cuando el número de orden y las placas no coinciden con ninguna orden
-    Entonces el sistema debe mostrar el mensaje «No se encontró una orden con esos datos» sin revelar ninguna información
+    Entonces el sistema debe mostrar el mensaje «No se encontró una orden con esos datos. Revise el número de orden y las placas e intente de nuevo.» sin revelar ninguna información

@@ -23,4 +23,5 @@ Característica: Cancelación de la orden
     Dado que una orden ya tiene una cotización generada («Cotizada» o un estado posterior)
     Cuando el asesor intenta cancelarla
     Entonces el sistema no debe permitirlo
-    Y debe indicar que una orden con cotización no se cancela: si el cliente no desea la reparación, se registra el rechazo total de la cotización
+    Y debe indicar que la orden no se puede cancelar
+    Y si la orden está «Cotizada» y el cliente aún no decide, debe indicar que, si no desea la reparación, se registra el rechazo total de la cotización

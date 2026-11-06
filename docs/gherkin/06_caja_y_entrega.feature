@@ -52,7 +52,8 @@ Característica: Caja y entrega del vehículo
     Dado que una orden no está en «Pagada» ni en «Por Cobrar (Crédito)»
     Cuando el asesor intenta registrar la entrega
     Entonces el sistema no debe permitirlo
-    Y debe indicar que primero debe registrarse el pago o el cargo a crédito
+    Y si la orden todavía puede cobrarse, debe indicar que primero debe registrarse el pago o el cargo a crédito
+    Y si la orden está «Cancelada», «Cerrada» o «Cerrada sin Reparación», debe indicar esa situación sin pedir el pago
 
   @US-024 @CA-043
   Escenario: CA-043 Entregar el vehículo sin reparación
