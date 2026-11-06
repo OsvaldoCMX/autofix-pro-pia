@@ -6,6 +6,7 @@ from unittest.mock import Mock
 
 import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy import Engine
 
 from tests.api.pasos import (
     ASESOR,
@@ -22,6 +23,7 @@ from tests.api.pasos import (
     tipos_de_alertas,
     trabajos,
 )
+from tests.integration.apoyo_base import registrar_servicios_de_orden
 from tests.unit.application.escenarios import AHORA, poner_hora
 
 PENDIENTE_DEL_CLIENTE = "Pendiente de Autorización del Cliente"
@@ -317,3 +319,22 @@ def test_cotizacion_inexistente_responde_404(cliente: TestClient) -> None:
 
     assert respuesta.status_code == 404
     assert respuesta.json()["error"] == "CotizacionNoEncontrada"
+
+
+
+def test_servicio_inhabilitado_responde_422_y_la_orden_sigue_en_diagnostico(
+    cliente: TestClient, motor: Engine
+) -> None:
+    """D-05: aunque las líneas sean texto libre, esa orden no se cotiza."""
+    numero = diagnosticada(cliente)
+    registrar_servicios_de_orden(motor, numero, ("AUT-P001",), ("AUT-P011",))
+
+    respuesta = cliente.post(
+        f"/api/ordenes/{numero}/cotizaciones", json=trabajos("1000.00"), headers=ASESOR
+    )
+
+    assert respuesta.status_code == 422
+    cuerpo = respuesta.json()
+    assert (cuerpo["error"], cuerpo["codigo"]) == ("ValorInvalido", 422)
+    assert "AUT-P011" in cuerpo["detalle"]
+    assert expediente_de(cliente, numero)["estado"] == "En Diagnóstico"

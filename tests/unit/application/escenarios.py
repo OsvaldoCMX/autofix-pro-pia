@@ -106,6 +106,11 @@ class Taller:
     def ordenes_registradas(self) -> int:
         return len(self.datos.ordenes)
 
+    def registrar_servicios_de_orden(
+        self, numero: str, habilitados: tuple[str, ...], inhabilitados: tuple[str, ...]
+    ) -> None:
+        self.datos.servicios_inhabilitados[numero] = inhabilitados
+
     @property
     def datos(self) -> DatosEnMemoria:
         return self.almacen.datos

@@ -7,6 +7,7 @@ from datetime import datetime
 
 from domain.compartido.errores import ValorInvalido
 from domain.compartido.eventos import EventoDeDominio
+from domain.compartido.valores import NumeroOrden
 from domain.cotizaciones.cotizacion import Cotizacion
 from domain.empleados.empleado import RolDeEmpleado
 from domain.ordenes.orden_de_servicio import OrdenDeServicio
@@ -20,6 +21,14 @@ class Reloj(ABC):
     @abstractmethod
     def ahora_en_el_taller(self) -> datetime:
         """El mismo instante en la zona del taller: define «hoy», los días hábiles y el crédito."""
+
+
+class CatalogoDeServicios(ABC):
+    """Catálogo de referencia del paquete del profesor (ADR-013, D-05)."""
+
+    @abstractmethod
+    def servicios_inhabilitados_de_la_orden(self, numero: NumeroOrden) -> tuple[str, ...]:
+        """Servicios solicitados en la orden que no se pueden cotizar, ordenados por su id."""
 
 
 class PublicadorDeEventos(ABC):

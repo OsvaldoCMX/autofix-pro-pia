@@ -25,7 +25,7 @@ from domain.empleados.empleado import RolDeEmpleado
 from domain.ordenes.orden_de_servicio import OrdenDeServicio
 from domain.ordenes.valores import EstadoDeRecepcion, NivelDeCombustible
 from domain.vehiculos.vehiculo import Vehiculo
-from tests.unit.application.escenarios import AHORA, ASESOR, TECNICO, Taller
+from tests.unit.application.escenarios import AHORA, ASESOR, TECNICO, Taller, en_diagnostico
 
 ID_CLIENTE = "CLI-1"
 NUMERO = NumeroOrden("OS-0001")
@@ -272,3 +272,16 @@ def test_existe_clave_de_alerta(taller: Taller) -> None:
         uow.alertas.agregar(alerta)
         assert uow.alertas.existe_clave("refaccion:1:1") is True
         assert uow.alertas.existe_clave("otra") is False
+
+
+
+def test_catalogo_devuelve_los_servicios_inhabilitados_de_la_orden(taller: Taller) -> None:
+    numero = en_diagnostico(taller)
+    taller.registrar_servicios_de_orden(numero, ("AUT-P001",), ("AUT-P011", "AUT-P002"))
+
+    with taller.uow() as uow:
+        assert uow.catalogo.servicios_inhabilitados_de_la_orden(NumeroOrden(numero)) == (
+            "AUT-P002",
+            "AUT-P011",
+        )
+        assert uow.catalogo.servicios_inhabilitados_de_la_orden(NumeroOrden("OS-9999")) == ()

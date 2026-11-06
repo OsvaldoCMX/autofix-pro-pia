@@ -23,6 +23,7 @@ from domain.compartido.errores import (
     OperacionDeCotizacionNoPermitida,
     OrdenNoEncontrada,
     TransicionDeEstadoNoPermitida,
+    ValorInvalido,
 )
 from domain.cotizaciones.eventos import AprobacionGerencialRequerida, CotizacionGenerada
 from tests.unit.application.escenarios import (
@@ -213,3 +214,36 @@ def test_ca_009_ajustar_una_cotizacion_que_no_lo_requiere_se_rechaza(taller: Tal
 
     with pytest.raises(OperacionDeCotizacionNoPermitida):
         taller.cotizacion.ajustar(AjustarCotizacion(id_cotizacion, trabajos("100.00")))
+
+
+
+def test_no_genera_cotizacion_con_servicio_inhabilitado(taller: Taller) -> None:
+    """D-05: el dato es inválido, la orden sigue «En Diagnóstico» y no se consume un folio."""
+    numero = diagnosticada(taller)
+    taller.registrar_servicios_de_orden(numero, ("AUT-P001",), ("AUT-P011",))
+    taller.publicador.reset_mock()
+
+    with pytest.raises(ValorInvalido, match="AUT-P011"):
+        taller.cotizacion.generar_inicial(GenerarCotizacion(numero, trabajos("1000.00")))
+
+    assert taller.datos.ordenes[numero].estado.value == "En Diagnóstico"
+    assert taller.datos.cotizaciones == {}
+    assert taller.datos.ultimo_folio_de_cotizacion == 0
+    taller.publicador.publicar.assert_not_called()
+
+
+def test_el_error_de_estado_tiene_prioridad_sobre_el_servicio_inhabilitado(taller: Taller) -> None:
+    numero = en_diagnostico(taller)
+    taller.registrar_servicios_de_orden(numero, (), ("AUT-P011",))
+
+    with pytest.raises(DiagnosticoRequerido):
+        taller.cotizacion.generar_inicial(GenerarCotizacion(numero, trabajos("1000.00")))
+
+
+def test_orden_con_servicios_habilitados_si_se_cotiza(taller: Taller) -> None:
+    numero = diagnosticada(taller)
+    taller.registrar_servicios_de_orden(numero, ("AUT-P001",), ())
+
+    resultado = taller.cotizacion.generar_inicial(GenerarCotizacion(numero, trabajos("1000.00")))
+
+    assert resultado.version == "v.1"

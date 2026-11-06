@@ -14,6 +14,7 @@ from application.comandos import (
 from application.puertos import PublicadorDeEventos, Reloj
 from application.resultados import ResultadoDeCotizacion, ResultadoDeRecontacto
 from application.unidad_de_trabajo import UnidadDeTrabajo
+from domain.compartido.errores import ValorInvalido
 from domain.compartido.valores import Dinero, NumeroOrden
 from domain.cotizaciones.cotizacion import Cotizacion
 from domain.cotizaciones.linea_de_cotizacion import LineaDeCotizacion
@@ -33,6 +34,7 @@ class ServicioDeCotizacion:
         with self._uow as uow:
             orden = uow.ordenes.obtener(NumeroOrden(comando.numero_orden))
             orden.marcar_cotizada(ahora)
+            _exigir_servicios_habilitados(uow, orden.numero)
             cotizacion = Cotizacion.generar(
                 uow.cotizaciones.siguiente_id(),
                 orden.numero,
@@ -93,6 +95,16 @@ class ServicioDeCotizacion:
             uow.confirmar()
         self._publicador.publicar(uow.eventos_confirmados())
         return ResultadoDeRecontacto(cotizacion.id, cotizacion.estado.value, ahora)
+
+
+def _exigir_servicios_habilitados(uow: UnidadDeTrabajo, numero: NumeroOrden) -> None:
+    """D-05: un servicio inhabilitado es un dato inválido y esa orden no se puede cotizar."""
+    inhabilitados = uow.catalogo.servicios_inhabilitados_de_la_orden(numero)
+    if inhabilitados:
+        raise ValorInvalido(
+            f"No se puede cotizar la orden {numero}: incluye servicios inhabilitados "
+            f"({', '.join(inhabilitados)})."
+        )
 
 
 def a_lineas(trabajos: tuple[TrabajoPropuesto, ...]) -> list[LineaDeCotizacion]:

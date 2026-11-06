@@ -1,7 +1,7 @@
 """Implementaciones en memoria de los Repositories, con el mismo contrato que las de SQLAlchemy."""
 from __future__ import annotations
 
-from application.puertos import AlertaInterna, RepositorioDeAlertas
+from application.puertos import AlertaInterna, CatalogoDeServicios, RepositorioDeAlertas
 from domain.clientes.cliente import Cliente
 from domain.clientes.repositorio import RepositorioDeClientes
 from domain.compartido.errores import (
@@ -170,3 +170,11 @@ class RepositorioDeAlertasEnMemoria(RepositorioDeAlertas):
 
     def existe_clave(self, clave: str) -> bool:
         return any(alerta.clave == clave for alerta in self._datos.alertas)
+
+
+class CatalogoDeServiciosEnMemoria(CatalogoDeServicios):
+    def __init__(self, datos: DatosEnMemoria) -> None:
+        self._datos = datos
+
+    def servicios_inhabilitados_de_la_orden(self, numero: NumeroOrden) -> tuple[str, ...]:
+        return tuple(sorted(self._datos.servicios_inhabilitados.get(str(numero), ())))

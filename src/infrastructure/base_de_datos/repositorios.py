@@ -14,7 +14,7 @@ from typing import Any
 
 from sqlalchemy import Connection, Table, delete, func, insert, select, update
 
-from application.puertos import AlertaInterna, RepositorioDeAlertas
+from application.puertos import AlertaInterna, CatalogoDeServicios, RepositorioDeAlertas
 from domain.clientes.cliente import Cliente, TipoCliente
 from domain.clientes.repositorio import RepositorioDeClientes
 from domain.compartido.errores import (
@@ -39,6 +39,7 @@ from domain.vehiculos.vehiculo import Vehiculo
 from infrastructure.base_de_datos import mapeo
 from infrastructure.base_de_datos.tablas import (
     alertas_internas,
+    catalogo_servicios,
     clientes,
     cotizaciones,
     empleados,
@@ -48,6 +49,7 @@ from infrastructure.base_de_datos.tablas import (
     recontactos,
     refacciones_cotizadas,
     secuencias,
+    servicios_solicitados,
     solicitudes_de_compra,
     trabajos,
     vehiculos,
@@ -374,3 +376,23 @@ class RepositorioDeAlertasSqlAlchemy(RepositorioDeAlertas):
     def existe_clave(self, clave: str) -> bool:
         consulta = select(alertas_internas.c.id).where(alertas_internas.c.clave == clave)
         return self._conexion.execute(consulta).first() is not None
+
+
+class CatalogoDeServiciosSqlAlchemy(CatalogoDeServicios):
+    def __init__(self, conexion: Connection) -> None:
+        self._conexion = conexion
+
+    def servicios_inhabilitados_de_la_orden(self, numero: NumeroOrden) -> tuple[str, ...]:
+        consulta = (
+            select(catalogo_servicios.c.recurso_id)
+            .join(
+                servicios_solicitados,
+                servicios_solicitados.c.recurso_id == catalogo_servicios.c.recurso_id,
+            )
+            .where(
+                servicios_solicitados.c.numero_orden == str(numero),
+                catalogo_servicios.c.habilitado.is_(False),
+            )
+            .order_by(catalogo_servicios.c.recurso_id)
+        )
+        return tuple(self._conexion.execute(consulta).scalars())

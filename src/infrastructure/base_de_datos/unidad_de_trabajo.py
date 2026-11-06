@@ -14,6 +14,7 @@ from application.unidad_de_trabajo import (
 )
 from domain.compartido.eventos import EventoDeDominio, RaizDeAgregado
 from infrastructure.base_de_datos.repositorios import (
+    CatalogoDeServiciosSqlAlchemy,
     RepositorioDeAlertasSqlAlchemy,
     RepositorioDeClientesSqlAlchemy,
     RepositorioDeCotizacionesSqlAlchemy,
@@ -38,6 +39,7 @@ class UnidadDeTrabajoSqlAlchemy(UnidadDeTrabajo):
         self.vehiculos = RepositorioDeVehiculosSqlAlchemy(self._conexion)
         self.empleados = RepositorioDeEmpleadosSqlAlchemy(self._conexion)
         self.alertas = RepositorioDeAlertasSqlAlchemy(self._conexion)
+        self.catalogo = CatalogoDeServiciosSqlAlchemy(self._conexion)
 
     def _recolectar_eventos(self) -> list[EventoDeDominio]:
         return eventos_de(self._vistos)

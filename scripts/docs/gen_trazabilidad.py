@@ -192,6 +192,8 @@ api += ["## Ejemplos\n",
         "```json\n{\"error\": \"EntregaNoPermitida\", \"codigo\": 409,\n \"detalle\": \"No se puede entregar el vehículo de la orden AUT-O006 (estado «Autorizada»): primero debe registrarse el pago o el cargo a crédito.\"}\n```\n",
         "**Consulta pública con datos que no coinciden** (`GET /api/consulta-de-estado?orden=AUT-O007&placas=XXX000`) → `404`:\n",
         "```json\n{\"error\": \"OrdenNoEncontrada\", \"detalle\": \"No se encontró una orden con esos datos\", \"codigo\": 404}\n```\n",
-        "Los importes del ejemplo salen de los datos del profesor: AUT-O007 tiene AUT-P007 × 1 ($785.00) y AUT-P012 × 2 ($1,140.00) = $785.00 + $2,280.00 = **$3,065.00**."]
+        "Los importes del ejemplo salen de los datos del profesor: AUT-O007 tiene AUT-P007 × 1 ($785.00) y AUT-P012 × 2 ($1,140.00) = $785.00 + $2,280.00 = **$3,065.00**.\n",
+        "**Cotizar una orden con un servicio inhabilitado** (`POST /api/ordenes/AUT-O005/cotizaciones`, D-05 y H-PIA-19) → `422`, y la orden sigue «En Diagnóstico»:\n",
+        "```json\n{\"error\": \"ValorInvalido\", \"codigo\": 422,\n \"detalle\": \"No se puede cotizar la orden AUT-O005: incluye servicios inhabilitados (AUT-P011).\"}\n```"]
 (A / "README.md").write_text("\n".join(api) + "\n", encoding="utf-8")
 print("ok", len(filas_ca), len(filas_rn), len(RUTAS))

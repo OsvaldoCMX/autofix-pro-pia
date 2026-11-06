@@ -10,6 +10,7 @@ from application.unidad_de_trabajo import RegistroDeBitacora, UnidadDeTrabajo, e
 from domain.compartido.eventos import EventoDeDominio, RaizDeAgregado
 from infrastructure.memoria.almacen import AlmacenEnMemoria, DatosEnMemoria
 from infrastructure.memoria.repositorios import (
+    CatalogoDeServiciosEnMemoria,
     RepositorioDeAlertasEnMemoria,
     RepositorioDeClientesEnMemoria,
     RepositorioDeCotizacionesEnMemoria,
@@ -32,6 +33,7 @@ class UnidadDeTrabajoEnMemoria(UnidadDeTrabajo):
         self.vehiculos = RepositorioDeVehiculosEnMemoria(self._copia)
         self.empleados = RepositorioDeEmpleadosEnMemoria(self._copia)
         self.alertas = RepositorioDeAlertasEnMemoria(self._copia)
+        self.catalogo = CatalogoDeServiciosEnMemoria(self._copia)
 
     def _recolectar_eventos(self) -> list[EventoDeDominio]:
         return eventos_de(self._vistos)

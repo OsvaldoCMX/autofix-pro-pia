@@ -194,7 +194,7 @@ Formato: CSV UTF-8 **con BOM** (leer con `encoding="utf-8-sig"`), importes en MX
 | `actor_id`, `nombre` | `clientes` (Particular): id y nombre | Teléfono y correo no vienen: se generan valores ficticios reconocibles (`81-0000-0001`, `aut-c001@ejemplo.test`). |
 | `ciudad` | — | Informativo; no forma parte del modelo. |
 | `operacion_id` | `NumeroOrden` (folio) | El folio es el mismo id (`AUT-O001`), para que los casos se puedan cruzar. |
-| `fecha_solicitud` | `fecha_ingreso` | A las 09:00 de Monterrey, guardada en UTC. |
+| `fecha_solicitud` | `fecha_ingreso` y `fecha_ingreso_a_fila` | A las 09:00 de Monterrey, guardada en UTC. La orden entra a la fila de trabajo al registrarse, igual que las que se crean con la API. |
 | `referencia` (`PIA_AUT_001`) | `Placas` del vehículo y motivo de ingreso | Placas = `PIA-AUT-001` (el Value Object las normaliza a `PIAAUT001`); motivo = «Servicio de referencia PIA_AUT_001». |
 | — | `Vehiculo` | Uno por operación: marca «Ficticia», modelo «Referencia», año 2020, VIN `AUT` + 14 dígitos del número de operación. |
 | `estado_inicial` = `RECIBIDA` | `EstadoOrden.RECIBIDA` | Sin cambios; los cambios de estado se hacen **con el código** (casos de uso), como pide el paquete. |
@@ -203,7 +203,7 @@ Formato: CSV UTF-8 **con BOM** (leer con `encoding="utf-8-sig"`), importes en MX
 | `autorizado` | Decisión del cliente | 1 = autoriza todos los trabajos; 0 = **no autoriza ninguno** (rechazo total, CA-012). |
 | `activo`, `es_preferente`, `promocion_activa`, `capacidad_o_stock` | — | Sin equivalente en el BRD (ver diferencias D-01 a D-03). |
 
-El script lo genera `scripts/db/generar_datos_iniciales.py` y además registra los 6 empleados de demostración (ADR-012). Solo carga el **estado inicial**: las 60 órdenes quedan «Recibida» y los cambios de estado se hacen con la API, así que todas las reglas del dominio aplican también a los datos del profesor. El catálogo y el detalle quedan en `catalogo_servicios` y `servicios_solicitados`, y las columnas sin equivalente (`activo`, `es_preferente`, `promocion_activa`, `autorizado`) en `referencia_operaciones_profesor`, solo como referencia. Kilometraje y combustible quedan vacíos (no vienen en los datos).
+El script lo genera `scripts/db/generar_datos_iniciales.py` y además registra los 6 empleados de demostración (ADR-012). Solo carga el **estado inicial**: las 60 órdenes quedan «Recibida» y los cambios de estado se hacen con la API, así que todas las reglas del dominio aplican también a los datos del profesor. El catálogo y el detalle quedan en `catalogo_servicios` y `servicios_solicitados` (la aplicación los consulta solo para rechazar los servicios inhabilitados, D-05), y las columnas sin equivalente (`activo`, `es_preferente`, `promocion_activa`, `autorizado`) en `referencia_operaciones_profesor`, solo como referencia. Kilometraje y combustible quedan vacíos (no vienen en los datos).
 
 ## 3. Diferencias entre el modelo propuesto y AutoFix Pro
 
@@ -213,7 +213,7 @@ El script lo genera `scripts/db/generar_datos_iniciales.py` y además registra l
 | D-02 | `beneficio_referencia`: preferente AND total ≥ 1500 AND NOT promoción. | Fuera de alcance: «No se manejan descuentos, promociones ni clientes preferentes» (BRD §5). | No se agrega al dominio. La regla propia comparable (composición AND sobre el total) es `RequiereAprobacionGerencial`. La regla del profesor se evalúa solo como **referencia** en el arnés de pruebas con la clase `Especificacion`. |
 | D-03 | `capacidad_o_stock` por servicio. | «El sistema no controla existencias de inventario» (Glosario, Verificación de Disponibilidad). | Se ignora. Ninguna línea excede la capacidad ({len([o for o, i in info.items() if i['excede_stock']])} casos), así que no cambia ningún resultado. |
 | D-04 | 5 estados: RECIBIDA → DIAGNOSTICADA → EN_REPARACION → ENTREGADA; CANCELADA desde RECIBIDA. | 13 estados de orden (Glosario §2). | Equivalencias: RECIBIDA = «Recibida»; DIAGNOSTICADA ≈ «En Diagnóstico» con diagnóstico registrado; EN_REPARACION = «En Reparación»; ENTREGADA = «Cerrada»; CANCELADA = «Cancelada» (agregada en v3.0 por H-PIA-01, también desde «En Diagnóstico»). |
-| D-05 | La regla de ejemplo no menciona `habilitado`, pero el paquete pide «validar disponibilidad». | Un servicio inhabilitado es un dato inválido. | `validar_operacion` de AutoFix = TieneDetalle AND ServiciosHabilitados AND Autorizado. |
+| D-05 | La regla de ejemplo no menciona `habilitado`, pero el paquete pide «validar disponibilidad». | Un servicio inhabilitado es un dato inválido. | `validar_operacion` de AutoFix = TieneDetalle AND ServiciosHabilitados AND Autorizado. `ServicioDeCotizacion.generar_inicial` lo aplica con el puerto `CatalogoDeServicios` (H-PIA-19): también responde 422 en la API. |
 | D-06 | Precondición «técnico disponible». | El asesor asigna un técnico (CA-035); no hay agenda de técnicos en el BRD. | En las pruebas se asigna siempre el Técnico 1 de demostración. |
 | D-07 | Un actor = «propietario». | Clientes particulares o de flotilla. | Todos los propietarios se cargan como particulares; las flotillas se prueban con fixtures propios (CA-028, CA-029, CA-039). |
 

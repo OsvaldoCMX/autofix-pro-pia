@@ -253,7 +253,7 @@ tabla("secuencias", "Folios consecutivos (OS-0001, COT-0001, REC-0001, CLI-0001)
     ("ultimo_valor", "INTEGER", False, "0", "Último número usado"),
 ], ["nombre"], checks=["ultimo_valor >= 0"], grupo="Soporte")
 
-tabla("catalogo_servicios", "Catálogo de referencia del profesor (catalogo.csv). No es parte del dominio: sirve para armar cotizaciones de demostración (ADR-013).", [
+tabla("catalogo_servicios", "Catálogo de referencia del profesor (catalogo.csv). No es parte del dominio: sirve para armar cotizaciones de demostración y para rechazar las órdenes con servicios inhabilitados con el puerto `CatalogoDeServicios` (ADR-013, H-PIA-19).", [
     ("recurso_id", "VARCHAR(20)", False, None, "AUT-P001…"),
     ("descripcion", "VARCHAR(120)", False, None, "Servicio"),
     ("precio_mxn", MXN, False, None, "Precio unitario"),

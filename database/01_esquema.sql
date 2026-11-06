@@ -453,7 +453,7 @@ COMMENT ON TABLE secuencias IS 'Folios consecutivos (OS-0001, COT-0001, REC-0001
 COMMENT ON COLUMN secuencias.nombre IS 'orden, cotizacion, recibo, cliente';
 COMMENT ON COLUMN secuencias.ultimo_valor IS 'Último número usado';
 
--- Catálogo de referencia del profesor (catalogo.csv). No es parte del dominio: sirve para armar cotizaciones de demostración (ADR-013).
+-- Catálogo de referencia del profesor (catalogo.csv). No es parte del dominio: sirve para armar cotizaciones de demostración y para rechazar las órdenes con servicios inhabilitados con el puerto `CatalogoDeServicios` (ADR-013, H-PIA-19).
 CREATE TABLE catalogo_servicios (
     recurso_id                   VARCHAR(20) NOT NULL,
     descripcion                  VARCHAR(120) NOT NULL,
@@ -464,7 +464,7 @@ CREATE TABLE catalogo_servicios (
     CONSTRAINT ck_catalogo_servicios_1 CHECK (precio_mxn >= 0),
     CONSTRAINT ck_catalogo_servicios_2 CHECK (capacidad_o_stock >= 0)
 );
-COMMENT ON TABLE catalogo_servicios IS 'Catálogo de referencia del profesor (catalogo.csv). No es parte del dominio: sirve para armar cotizaciones de demostración (ADR-013).';
+COMMENT ON TABLE catalogo_servicios IS 'Catálogo de referencia del profesor (catalogo.csv). No es parte del dominio: sirve para armar cotizaciones de demostración y para rechazar las órdenes con servicios inhabilitados con el puerto `CatalogoDeServicios` (ADR-013, H-PIA-19).';
 COMMENT ON COLUMN catalogo_servicios.recurso_id IS 'AUT-P001…';
 COMMENT ON COLUMN catalogo_servicios.descripcion IS 'Servicio';
 COMMENT ON COLUMN catalogo_servicios.precio_mxn IS 'Precio unitario';

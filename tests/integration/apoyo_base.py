@@ -6,6 +6,7 @@ en un esquema privado y temporal: su `search_path` solo ve ese esquema, así que
 """
 from __future__ import annotations
 
+from decimal import Decimal
 from pathlib import Path
 
 from sqlalchemy import Engine, func, insert, make_url, select, text
@@ -17,10 +18,12 @@ from infrastructure.base_de_datos.lector import LectorDeOrdenesSqlAlchemy
 from infrastructure.base_de_datos.motor import crear_motor
 from infrastructure.base_de_datos.tablas import (
     SECUENCIAS,
+    catalogo_servicios,
     empleados,
     metadata,
     ordenes,
     secuencias,
+    servicios_solicitados,
 )
 from infrastructure.base_de_datos.unidad_de_trabajo import UnidadDeTrabajoSqlAlchemy
 from infrastructure.config import Configuracion
@@ -46,6 +49,37 @@ class TallerEnBase(Taller):
     def ordenes_registradas(self) -> int:
         with self.motor.connect() as conexion:
             return conexion.execute(select(func.count()).select_from(ordenes)).scalar_one()
+
+    def registrar_servicios_de_orden(
+        self, numero: str, habilitados: tuple[str, ...], inhabilitados: tuple[str, ...]
+    ) -> None:
+        registrar_servicios_de_orden(self.motor, numero, habilitados, inhabilitados)
+
+
+def registrar_servicios_de_orden(
+    motor: Engine, numero: str, habilitados: tuple[str, ...], inhabilitados: tuple[str, ...]
+) -> None:
+    """Agrega al catálogo los servicios indicados y los liga a la orden, como los datos iniciales."""
+    servicios = [(recurso, True) for recurso in habilitados]
+    servicios += [(recurso, False) for recurso in inhabilitados]
+    with motor.begin() as conexion:
+        conexion.execute(
+            insert(catalogo_servicios),
+            [
+                {
+                    "recurso_id": recurso,
+                    "descripcion": f"Servicio {recurso}",
+                    "precio_mxn": Decimal("100.00"),
+                    "capacidad_o_stock": 1,
+                    "habilitado": habilitado,
+                }
+                for recurso, habilitado in servicios
+            ],
+        )
+        conexion.execute(
+            insert(servicios_solicitados),
+            [{"numero_orden": numero, "recurso_id": r, "cantidad": 1} for r, _ in servicios],
+        )
 
 
 class ServidorNoPermitido(Exception):

@@ -18,7 +18,7 @@ from datetime import datetime
 from types import TracebackType
 from typing import Any, Self
 
-from application.puertos import RepositorioDeAlertas
+from application.puertos import CatalogoDeServicios, RepositorioDeAlertas
 from domain.clientes.repositorio import RepositorioDeClientes
 from domain.compartido.eventos import EventoDeDominio, RaizDeAgregado
 from domain.cotizaciones.eventos import EventoDeCotizacion
@@ -73,6 +73,7 @@ class UnidadDeTrabajo(ABC):
     vehiculos: RepositorioDeVehiculos
     empleados: RepositorioDeEmpleados
     alertas: RepositorioDeAlertas
+    catalogo: CatalogoDeServicios
 
     def __enter__(self) -> Self:
         self._confirmada = False

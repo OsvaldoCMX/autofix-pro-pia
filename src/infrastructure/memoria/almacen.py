@@ -22,6 +22,7 @@ class DatosEnMemoria:
     empleados: dict[str, Empleado] = field(default_factory=dict)
     alertas: list[AlertaInterna] = field(default_factory=list)
     bitacora: list[RegistroDeBitacora] = field(default_factory=list)
+    servicios_inhabilitados: dict[str, tuple[str, ...]] = field(default_factory=dict)
     ultimo_folio_de_orden: int = 0
     ultimo_folio_de_cotizacion: int = 0
     ultimo_folio_de_cliente: int = 0

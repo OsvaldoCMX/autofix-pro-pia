@@ -280,7 +280,7 @@ CHECK `ultimo_valor >= 0`
 
 #### `catalogo_servicios`
 
-Catálogo de referencia del profesor (catalogo.csv). No es parte del dominio: sirve para armar cotizaciones de demostración (ADR-013).
+Catálogo de referencia del profesor (catalogo.csv). No es parte del dominio: sirve para armar cotizaciones de demostración y para rechazar las órdenes con servicios inhabilitados con el puerto `CatalogoDeServicios` (ADR-013, H-PIA-19).
 
 | Columna | Tipo | Nulo | Descripción |
 |---|---|---|---|

@@ -157,3 +157,10 @@ Respuesta `201`:
 ```
 
 Los importes del ejemplo salen de los datos del profesor: AUT-O007 tiene AUT-P007 × 1 ($785.00) y AUT-P012 × 2 ($1,140.00) = $785.00 + $2,280.00 = **$3,065.00**.
+
+**Cotizar una orden con un servicio inhabilitado** (`POST /api/ordenes/AUT-O005/cotizaciones`, D-05 y H-PIA-19) → `422`, y la orden sigue «En Diagnóstico»:
+
+```json
+{"error": "ValorInvalido", "codigo": 422,
+ "detalle": "No se puede cotizar la orden AUT-O005: incluye servicios inhabilitados (AUT-P011)."}
+```
