@@ -33,7 +33,7 @@ def registrar_pago(
 @router.get(
     "/ordenes/{numero}/recibo/pdf",
     summary="PDF del recibo interno (P2)",
-    responses=errores(401, 403, 404, 409, 501),
+    responses=errores(401, 403, 404, 409, 422, 501),
 )
 def pdf_de_recibo(numero: str) -> None:
     raise FuncionNoImplementada("El PDF del recibo interno todavía no está disponible.")
@@ -44,7 +44,7 @@ def pdf_de_recibo(numero: str) -> None:
     response_model=CargoRegistrado,
     status_code=status.HTTP_201_CREATED,
     summary="Registrar el cargo a crédito de una flotilla",
-    responses=errores(401, 403, 404, 409),
+    responses=errores(401, 403, 404, 409, 422),
 )
 def registrar_cargo_a_credito(
     numero: str, contenedor: ContenedorDeLaApp

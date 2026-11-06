@@ -19,7 +19,7 @@ router = APIRouter(prefix="/api", tags=["Retiro anticipado"], dependencies=[SOLO
     response_model=NotaDeResponsabilidad,
     status_code=status.HTTP_201_CREATED,
     summary="Registrar la salida del vehículo y generar la Nota de Responsabilidad",
-    responses=errores(401, 403, 404, 409),
+    responses=errores(401, 403, 404, 409, 422),
 )
 def registrar_salida(numero: str, contenedor: ContenedorDeLaApp) -> ResultadoDeNota:
     return contenedor.retiro().registrar_salida(RegistrarSalida(numero))
@@ -28,7 +28,7 @@ def registrar_salida(numero: str, contenedor: ContenedorDeLaApp) -> ResultadoDeN
 @router.get(
     "/ordenes/{numero}/nota-de-responsabilidad/pdf",
     summary="PDF de la Nota de Responsabilidad (P2)",
-    responses=errores(401, 403, 404, 409, 501),
+    responses=errores(401, 403, 404, 409, 422, 501),
 )
 def pdf_de_nota(numero: str) -> None:
     raise FuncionNoImplementada("El PDF de la Nota de Responsabilidad todavía no está disponible.")
@@ -38,7 +38,7 @@ def pdf_de_nota(numero: str) -> None:
     "/ordenes/{numero}/retiro/firma",
     response_model=EstadoDeLaOrden,
     summary="Confirmar la firma de la nota",
-    responses=errores(401, 403, 404, 409),
+    responses=errores(401, 403, 404, 409, 422),
 )
 def confirmar_firma(numero: str, contenedor: ContenedorDeLaApp) -> ResultadoDeEstado:
     return contenedor.retiro().confirmar_firma(ConfirmarFirmaDeNota(numero))
@@ -48,7 +48,7 @@ def confirmar_firma(numero: str, contenedor: ContenedorDeLaApp) -> ResultadoDeEs
     "/ordenes/{numero}/reactivacion",
     response_model=EstadoDeLaOrden,
     summary="Reactivar la orden cuando el vehículo regresa",
-    responses=errores(401, 403, 404, 409),
+    responses=errores(401, 403, 404, 409, 422),
 )
 def reactivar(numero: str, contenedor: ContenedorDeLaApp) -> ResultadoDeEstado:
     return contenedor.retiro().reactivar(ReactivarOrden(numero))

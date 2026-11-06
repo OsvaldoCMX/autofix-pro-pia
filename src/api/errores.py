@@ -62,7 +62,6 @@ _MENSAJES_DE_HTTP = {
     404: ("RutaNoEncontrada", "La ruta solicitada no existe."),
     405: ("MetodoNoPermitido", "La ruta no admite este método."),
 }
-_ORIGENES_DE_DATOS = ("body", "query", "path", "header")
 
 
 class ErrorDeAcceso(Exception):
@@ -101,9 +100,7 @@ def codigo_de(error: dominio.ErrorDeDominio) -> int:
 
 def mensaje_de_validacion(error: Mapping[str, Any]) -> str:
     """Pydantic escribe en inglés: el usuario del taller recibe el mensaje en español."""
-    ubicacion = [str(parte) for parte in error["loc"]]
-    if ubicacion and ubicacion[0] in _ORIGENES_DE_DATOS:
-        ubicacion = ubicacion[1:]
+    ubicacion = [str(parte) for parte in error["loc"][1:]]  # el primero es body, query o path
     if not ubicacion:
         return "Falta el cuerpo de la petición."
     # El nombre de un dato desconocido viene del cliente: podría no poder escribirse como UTF-8.

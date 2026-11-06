@@ -17,7 +17,7 @@ router = APIRouter(prefix="/api", tags=["Entrega"], dependencies=[SOLO_ASESOR])
     "/ordenes/{numero}/entrega",
     response_model=EntregaRegistrada,
     summary="Entregar el vehículo y cerrar la orden",
-    responses=errores(401, 403, 404, 409),
+    responses=errores(401, 403, 404, 409, 422),
 )
 def entregar(numero: str, contenedor: ContenedorDeLaApp) -> ResultadoDeEntrega:
     return contenedor.entrega().entregar(RegistrarEntrega(numero))
@@ -27,7 +27,7 @@ def entregar(numero: str, contenedor: ContenedorDeLaApp) -> ResultadoDeEntrega:
     "/ordenes/{numero}/entrega-sin-reparacion",
     response_model=EntregaRegistrada,
     summary="Entregar sin reparación tras un rechazo total",
-    responses=errores(401, 403, 404, 409),
+    responses=errores(401, 403, 404, 409, 422),
 )
 def entregar_sin_reparacion(numero: str, contenedor: ContenedorDeLaApp) -> ResultadoDeEntrega:
     return contenedor.entrega().entregar_sin_reparacion(EntregarSinReparacion(numero))

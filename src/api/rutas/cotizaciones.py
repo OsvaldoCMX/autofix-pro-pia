@@ -72,7 +72,7 @@ def generar_adicional(
     response_model=CotizacionDetallada,
     summary="Detalle de la cotización",
     dependencies=[_LEEN_LA_COTIZACION],
-    responses=errores(401, 403, 404),
+    responses=errores(401, 403, 404, 422),
 )
 def consultar_cotizacion(id: str, contenedor: ContenedorDeLaApp) -> CotizacionVista:
     return contenedor.consultar_cotizacion().ejecutar(ConsultarCotizacion(id))
@@ -82,7 +82,7 @@ def consultar_cotizacion(id: str, contenedor: ContenedorDeLaApp) -> CotizacionVi
     "/cotizaciones/{id}/pdf",
     summary="PDF de la cotización (P2)",
     dependencies=[SOLO_ASESOR],
-    responses=errores(401, 403, 404, 501),
+    responses=errores(401, 403, 404, 422, 501),
 )
 def pdf_de_cotizacion(id: str) -> None:
     raise FuncionNoImplementada("El PDF de la cotización todavía no está disponible.")
@@ -94,7 +94,7 @@ def pdf_de_cotizacion(id: str) -> None:
     response_model_exclude_none=True,
     summary="Marcar como presentada (inicia las 48 h)",
     dependencies=[SOLO_ASESOR],
-    responses=errores(401, 403, 404, 409),
+    responses=errores(401, 403, 404, 409, 422),
 )
 def presentar(id: str, contenedor: ContenedorDeLaApp) -> ResultadoDeCotizacion:
     return contenedor.cotizacion().presentar(PresentarCotizacion(id))
@@ -135,7 +135,7 @@ def ajustar(
     response_model=RecontactoRegistrado,
     status_code=status.HTTP_201_CREATED,
     summary="Registrar el recontacto al cliente (48 h)",
-    responses=errores(401, 403, 404, 409),
+    responses=errores(401, 403, 404, 409, 422),
 )
 def registrar_recontacto(
     id: str, asesor: Asesor, contenedor: ContenedorDeLaApp
