@@ -54,3 +54,7 @@ Antes de empezar la implementación del PIA se revisaron juntos el BRD, las User
 2. PDF generados al pedirlos y fotos en la base (ADR-014); revisión de plazos con un endpoint y GitHub Actions cada 6 horas (ADR-015).
 3. BPMN v3 aplicado directamente sobre el PDF exportado de Lucidchart (`bpmn/BPMN_AutoFix_Pro_v3.pdf`).
 4. El equipo del PIA queda integrado por Jesus Eduardo Moreno Osoria y Osvaldo Salvador Cárdenas Mejorado.
+
+## 5. Decisiones durante la implementación
+
+1. **06/11/2026:** se omite la Fase 10 (P2: PDF y fotos de daños) por falta de tiempo antes de la entrega. Las 4 rutas P2 siguen respondiendo 501: CA-027 queda sin implementar y CA-002, CA-005 y CA-024 quedan sin sus fotos o su PDF.

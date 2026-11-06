@@ -112,7 +112,7 @@ md += tabla(["#", "Specification", "Composición", "Operadores", "Regla", "Crite
 md += ["", "Operadores cubiertos: **AND** (E1, E2, E3, E5, E6, E7, E8), **OR** (E2, E3, E4, E6) y **NOT** (E5, E7).", "",
        "## 4. Matriz por criterio de aceptación\n"]
 md += tabla(CAB_CA, filas_ca)
-md += ["", f"**Prioridad:** {p1} criterios son P1 completos; los demás tienen una parte P2 (PDF o fotos, ver `architecture/decisiones-tecnicas.md` §8).\n"]
+md += ["", f"**Prioridad:** {p1} criterios son P1 completos; la parte P2 (PDF y fotos) se omitió por decisión del equipo y sus rutas responden 501 (ver `architecture/decisiones-tecnicas.md` §8). CA-027 no está implementado; CA-002, CA-005 y CA-024 están implementados, salvo sus fotos o su PDF.\n"]
 (T / "matriz-trazabilidad.md").write_text("\n".join(md) + "\n", encoding="utf-8")
 
 # ============================================================================ xlsx

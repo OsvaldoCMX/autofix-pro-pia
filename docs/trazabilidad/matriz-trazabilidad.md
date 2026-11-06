@@ -123,5 +123,5 @@ Operadores cubiertos: **AND** (E1, E2, E3, E5, E6, E7, E8), **OR** (E2, E3, E4, 
 | CA-045 | No se cancela una orden que ya tiene cotización | US-025 | N-15 | Diagrama 2: Cliente desiste antes de la cotización | RN-19 | spec PuedeCancelarse, error CancelacionNoPermitida | ServicioDeCancelacion.cancelar | POST /api/ordenes/{numero}/cancelacion (409) | Asesor | tests/api/test_cancelacion.py::test_ca_045_* | P1 | H-PIA-01 |
 | CA-046 | No se trabaja un vehículo retirado del taller | US-008 | N-09 | Diagrama 2: Retiro anticipado | RN-13, RN-14 | spec PuedeIniciarTrabajo (TrabajoPendiente AND AsignadoAlTecnico AND NOT OrdenPausadaPorRetiro), error TrabajoNoPermitido | ServicioDeReparacion.iniciar_trabajo | POST /api/ordenes/{numero}/trabajos/{id}/inicio (409) | Técnico | tests/api/test_reparacion_y_refacciones.py::test_ca_046_* | P1 | H-PIA-06 |
 
-**Prioridad:** 42 criterios son P1 completos; los demás tienen una parte P2 (PDF o fotos, ver `architecture/decisiones-tecnicas.md` §8).
+**Prioridad:** 42 criterios son P1 completos; la parte P2 (PDF y fotos) se omitió por decisión del equipo y sus rutas responden 501 (ver `architecture/decisiones-tecnicas.md` §8). CA-027 no está implementado; CA-002, CA-005 y CA-024 están implementados, salvo sus fotos o su PDF.
 
