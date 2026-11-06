@@ -1,8 +1,11 @@
 """`tablas.py` debe coincidir con `database/01_esquema.sql`, que es el esquema oficial (ADR-009)."""
 from __future__ import annotations
 
+import os
 import re
+from collections.abc import Iterator
 from dataclasses import dataclass, field
+from decimal import Decimal
 
 import pytest
 from sqlalchemy import (
@@ -12,11 +15,29 @@ from sqlalchemy import (
     Table,
     UniqueConstraint,
     inspect,
+    text,
 )
 from sqlalchemy.dialects import postgresql
 
+from application.comandos import (
+    AsignarTecnicoParaDiagnostico,
+    RegistrarDiagnostico,
+    RegistrarOrden,
+)
+from domain.compartido.valores import NumeroOrden
+from domain.ordenes.estados import EstadoOrden
+from domain.ordenes.valores import NivelDeCombustible
+from infrastructure.base_de_datos.motor import crear_motor
 from infrastructure.base_de_datos.tablas import metadata
-from tests.integration.apoyo_base import DATABASE
+from tests.integration.apoyo_base import (
+    DATABASE,
+    TallerEnBase,
+    crear_esquema,
+    ejecutar_script,
+    eliminar_esquema,
+    url_con_esquema,
+)
+from tests.unit.application.escenarios import ASESOR, TECNICO
 
 _TIPOS_EQUIVALENTES = {
     "TIMESTAMPTZ": "TIMESTAMP WITH TIME ZONE",
@@ -191,3 +212,86 @@ def test_tablas_coincide_con_postgresql_real(base_real: Engine, nombre: str) -> 
         for fk in tabla.foreign_key_constraints
     }
     assert foraneas_reales == foraneas_esperadas
+
+
+# ------------------------------------------------------------------ datos iniciales del profesor
+@pytest.fixture
+def base_con_datos_iniciales(
+    motor_postgresql: Engine | None, url_postgresql: str | None
+) -> Iterator[Engine]:
+    """Ejecuta `01` y `02` tal como se hace en Docker y en Supabase, en un esquema desechable."""
+    if motor_postgresql is None or url_postgresql is None:
+        pytest.skip("Requiere PostgreSQL: se ejecuta con DATABASE_URL (Docker o el CI).")
+    esquema = f"pruebas_datos_{os.getpid()}"
+    crear_esquema(url_postgresql, esquema)
+    motor = crear_motor(url_con_esquema(url_postgresql, esquema))
+    try:
+        ejecutar_script(motor, "01_esquema.sql")
+        ejecutar_script(motor, "02_datos_iniciales.sql")
+        yield motor
+    finally:
+        motor.dispose()
+        eliminar_esquema(url_postgresql, esquema)
+
+
+def _consultas_de_verificacion() -> list[str]:
+    script = (DATABASE / "03_verificacion.sql").read_text(encoding="utf-8")
+    return [parte.strip() for parte in script.split(";") if "SELECT" in parte]
+
+
+def test_datos_iniciales_cargan_y_verifican(base_con_datos_iniciales: Engine) -> None:
+    conteos, total, mayor = _consultas_de_verificacion()
+
+    with base_con_datos_iniciales.connect() as conexion:
+        filas = conexion.execute(text(conteos)).all()
+        referencia = conexion.execute(text(total)).scalar_one()
+        operacion_mayor = conexion.execute(text(mayor)).one()
+
+    assert len(filas) == 10
+    assert [fila.tabla for fila in filas if fila.obtenido != fila.esperado] == []
+    assert referencia == Decimal("305758.00")
+    assert (operacion_mayor.numero_orden, operacion_mayor.total) == ("AUT-O008", Decimal("12887.00"))
+
+
+def test_las_60_ordenes_iniciales_se_reconstruyen_en_el_dominio(
+    base_con_datos_iniciales: Engine,
+) -> None:
+    taller = TallerEnBase(base_con_datos_iniciales)
+    resumenes = taller.lector().ordenes(EstadoOrden.RECIBIDA)
+    assert len(resumenes) == 60
+
+    with taller.uow() as uow:
+        for resumen in resumenes:
+            orden = uow.ordenes.obtener(NumeroOrden(resumen.numero_orden))
+            assert orden.estado is EstadoOrden.RECIBIDA
+            assert orden.estado_de_recepcion is None
+            assert orden.fecha_ingreso_a_fila == orden.fecha_ingreso
+            assert uow.clientes.obtener(orden.id_cliente).id_cliente == orden.id_cliente
+            assert uow.vehiculos.por_placas(orden.placas).id_cliente == orden.id_cliente
+
+    assert len(taller.lector().clientes(None, None)) == 40
+
+
+def test_orden_del_profesor_avanza_con_los_casos_de_uso(base_con_datos_iniciales: Engine) -> None:
+    taller = TallerEnBase(base_con_datos_iniciales)
+
+    taller.diagnostico.asignar_tecnico(AsignarTecnicoParaDiagnostico("AUT-O001", TECNICO))
+    taller.diagnostico.registrar_diagnostico(
+        RegistrarDiagnostico("AUT-O001", TECNICO, "Balatas gastadas", "Cambiar balatas")
+    )
+
+    expediente = taller.lector().expediente(NumeroOrden("AUT-O001"))
+    assert expediente.estado == "En Diagnóstico"
+    assert expediente.diagnostico_fallas == "Balatas gastadas"
+
+
+def test_el_primer_folio_nuevo_es_os_0001(base_con_datos_iniciales: Engine) -> None:
+    """Un vehículo del profesor que regresa reutiliza sus registros (CA-003)."""
+    taller = TallerEnBase(base_con_datos_iniciales)
+
+    resultado = taller.recepcion.registrar_orden(
+        RegistrarOrden(ASESOR, "PIA-AUT-001", "Revisión", 1000, NivelDeCombustible.LLENO)
+    )
+
+    assert resultado.numero_orden == "OS-0001"
+    assert resultado.id_cliente == "AUT-C014"
