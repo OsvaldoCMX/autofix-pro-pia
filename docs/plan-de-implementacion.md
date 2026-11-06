@@ -22,7 +22,7 @@ Orden en que se construye el sistema a partir de esta documentación. Cada fase 
 | 4 | Persistencia con SQLAlchemy y PostgreSQL | Terminada | 05/11/2026 | `docs: cerrar la Fase 4` |
 | 5 | API REST con FastAPI | Terminada | 05/11/2026 | `docs: cerrar la Fase 5` |
 | 6 | Pruebas con los datos del profesor y trazabilidad | Terminada | 05/11/2026 | `docs: cerrar la Fase 6` |
-| 7 | Docker Compose | Pendiente | | |
+| 7 | Docker Compose | Terminada | 05/11/2026 | `docs: cerrar la Fase 7` |
 | 8 | CI/CD con GitHub Actions | Pendiente | | |
 | 9 | Despliegue en Render con Supabase | Pendiente | | |
 | 10 | P2: documentos PDF y fotos de daños | Pendiente | | |
