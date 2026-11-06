@@ -1,0 +1,53 @@
+name: Revisión de plazos
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  revisar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Llamar a la revisión de plazos
+        env:
+          AUTOFIX_API_URL: ${{ secrets.AUTOFIX_API_URL }}
+          TOKEN_SISTEMA: ${{ secrets.TOKEN_SISTEMA }}
+          INTENTOS: 5
+          ESPERA_SEGUNDOS: 30
+          TIEMPO_MAXIMO_SEGUNDOS: 90
+        run: |
+          if [ -z "$AUTOFIX_API_URL" ] || [ -z "$TOKEN_SISTEMA" ]; then
+            echo "::warning::Faltan los secretos AUTOFIX_API_URL o TOKEN_SISTEMA: no se revisó nada."
+            exit 0
+          fi
+
+          respuesta="$(mktemp)"
+          for intento in $(seq 1 "$INTENTOS"); do
+            # Render gratis tarda en despertar: un error de conexión también se reintenta.
+            codigo="$(curl --silent --output "$respuesta" --write-out '%{http_code}' \
+              --max-time "$TIEMPO_MAXIMO_SEGUNDOS" --request POST \
+              --header "Authorization: Bearer $TOKEN_SISTEMA" \
+              "${AUTOFIX_API_URL%/}/api/revisiones/plazos" || true)"
+            echo "Intento $intento de $INTENTOS: HTTP $codigo"
+            case "$codigo" in
+              2*)
+                cat "$respuesta"
+                exit 0
+                ;;
+              401|403)
+                echo "::error::La API rechazó TOKEN_SISTEMA (HTTP $codigo)."
+                exit 1
+                ;;
+            esac
+            if [ "$intento" -lt "$INTENTOS" ]; then
+              sleep "$ESPERA_SEGUNDOS"
+            fi
+          done
+
+          echo "::error::La API no respondió con éxito tras $INTENTOS intentos."
+          exit 1

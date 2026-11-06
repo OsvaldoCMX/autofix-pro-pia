@@ -18,7 +18,7 @@ El PIA exige una URL pública (Render, Railway o Fly.io) con Swagger disponible,
 
 ## Decisión
 
-**CI** (`.github/workflows/ci.yml`): en cada *push* y *pull request* instala dependencias, corre Ruff y `pytest` con cobertura ≥ 80 % usando PostgreSQL como servicio, y publica `htmlcov/` y `coverage.xml` como artefactos. **CD:** Render Web Service (tipo Docker) conectado a `main` con *Auto-Deploy* = «After CI Checks Pass», *health check* en `/health` y las variables de entorno en el panel de Render; `DATABASE_URL` es la cadena *Session pooler* de Supabase. Conviene elegir regiones cercanas: Supabase «East US (North Virginia)» y Render «Virginia (US East)».
+**CI** (`.github/workflows/ci.yml`): en cada *push* y *pull request* instala dependencias, corre Ruff y `pytest` con cobertura ≥ 80 % usando PostgreSQL como servicio, y publica `htmlcov/`, `coverage.xml` y `reportes/` como artefactos. **CD:** Render Web Service (tipo Docker) conectado a `main` con *Auto-Deploy* = «After CI Checks Pass», *health check* en `/health` y las variables de entorno en el panel de Render; `DATABASE_URL` es la cadena *Session pooler* de Supabase. Conviene elegir regiones cercanas: Supabase «East US (North Virginia)» y Render «Virginia (US East)».
 
 ## Consecuencias
 
