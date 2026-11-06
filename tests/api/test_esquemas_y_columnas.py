@@ -111,24 +111,26 @@ def test_los_textos_justo_en_el_limite_se_guardan(cliente: TestClient) -> None:
 
 
 @pytest.mark.parametrize(
-    "campo",
+    ("campo", "nombre_claro"),
     [
-        "nombre",
-        "telefono",
-        "correo",
-        "empresa",
-        "responsable_nombre",
-        "responsable_telefono",
-        "responsable_correo",
+        ("nombre", "nombre"),
+        ("telefono", "teléfono"),
+        ("correo", "correo"),
+        ("empresa", "empresa"),
+        ("responsable_nombre", "nombre del Responsable de Flotilla"),
+        ("responsable_telefono", "teléfono del Responsable de Flotilla"),
+        ("responsable_correo", "correo del Responsable de Flotilla"),
     ],
 )
-def test_un_caracter_de_mas_en_el_cliente_responde_422(cliente: TestClient, campo: str) -> None:
+def test_un_caracter_de_mas_en_el_cliente_responde_422(
+    cliente: TestClient, campo: str, nombre_claro: str
+) -> None:
     cuerpo = {**CLIENTE_COMPLETO, campo: CLIENTE_COMPLETO[campo] + "x"}
 
     respuesta = cliente.post("/api/clientes", json=cuerpo, headers=ASESOR)
 
     assert respuesta.status_code == 422
-    assert campo in respuesta.json()["detalle"]
+    assert f"«{nombre_claro}»" in respuesta.json()["detalle"]
     assert "caracteres" in respuesta.json()["detalle"]
 
 

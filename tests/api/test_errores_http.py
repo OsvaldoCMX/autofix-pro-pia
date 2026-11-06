@@ -2,14 +2,23 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Iterator
+from enum import Enum
 from pathlib import Path
 
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from starlette.exceptions import HTTPException
 
-from api.errores import CODIGOS_DE_ERROR, codigo_de, registrar_manejadores
-from api.esquemas.comunes import ModeloDeEntrada, TextoDeNombre
+from api.errores import (
+    CODIGOS_DE_ERROR,
+    TokenInvalido,
+    codigo_de,
+    nombre_del_campo,
+    registrar_manejadores,
+)
+from api.esquemas.comunes import ENTERO_MAXIMO, EnteroNoNegativo, ModeloDeEntrada, TextoDeNombre
 from domain.compartido.errores import ErrorDeDominio, ValorInvalido
 
 MODELO_DE_DOMINIO = Path(__file__).resolve().parents[2] / "docs/architecture/modelo-de-dominio.md"
@@ -32,9 +41,18 @@ def _codigos_documentados() -> dict[str, int]:
     return codigos
 
 
+class _Tipo(Enum):
+    PARTICULAR = "Particular"
+    FLOTILLA = "Flotilla"
+    OTRO = "Otro"
+
+
 class _Entrada(ModeloDeEntrada):
     nombre: TextoDeNombre
     libre: str = ""
+    kilometraje: EnteroNoNegativo = 0
+    monto: str = ""
+    tipo: _Tipo | None = None
 
 
 @pytest.fixture
@@ -49,6 +67,10 @@ def cliente_de_prueba() -> TestClient:
     @app.get("/invalido")
     def invalido() -> None:
         raise ValorInvalido("El dato no sirve.")
+
+    @app.get("/teapot")
+    def teapot() -> None:
+        raise HTTPException(418, "I'm a teapot")
 
     @app.get("/fallo")
     def fallo() -> None:
@@ -119,7 +141,112 @@ def test_sin_cuerpo_responde_422(cliente_de_prueba: TestClient) -> None:
     respuesta = cliente_de_prueba.post("/eco")
 
     assert respuesta.status_code == 422
-    assert respuesta.json()["detalle"] == "Falta el cuerpo de la petición."
+    assert respuesta.json()["detalle"] == (
+        "No se recibió la información solicitada. Capture los datos e intente de nuevo."
+    )
+
+
+@pytest.mark.parametrize("cuerpo", [[1], 5])
+def test_un_cuerpo_con_formato_incorrecto_no_dice_que_falta(
+    cliente_de_prueba: TestClient, cuerpo: object
+) -> None:
+    respuesta = cliente_de_prueba.post("/eco", json=cuerpo)
+
+    assert respuesta.status_code == 422
+    assert "formato correcto" in respuesta.json()["detalle"]
+
+
+@pytest.mark.parametrize(
+    ("cuerpo", "fragmento"),
+    [
+        ({"nombre": "a", "kilometraje": 1.5}, "«kilometraje» debe ser un número entero"),
+        ({"nombre": "a", "kilometraje": -1}, "«kilometraje» no puede ser menor que 0"),
+        ({"nombre": "a", "kilometraje": ENTERO_MAXIMO + 1}, "demasiado grande"),
+        ({"nombre": "a", "monto": 100}, "importe con dos decimales"),
+    ],
+)
+def test_un_numero_invalido_explica_que_corregir(
+    cliente_de_prueba: TestClient, cuerpo: dict[str, object], fragmento: str
+) -> None:
+    respuesta = cliente_de_prueba.post("/eco", json=cuerpo)
+
+    assert respuesta.status_code == 422
+    assert fragmento in respuesta.json()["detalle"]
+    assert str(ENTERO_MAXIMO) not in respuesta.json()["detalle"]
+
+
+def test_las_opciones_se_escriben_en_espanol(cliente_de_prueba: TestClient) -> None:
+    respuesta = cliente_de_prueba.post("/eco", json={"nombre": "a", "tipo": "X"})
+
+    assert respuesta.status_code == 422
+    assert respuesta.json()["detalle"] == (
+        "El dato «tipo de cliente» debe ser una de estas opciones: "
+        "«Particular», «Flotilla» o «Otro»."
+    )
+
+
+@pytest.mark.parametrize(
+    ("ubicacion", "nombre"),
+    [
+        (("motivo_de_ingreso",), "motivo de ingreso"),
+        (("responsable_nombre",), "nombre del Responsable de Flotilla"),
+        (("vehiculo",), "vehículo"),
+        (("vehiculo", "anio"), "año del vehículo"),
+        (("cliente", "telefono"), "teléfono del cliente"),
+        (("trabajos",), "trabajos"),
+        (("trabajos", 0), "trabajo 1"),
+        (("trabajos", 0, "mano_de_obra"), "mano de obra del trabajo 1"),
+        (("trabajos", 0, "refacciones", 1, "cantidad"), "cantidad de la refacción 2 del trabajo 1"),
+        (("ids_trabajos", 2), "trabajos a asignar"),
+        (("otro", "dato_raro"), "dato_raro de otro"),
+    ],
+)
+def test_el_campo_se_nombra_sin_indices_ni_nombres_internos(
+    ubicacion: tuple[str | int, ...], nombre: str
+) -> None:
+    assert nombre_del_campo(ubicacion) == nombre
+
+
+def _modelos_de_entrada(base: type[ModeloDeEntrada] = ModeloDeEntrada) -> Iterator[type]:
+    for modelo in base.__subclasses__():
+        yield modelo
+        yield from _modelos_de_entrada(modelo)
+
+
+def test_ningun_campo_de_entrada_muestra_su_nombre_interno() -> None:
+    campos = {
+        campo
+        for modelo in _modelos_de_entrada()
+        if modelo.__module__.startswith("api.esquemas")
+        for campo in modelo.model_fields
+    }
+
+    assert "motivo_de_ingreso" in campos  # los esquemas de la aplicación sí se revisaron
+    assert [campo for campo in campos if "_" in nombre_del_campo((campo,))] == []
+
+
+def test_un_nombre_de_dato_con_digitos_raros_no_rompe_la_respuesta(
+    cliente_de_prueba: TestClient,
+) -> None:
+    respuesta = cliente_de_prueba.post("/eco", json={"nombre": "a", "²": 1})
+
+    assert respuesta.status_code == 422
+    assert "«²» no se reconoce" in respuesta.json()["detalle"]
+
+
+def test_otro_error_http_no_deja_pasar_el_texto_en_ingles(cliente_de_prueba: TestClient) -> None:
+    respuesta = cliente_de_prueba.get("/teapot")
+
+    assert respuesta.status_code == 418
+    assert respuesta.json() == {
+        "error": "ErrorHttp",
+        "detalle": "No se pudo completar la solicitud. Intente de nuevo.",
+        "codigo": 418,
+    }
+
+
+def test_el_mensaje_de_acceso_no_usa_jerga() -> None:
+    assert "token" not in TokenInvalido.mensaje.lower()
 
 
 def test_un_dato_desconocido_con_sustituto_suelto_no_rompe_la_respuesta(
