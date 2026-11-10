@@ -32,7 +32,7 @@ Los Aggregates se relacionan **solo por identidad** (`numero_orden`, `id_cliente
 | Value Objects | `EstadoDeRecepcion` (kilometraje, nivel de combustible, fotos), `Diagnostico`, `Pago`, `CargoACredito`, `NotaDeResponsabilidad`, `Cancelacion`. |
 | Responsabilidades | Ciclo de vida completo del servicio: recepción, diagnóstico, cotizada, decisión, asignación y avance de trabajos, fallas adicionales, refacciones, retiro anticipado, pago o crédito, entrega y cancelación. |
 | Invariantes | Solo cambia de estado por la tabla de su máquina de estados (RN-22) · sin diagnóstico no hay cotización y después el diagnóstico no cambia (RN-02, RN-03) · solo se asignan e inician trabajos autorizados (RN-08) · refacciones solo de trabajos autorizados (RN-09) · «En Espera de Refacción» mientras exista una solicitud «Solicitada» (RN-10) · nadie trabaja la orden con el vehículo fuera del taller y cada trabajo lo inicia su técnico (RN-14) · «Lista para Entrega» cuando todos los trabajos autorizados están completados y no hay cotización adicional sin decisión (RN-15) · el pago cubre el total autorizado y las flotillas no pagan de contado; después ya no cambian los costos (RN-16) · el vencimiento del crédito es la entrega + 15 días naturales (RN-17) · se entrega solo con pago, crédito o rechazo total (RN-18) · se cancela solo sin cotización, con motivo (RN-19). |
-| Eventos | `OrdenRecibida`, `TecnicoAsignadoParaDiagnostico`, `DiagnosticoRegistrado`, `OrdenAutorizada`, `TrabajosAsignados`, `TrabajoIniciado`, `FallaAdicionalReportada`, `SolicitudDeCompraCreada`, `RefaccionDisponible`, `ClienteAvisadoDelRetraso`, `VehiculoRetirado`, `OrdenReactivada`, `OrdenListaParaEntrega`, `PagoRegistrado`, `CargoACreditoRegistrado`, `VehiculoEntregado`, `OrdenCancelada`. |
+| Eventos | `OrdenRecibida`, `TecnicoAsignadoParaDiagnostico`, `DiagnosticoRegistrado`, `OrdenAutorizada`, `TrabajosAsignados`, `TrabajoIniciado`, `FallaAdicionalReportada`, `SolicitudDeCompraCreada`, `RefaccionDisponible`, `ClienteAvisadoDelRetraso`, `VehiculoRetirado`, `OrdenReactivada`, `OrdenListaParaEntrega`, `PagoRegistrado`, `CargoACreditoRegistrado`, `VehiculoEntregado`, `OrdenCancelada`, `TecnicoDeDiagnosticoReasignado` (v3.1). |
 | Repositorio | `RepositorioDeOrdenes`: `obtener(numero)`, `agregar(orden)`, `guardar(orden)`, `siguiente_numero()` y, en la v3.1, `abierta_del_vehiculo(placas)`. |
 
 ### 2.2 Cotización — raíz `Cotizacion`
@@ -134,6 +134,7 @@ Una clase genérica `MaquinaDeEstados[E]` guarda la tabla `{estado: {estados des
 | Lista para Entrega | Por Cobrar (Crédito) | `registrar_cargo_a_credito` | cliente de flotilla | `CargoACreditoRegistrado` | CA-039 |
 | Pagada | Cerrada | `entregar` | E3 | `VehiculoEntregado` | CA-041 |
 | Por Cobrar (Crédito) | Cerrada | `entregar` (fija el vencimiento) | E3 | `VehiculoEntregado(vence=…)` | CA-041 |
+| En Diagnóstico | (mismo estado) | `asignar_tecnico_para_diagnostico` *(v3.1: cambio de técnico)* | sin diagnóstico registrado y empleado con rol Técnico (RN-28) | `TecnicoDeDiagnosticoReasignado` | CA-054 |
 
 Estados finales: **Cerrada**, **Cerrada sin Reparación** y **Cancelada**. Cualquier otra combinación (por ejemplo, Recibida → Autorizada, «saltar estado») se rechaza con `TransicionDeEstadoNoPermitida` (HTTP 409).
 
@@ -193,6 +194,7 @@ Los eventos se registran dentro del Aggregate, la Unidad de Trabajo los recolect
 |---|---|---|---|
 | `OrdenRecibida` | Orden | — (bitácora) | CA-001 |
 | `TecnicoAsignadoParaDiagnostico` | Orden | aparece en el panel del técnico (modelo de lectura) | CA-035 |
+| `TecnicoDeDiagnosticoReasignado` *(v3.1)* | Orden | sale del panel del técnico anterior y aparece en el del nuevo (modelo de lectura) | CA-054 |
 | `DiagnosticoRegistrado` | Orden | alerta al asesor: «lista para cotizar» | CA-032 |
 | `AprobacionGerencialRequerida` | Cotización (al generar o al corregir) | alerta al Gerente | CA-007, CA-048 |
 | `CotizacionAprobadaPorGerente` | Cotización | alerta al asesor: «ya puede presentarse» | CA-008 |
@@ -222,6 +224,7 @@ Las alertas por tiempo (CA-023 y CA-040) no vienen de un evento sino de la revis
 | `EntregaNoPermitida` | E3 no se cumple. | 409 |
 | `CancelacionNoPermitida` | E4 no se cumple. | 409 |
 | `VehiculoConOrdenAbierta` | *(v3.1)* El vehículo ya tiene una orden abierta (RN-27), también cuando la base rechaza un segundo registro simultáneo. | 409 · Planeado |
+| `CorreccionNoPermitida` | *(v3.1)* Una corrección de la orden fuera del estado que la permite: cambiar el técnico de diagnóstico cuando el diagnóstico ya está registrado (RN-28) y, desde H-PIA-24, corregir la recepción, la forma de pago o las placas. | 409 · Planeado |
 | `OrdenNoEncontrada`, `CotizacionNoEncontrada`, `ClienteNoEncontrado`, `VehiculoNoEncontrado`, `EmpleadoNoEncontrado`, `TrabajoNoEncontrado`, `SolicitudNoEncontrada` | El identificador no existe. | 404 |
 
 *(v3.1)* Los errores con **«409 · Planeado»** en la columna HTTP están aprobados (Fase 13) pero todavía no existen en el código; `tests/api/test_errores_http.py` solo compara los demás, y la Fase 14 quita la marca al crear cada uno.

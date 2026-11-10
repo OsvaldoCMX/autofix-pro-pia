@@ -21,7 +21,7 @@ from tests.api.pasos import ASESOR, CAJA, COMPRAS, GERENTE, SISTEMA, TECNICO, TO
 
 CONTRATO = Path(__file__).resolve().parents[2] / "docs/api/README.md"
 OPENAPI = CONTRATO.parent / "openapi.json"
-TOTAL_DE_RUTAS = 44
+TOTAL_DE_RUTAS = 45
 MARCA_DE_PLANEADO = "Planeado"
 TOKENS_POR_ROL = {
     "Asesor": ASESOR,

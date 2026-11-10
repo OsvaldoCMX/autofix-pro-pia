@@ -53,6 +53,7 @@ RN_COMPONENTE = {
     "RN-25": ("`Cotizacion.corregir` + `CorreccionDeCotizacion` (historial) + `requiere_rol(ASESOR)`", "ADR-018"),
     "RN-26": ("`Cotizacion.corregir` + Specification E1 + `MAQUINA_DE_COTIZACION` + `Cotizacion.ultimo_contacto` (E8)", "ADR-005, ADR-018"),
     "RN-27": ("`VerificadorDeOrdenUnica` + `RepositorioDeOrdenes.abierta_del_vehiculo` + índice único parcial de `ordenes(placas)`", "ADR-002, ADR-009"),
+    "RN-28": ("`OrdenDeServicio.asignar_tecnico_para_diagnostico` + consulta `ListarTecnicos`", "ADR-003, ADR-007"),
 }
 assert set(RN_COMPONENTE) == set(REGLAS)
 

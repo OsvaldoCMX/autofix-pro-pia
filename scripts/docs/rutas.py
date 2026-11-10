@@ -21,10 +21,11 @@ RUTAS = [
     # cancelación
     ("POST", "/api/ordenes/{numero}/cancelacion", A, "Cancelar la orden con motivo (solo sin cotización).", "200", "401, 403, 404, 409, 422", "ServicioDeCancelacion.cancelar", ["CA-044", "CA-045"], "P1", "Cancelación"),
     # diagnóstico
-    ("POST", "/api/ordenes/{numero}/asignacion-diagnostico", A, "Asignar técnico para el diagnóstico.", "200", "401, 403, 404, 409, 422", "ServicioDeDiagnostico.asignar_tecnico", ["CA-035"], "P1", "Diagnóstico"),
+    ("POST", "/api/ordenes/{numero}/asignacion-diagnostico", A, "Asignar técnico para el diagnóstico. *Planeado (H-PIA-23):* también lo cambia mientras no haya diagnóstico.", "200", "401, 403, 404, 409, 422", "ServicioDeDiagnostico.asignar_tecnico", ["CA-035", "CA-054"], "P1", "Diagnóstico"),
     ("POST", "/api/ordenes/{numero}/diagnostico", T, "Registrar el diagnóstico (fallas y recomendaciones).", "201", "401, 403, 404, 409, 422", "ServicioDeDiagnostico.registrar_diagnostico", ["CA-032", "CA-033"], "P1", "Diagnóstico"),
     ("POST", "/api/ordenes/{numero}/fallas-adicionales", T, "Reportar una falla adicional durante la reparación.", "201", "401, 403, 404, 409, 422", "ServicioDeDiagnostico.reportar_falla_adicional", ["CA-034"], "P1", "Diagnóstico"),
-    ("GET", "/api/tecnicos/me/panel", T, "Órdenes y trabajos asignados, en orden de la fila.", "200", "401, 403", "ConsultarPanelDelTecnico", ["CA-013", "CA-035", "CA-036"], "P1", "Diagnóstico"),
+    ("GET", "/api/tecnicos/me/panel", T, "Órdenes y trabajos asignados, en orden de la fila.", "200", "401, 403", "ConsultarPanelDelTecnico", ["CA-013", "CA-035", "CA-036", "CA-054"], "P1", "Diagnóstico"),
+    ("GET", "/api/tecnicos", A, "Técnicos del taller (clave y nombre) para asignarlos.", "200", "401, 403", "ListarTecnicos", ["CA-053"], P1_PLANEADA, "Diagnóstico"),
     # cotización
     ("POST", "/api/ordenes/{numero}/cotizaciones", A, "Generar la cotización inicial (v.1).", "201", "401, 403, 404, 409, 422", "ServicioDeCotizacion.generar_inicial", ["CA-005", "CA-007"], "P1", "Cotización"),
     ("POST", "/api/ordenes/{numero}/cotizaciones-adicionales", A, "Generar una cotización adicional (v.2, v.3…).", "201", "401, 403, 404, 409, 422", "ServicioDeCotizacion.generar_adicional", ["CA-016"], "P1", "Cotización"),

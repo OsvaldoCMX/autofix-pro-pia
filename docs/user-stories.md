@@ -14,7 +14,7 @@ Este documento contiene las User Stories derivadas del levantamiento de requerim
 
 Las historias siguen el formato *Como… quiero… para…* y cada criterio de aceptación está escrito en Gherkin (*Dado / Cuando / Entonces / Y*). Los mismos criterios, palabra por palabra, están en los archivos `docs/gherkin/*.feature` con las etiquetas `@US-xxx` y `@CA-xxx`, para que cada escenario se pueda relacionar con su prueba automatizada (convención `test_ca_0XX_…`). Los nombres de estados, roles y términos son los del [Glosario del Dominio](glosario.md).
 
-**Resumen:** 16 necesidades · 26 User Stories · 52 criterios de aceptación · 8 archivos `.feature`.
+**Resumen:** 16 necesidades · 26 User Stories · 54 criterios de aceptación · 8 archivos `.feature`.
 
 ## 1. Trazabilidad con el BRD
 
@@ -35,7 +35,7 @@ Las historias siguen el formato *Como… quiero… para…* y cada criterio de a
 | N-13 | Permitir al cliente consultar el estado de su vehículo sin llamar al taller. | US-021 |
 | N-14 | (Implícita) Dar seguimiento a las cotizaciones que lleven más de 48 horas sin respuesta. | US-023 |
 | N-15 | (Implícita, v3.0) Cancelar la orden cuando el cliente desiste antes de que se genere la cotización. | US-025 |
-| N-16 | (Implícita, v3.1) Corregir los datos mal capturados dejando constancia y evitar registros repetidos (revisión del 09/11/2026). | US-026 |
+| N-16 | (Implícita, v3.1) Corregir los datos mal capturados dejando constancia y evitar registros repetidos (revisión del 09/11/2026). | US-026, US-020 |
 
 ## 2. Listado de User Stories
 
@@ -249,6 +249,8 @@ Los criterios marcados con **(v3.0)** se agregaron o se precisaron en el PIA y l
 |---|---|
 | **CA-035**<br>Asignar técnico para el diagnóstico | **Dado** que una orden está en estado «Recibida»<br>**Cuando** el asesor le asigna un técnico<br>**Entonces** el sistema debe cambiar la orden a «En Diagnóstico»<br>**Y** debe mostrarla en el panel de ese técnico |
 | **CA-036**<br>Asignar los trabajos autorizados | **Dado** que una orden tiene trabajos autorizados sin asignar<br>**Cuando** el asesor los asigna a un técnico<br>**Entonces** el sistema debe mostrarlos en el panel de ese técnico en estado «Pendiente» |
+| **CA-053**<br>Lista de técnicos para asignar **(v3.1, H-PIA-23)** | **Dado** que el asesor va a asignar un técnico para el diagnóstico o para los trabajos autorizados<br>**Cuando** consulta la lista de técnicos<br>**Entonces** el sistema debe mostrar la clave y el nombre de cada empleado con rol Técnico<br>**Y** no debe mostrar empleados de otros puestos |
+| **CA-054**<br>Cambiar el técnico de diagnóstico **(v3.1, H-PIA-23)** | **Dado** que una orden está en «En Diagnóstico» y el técnico asignado todavía no registra el diagnóstico<br>**Cuando** el asesor asigna a otro técnico<br>**Entonces** el sistema debe cambiar el técnico de la orden sin cambiar su estado<br>**Y** la orden debe salir del panel del técnico anterior y aparecer en el del nuevo<br>**Y** si el diagnóstico ya está registrado, no debe permitir el cambio e indicar que el diagnóstico ya está registrado |
 
 ### US-021
 
@@ -318,14 +320,14 @@ Los criterios marcados con **(v3.0)** se agregaron o se precisaron en el PIA y l
 | N-06 | US-009, US-019 | CA-016, CA-017, CA-018, CA-034 | Fase 5: Reparación y ampliación |
 | N-07 | US-016, US-022 | CA-028, CA-029, CA-039, CA-041 | Fase 1, Fase 3 y Fase 6: Cierre, pago y entrega |
 | N-08 | US-017, US-018 | CA-030, CA-031 | Consulta transversal (no es una tarea del flujo) |
-| N-09 | US-007, US-008, US-019, US-020 | CA-013, CA-014, CA-015, CA-032, CA-033, CA-035, CA-036, CA-046 | Fase 1, Fase 2 y Fase 5 |
+| N-09 | US-007, US-008, US-019, US-020 | CA-013, CA-014, CA-015, CA-032, CA-033, CA-035, CA-036, CA-046, CA-053, CA-054 | Fase 1, Fase 2 y Fase 5 |
 | N-10 | US-010, US-011 | CA-019, CA-020, CA-021, CA-022 | Fase 4: Gestión de refacciones |
 | N-11 | US-014, US-015, US-024 | CA-026, CA-027, CA-041, CA-042, CA-043 | Fase 6: Cierre, pago y entrega (y Fase 3 para la entrega sin reparación) |
 | N-12 | US-013 | CA-024, CA-025 | Diagrama 2 (Casos especiales): Retiro anticipado |
 | N-13 | US-021 | CA-037, CA-038 | Consulta transversal (no es una tarea del flujo) |
 | N-14 | US-023 | CA-040 | Fase 3: Autorización (temporizador de 48 h) |
 | N-15 | US-025 | CA-044, CA-045 | Diagrama 2 (Casos especiales): Cliente desiste antes de la cotización |
-| N-16 | US-026 | CA-047, CA-048, CA-049, CA-050, CA-051 | Fase 2 y Fase 3: corrección de la cotización (v3.1) |
+| N-16 | US-026, US-020 | CA-047, CA-048, CA-049, CA-050, CA-051, CA-054 | Fase 2 y Fase 3: corrección de la cotización (v3.1) |
 
 La trazabilidad completa de cada criterio hasta la regla de negocio, el componente, la ruta de la API y la prueba está en [trazabilidad/matriz-trazabilidad.md](trazabilidad/matriz-trazabilidad.md).
 

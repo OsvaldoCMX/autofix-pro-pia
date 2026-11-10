@@ -34,8 +34,7 @@ TRAZA_NECESIDAD = {
     "N-06": (["US-009", "US-019"], ["CA-016", "CA-017", "CA-018", "CA-034"], "Fase 5: Reparación y ampliación"),
     "N-07": (["US-016", "US-022"], ["CA-028", "CA-029", "CA-039", "CA-041"], "Fase 1, Fase 3 y Fase 6: Cierre, pago y entrega"),
     "N-08": (["US-017", "US-018"], ["CA-030", "CA-031"], "Consulta transversal (no es una tarea del flujo)"),
-    "N-09": (["US-007", "US-008", "US-019", "US-020"],
-             ["CA-013", "CA-014", "CA-015", "CA-032", "CA-033", "CA-035", "CA-036", "CA-046"], "Fase 1, Fase 2 y Fase 5"),
+    "N-09": (["US-007", "US-008", "US-019", "US-020"], ["CA-013", "CA-014", "CA-015", "CA-032", "CA-033", "CA-035", "CA-036", "CA-046", "CA-053", "CA-054"], "Fase 1, Fase 2 y Fase 5"),
     "N-10": (["US-010", "US-011"], ["CA-019", "CA-020", "CA-021", "CA-022"], "Fase 4: Gestión de refacciones"),
     "N-11": (["US-014", "US-015", "US-024"], ["CA-026", "CA-027", "CA-041", "CA-042", "CA-043"],
              "Fase 6: Cierre, pago y entrega (y Fase 3 para la entrega sin reparación)"),
@@ -43,7 +42,7 @@ TRAZA_NECESIDAD = {
     "N-13": (["US-021"], ["CA-037", "CA-038"], "Consulta transversal (no es una tarea del flujo)"),
     "N-14": (["US-023"], ["CA-040"], "Fase 3: Autorización (temporizador de 48 h)"),
     "N-15": (["US-025"], ["CA-044", "CA-045"], "Diagrama 2 (Casos especiales): Cliente desiste antes de la cotización"),
-    "N-16": (["US-026"], ["CA-047", "CA-048", "CA-049", "CA-050", "CA-051"],
+    "N-16": (["US-026", "US-020"], ["CA-047", "CA-048", "CA-049", "CA-050", "CA-051", "CA-054"],
              "Fase 2 y Fase 3: corrección de la cotización (v3.1)"),
 }
 
@@ -618,6 +617,24 @@ ca("CA-052", "US-001", [
    "ServicioDeRecepcion.registrar_orden", "POST /api/ordenes (409)", ASE,
    cambio="H-PIA-22", nombre="No se abre una segunda orden del mismo vehículo", planeado=True)
 
+ca("CA-053", "US-020", [
+    (D, "que el asesor va a asignar un técnico para el diagnóstico o para los trabajos autorizados"),
+    (C, "consulta la lista de técnicos"),
+    (E, "el sistema debe mostrar la clave y el nombre de cada empleado con rol Técnico"),
+    (Y, "no debe mostrar empleados de otros puestos"),
+], F2, ["RN-28"], "Empleado (RolDeEmpleado.TECNICO), modelo de lectura TecnicoVista", "Consulta ListarTecnicos",
+   "GET /api/tecnicos", ASE, cambio="H-PIA-23", nombre="Lista de técnicos para asignar", planeado=True)
+
+ca("CA-054", "US-020", [
+    (D, "que una orden está en «En Diagnóstico» y el técnico asignado todavía no registra el diagnóstico"),
+    (C, "el asesor asigna a otro técnico"),
+    (E, "el sistema debe cambiar el técnico de la orden sin cambiar su estado"),
+    (Y, "la orden debe salir del panel del técnico anterior y aparecer en el del nuevo"),
+    (Y, "si el diagnóstico ya está registrado, no debe permitir el cambio e indicar que el diagnóstico ya está registrado"),
+], F2, ["RN-28", "RN-22"], "OrdenDeServicio (asignar_tecnico_para_diagnostico), evento TecnicoDeDiagnosticoReasignado, error CorreccionNoPermitida",
+   "ServicioDeDiagnostico.asignar_tecnico", "POST /api/ordenes/{numero}/asignacion-diagnostico · GET /api/tecnicos/me/panel", ASE,
+   cambio="H-PIA-23", nombre="Cambiar el técnico de diagnóstico", planeado=True)
+
 # ----------------------------------------------------------------------------- áreas (archivos .feature)
 AREAS = [
     ("01_recepcion", "Recepción y registro del vehículo",
@@ -676,10 +693,11 @@ REGLAS = {
     "RN-25": ("Solo el Asesor corrige una cotización, con motivo, y solo en «Pendiente de Aprobación Gerencial» o «Pendiente de Autorización del Cliente»; conserva su número y versión, y cada corrección queda en su historial (asesor, fecha y hora, motivo, total anterior y total nuevo). En «Requiere Ajuste» se usa el ajuste (RN-05); después de la decisión del cliente, la cotización adicional.", "Revisión del 09/11/2026 (H-PIA-21); BRD Restricción 11"),
     "RN-26": ("Al corregir se vuelve a evaluar E1 y la cotización se presenta otra vez: si es inicial y supera $15,000 MXN regresa al Gerente aunque ya la hubiera aprobado o ajustado, porque RN-05 solo protege el ajuste que pidió el Gerente y una corrección cambia el monto que él revisó; el plazo de 48 horas cuenta desde la nueva presentación.", "H-PIA-21; BRD Restricciones 2, 4 y 11; ADR-018"),
     "RN-27": ("Un vehículo tiene a lo más una orden abierta (en un estado que no sea «Cerrada», «Cerrada sin Reparación» ni «Cancelada»); un segundo registro se rechaza con el mismo mensaje aunque llegue al mismo tiempo.", "Revisión del 09/11/2026 (H-PIA-22); BRD Restricción 12"),
+    "RN-28": ("El técnico de diagnóstico se elige entre los empleados con rol Técnico y se puede cambiar mientras la orden está «En Diagnóstico» sin diagnóstico registrado; el cambio no modifica el estado de la orden.", "Revisión del 09/11/2026 (H-PIA-23); US-020"),
 }
 
 # Reglas aprobadas en la Fase 13 que todavía no se construyen (misma idea que `planeado` en los CA).
-REGLAS_PLANEADAS = {"RN-25", "RN-26", "RN-27"}
+REGLAS_PLANEADAS = {"RN-25", "RN-26", "RN-27", "RN-28"}
 
 # ----------------------------------------------------------------------------- pruebas previstas
 # Convención: toda prueba de aceptación se llama test_ca_0XX_<descripcion> para poder

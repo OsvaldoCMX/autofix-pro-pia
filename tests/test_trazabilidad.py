@@ -17,8 +17,8 @@ RAIZ = Path(__file__).resolve().parents[1]
 GHERKIN = RAIZ / "docs" / "gherkin"
 MATRIZ = RAIZ / "docs" / "trazabilidad" / "matriz-trazabilidad.md"
 PRUEBAS = RAIZ / "tests"
-CRITERIOS_ESPERADOS = {f"CA-{numero:03d}" for numero in range(1, 53)}
-REGLAS_ESPERADAS = {f"RN-{numero:02d}" for numero in range(1, 28)}
+CRITERIOS_ESPERADOS = {f"CA-{numero:03d}" for numero in range(1, 55)}
+REGLAS_ESPERADAS = {f"RN-{numero:02d}" for numero in range(1, 29)}
 MARCA_DE_PLANEADO = "Planeado"
 
 
