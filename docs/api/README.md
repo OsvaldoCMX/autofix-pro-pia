@@ -31,7 +31,7 @@ Contrato de la API que se implementa con FastAPI (ADR-008). Cuando la API esté 
 
 | Método | Ruta | Rol | Descripción | Éxito | Errores | Caso de uso | Criterios | Prioridad |
 |---|---|---|---|---|---|---|---|---|
-| GET | `/api/vehiculos/{placas}` | Asesor | Buscar vehículo y cliente por placas. | 200 | 401, 403, 404 | `BuscarVehiculoPorPlacas` | CA-003, CA-004 | P1 |
+| GET | `/api/vehiculos/{placas}` | Asesor | Buscar vehículo y cliente por placas. Trae `orden_abierta` (folio y estado de la orden abierta del vehículo, o `null`) para abrir su expediente desde la búsqueda (A-01, Fase 16). | 200 | 401, 403, 404 | `BuscarVehiculoPorPlacas` | CA-003, CA-004 | P1 |
 | PUT | `/api/vehiculos/{placas}` | Asesor | Corregir el VIN, la marca, el modelo o el año del vehículo (las placas no cambian; un VIN de otro vehículo responde 422, como al registrar). | 200 | 401, 403, 404, 422 | `ServicioDeRecepcion.corregir_vehiculo` | CA-056 | P1 |
 | GET | `/api/clientes?tipo=Flotilla&empresa=` | Asesor | Buscar la empresa de flotilla y su Responsable. | 200 | 401, 403 | `BuscarClientes` | CA-028 | P1 |
 | POST | `/api/clientes` | Asesor | Registrar cliente particular o de flotilla (con Responsable); 409 si la empresa ya está registrada con otro responsable (H-PIA-28). | 201 | 400, 401, 403, 409, 422 | `ServicioDeRecepcion.registrar_cliente` | CA-028, CA-059, CA-065 | P1 |

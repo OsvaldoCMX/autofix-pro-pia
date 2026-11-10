@@ -82,6 +82,32 @@ def test_ca_003_encuentra_cliente_recurrente_por_placas(cliente: TestClient) -> 
     assert vehiculo["cliente"]["correo"] == CLIENTE_PARTICULAR["correo"]
 
 
+def test_ca_003_busqueda_por_placas_trae_la_orden_abierta(cliente: TestClient) -> None:
+    datos = datos_de_orden()
+    orden = exigir(cliente.post("/api/ordenes", json=datos, headers=ASESOR), 201)
+
+    vehiculo = exigir(cliente.get(f"/api/vehiculos/{datos['placas']}", headers=ASESOR), 200)
+
+    assert vehiculo["orden_abierta"] == {"numero_orden": orden["numero_orden"], "estado": "Recibida"}
+
+
+def test_ca_003_busqueda_por_placas_sin_orden_abierta(cliente: TestClient) -> None:
+    datos = datos_de_orden()
+    orden = exigir(cliente.post("/api/ordenes", json=datos, headers=ASESOR), 201)
+    exigir(
+        cliente.post(
+            f"/api/ordenes/{orden['numero_orden']}/cancelacion",
+            json={"motivo": "El cliente desiste"},
+            headers=ASESOR,
+        ),
+        200,
+    )
+
+    vehiculo = exigir(cliente.get(f"/api/vehiculos/{datos['placas']}", headers=ASESOR), 200)
+
+    assert vehiculo["orden_abierta"] is None
+
+
 def test_ca_003_orden_con_placas_existentes_reutiliza_y_actualiza(cliente: TestClient) -> None:
     datos = datos_de_orden()
     primera = exigir(cliente.post("/api/ordenes", json=datos, headers=ASESOR), 201)

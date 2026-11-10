@@ -35,6 +35,14 @@ class ClienteVista:
 
 
 @dataclass(frozen=True)
+class OrdenAbiertaVista:
+    """La orden abierta del vehículo, para abrirla desde la búsqueda por placas (A-01)."""
+
+    numero_orden: str
+    estado: str
+
+
+@dataclass(frozen=True)
 class VehiculoConClienteVista:
     placas: str
     vin: str
@@ -42,6 +50,7 @@ class VehiculoConClienteVista:
     modelo: str
     anio: int
     cliente: ClienteVista
+    orden_abierta: OrdenAbiertaVista | None
 
 
 @dataclass(frozen=True)
@@ -398,7 +407,9 @@ def vista_de_expediente(
     )
 
 
-def vista_de_vehiculo(vehiculo: Vehiculo, cliente: Cliente) -> VehiculoConClienteVista:
+def vista_de_vehiculo(
+    vehiculo: Vehiculo, cliente: Cliente, orden_abierta: OrdenAbiertaVista | None
+) -> VehiculoConClienteVista:
     return VehiculoConClienteVista(
         str(vehiculo.placas),
         str(vehiculo.vin),
@@ -406,6 +417,7 @@ def vista_de_vehiculo(vehiculo: Vehiculo, cliente: Cliente) -> VehiculoConClient
         vehiculo.modelo,
         vehiculo.anio,
         vista_de_cliente(cliente),
+        orden_abierta,
     )
 
 

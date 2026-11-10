@@ -153,13 +153,21 @@ class ClienteEncontrado(ModeloDeSalida):
     responsable_correo: str | None
 
 
+class OrdenAbierta(ModeloDeSalida):
+    numero_orden: str
+    estado: str
+
+
 class VehiculoEncontrado(ModeloDeSalida):
+    """`orden_abierta` es `null` si el vehículo no tiene una orden abierta (A-01)."""
+
     placas: str
     vin: str
     marca: str
     modelo: str
     anio: int
     cliente: ClienteEncontrado
+    orden_abierta: OrdenAbierta | None
 
 
 class TrabajoDeOrden(ModeloDeSalida):

@@ -6282,6 +6282,24 @@
         ],
         "title": "NuevoVehiculo"
       },
+      "OrdenAbierta": {
+        "properties": {
+          "numero_orden": {
+            "type": "string",
+            "title": "Numero Orden"
+          },
+          "estado": {
+            "type": "string",
+            "title": "Estado"
+          }
+        },
+        "type": "object",
+        "required": [
+          "numero_orden",
+          "estado"
+        ],
+        "title": "OrdenAbierta"
+      },
       "OrdenDelPanel": {
         "properties": {
           "numero_orden": {
@@ -7017,6 +7035,16 @@
           },
           "cliente": {
             "$ref": "#/components/schemas/ClienteEncontrado"
+          },
+          "orden_abierta": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OrdenAbierta"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "type": "object",
@@ -7026,9 +7054,11 @@
           "marca",
           "modelo",
           "anio",
-          "cliente"
+          "cliente",
+          "orden_abierta"
         ],
-        "title": "VehiculoEncontrado"
+        "title": "VehiculoEncontrado",
+        "description": "`orden_abierta` es `null` si el vehículo no tiene una orden abierta (A-01)."
       }
     },
     "securitySchemes": {

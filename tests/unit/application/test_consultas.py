@@ -105,6 +105,28 @@ def test_ca_003_busca_vehiculo_y_cliente(taller: Taller) -> None:
     assert vista.cliente.responsable_nombre is None
 
 
+def test_ca_003_busqueda_por_placas_trae_la_orden_abierta(taller: Taller) -> None:
+    numero = recibida(taller)
+
+    vista = ManejadorBuscarVehiculoPorPlacas(_lector(taller)).ejecutar(
+        BuscarVehiculoPorPlacas("ABC001")
+    )
+
+    assert vista.orden_abierta is not None
+    assert (vista.orden_abierta.numero_orden, vista.orden_abierta.estado) == (numero, "Recibida")
+
+
+def test_ca_003_busqueda_por_placas_sin_orden_abierta(taller: Taller) -> None:
+    numero = recibida(taller)
+    taller.cancelacion.cancelar(CancelarOrden(numero, "El cliente desiste", ASESOR))
+
+    vista = ManejadorBuscarVehiculoPorPlacas(_lector(taller)).ejecutar(
+        BuscarVehiculoPorPlacas("ABC001")
+    )
+
+    assert vista.orden_abierta is None
+
+
 def test_ca_004_placas_no_registradas(taller: Taller) -> None:
     with pytest.raises(VehiculoNoEncontrado, match="XYZ999"):
         ManejadorBuscarVehiculoPorPlacas(_lector(taller)).ejecutar(

@@ -12,6 +12,7 @@ from application.consultas.vistas import (
     DatosRelacionados,
     EstadoDeOrdenVista,
     ExpedienteDeOrdenVista,
+    OrdenAbiertaVista,
     OrdenDelPanelVista,
     OrdenResumenVista,
     SolicitudVista,
@@ -29,7 +30,7 @@ from domain.clientes.cliente import TipoCliente
 from domain.compartido.valores import NumeroOrden, Placas
 from domain.cotizaciones.estados import EstadoCotizacion
 from domain.empleados.empleado import RolDeEmpleado
-from domain.ordenes.estados import MAQUINA_DE_ORDEN, EstadoOrden
+from domain.ordenes.estados import MAQUINA_DE_ORDEN, EstadoOrden, esta_abierta
 from domain.ordenes.orden_de_servicio import OrdenDeServicio
 from infrastructure.memoria.almacen import AlmacenEnMemoria
 
@@ -43,7 +44,13 @@ class LectorEnMemoria(LectorDeOrdenes):
         vehiculo = datos.vehiculos.get(str(placas))
         if vehiculo is None:
             return None
-        return vista_de_vehiculo(vehiculo, datos.clientes[vehiculo.id_cliente])
+        abiertas = [
+            OrdenAbiertaVista(numero, orden.estado.value)
+            for numero, orden in datos.ordenes.items()
+            if orden.placas == placas and esta_abierta(orden.estado)
+        ]
+        abierta = min(abiertas, key=lambda vista: vista.numero_orden, default=None)
+        return vista_de_vehiculo(vehiculo, datos.clientes[vehiculo.id_cliente], abierta)
 
     def clientes(self, tipo: TipoCliente | None, empresa: str | None) -> list[ClienteVista]:
         buscada = (empresa or "").strip().casefold()

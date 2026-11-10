@@ -18,6 +18,7 @@ from application.consultas.vistas import (
     DatosRelacionados,
     EstadoDeOrdenVista,
     ExpedienteDeOrdenVista,
+    OrdenAbiertaVista,
     OrdenDelPanelVista,
     OrdenResumenVista,
     SolicitudVista,
@@ -36,6 +37,7 @@ from domain.cotizaciones.estados import EstadoCotizacion
 from domain.cotizaciones.valores import VersionCotizacion
 from domain.empleados.empleado import RolDeEmpleado
 from domain.ordenes.estados import (
+    ESTADOS_DE_ORDEN_CERRADA,
     MAQUINA_DE_ORDEN,
     EstadoOrden,
     EstadoSolicitud,
@@ -76,7 +78,20 @@ class LectorDeOrdenesSqlAlchemy(LectorDeOrdenes):
                 .mappings()
                 .one()
             )
-        return vista_de_vehiculo(mapeo.vehiculo_desde_fila(fila), mapeo.cliente_desde_fila(cliente))
+            abierta = conexion.execute(
+                select(ordenes.c.numero, ordenes.c.estado)
+                .where(
+                    ordenes.c.placas == str(placas),
+                    ordenes.c.estado.not_in([estado.value for estado in ESTADOS_DE_ORDEN_CERRADA]),
+                )
+                .order_by(ordenes.c.numero)
+                .limit(1)
+            ).first()
+        return vista_de_vehiculo(
+            mapeo.vehiculo_desde_fila(fila),
+            mapeo.cliente_desde_fila(cliente),
+            None if abierta is None else OrdenAbiertaVista(abierta.numero, abierta.estado),
+        )
 
     def clientes(self, tipo: TipoCliente | None, empresa: str | None) -> list[ClienteVista]:
         """El texto se compara en Python: `lower()` de SQLite no entiende acentos."""
