@@ -32,6 +32,13 @@ Característica: Autorización del cliente y cotizaciones adicionales
     Y debe impedir la asignación de trabajos
     Y debe habilitar la opción «Entregar sin reparación»
 
+  @US-006 @CA-063 @v3.1
+  Escenario: CA-063 El nombre del autorizante con espacios de más
+    Dado que el cliente particular se llama «Luis Peña»
+    Cuando el asesor registra la decisión a nombre de «Luis  Peña» (con dos espacios), « luis peña » o «LUIS PEÑA»
+    Entonces el sistema debe aceptar el nombre como el mismo
+    Y si el nombre se escribe sin acento («Luis Pena»), debe rechazarlo e indicar a nombre de quién se registra la decisión
+
   # ---------------------------------------------------------------- US-009 (Asesor de Servicio)
 
   @US-009 @CA-016

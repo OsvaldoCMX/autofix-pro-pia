@@ -78,6 +78,13 @@ Característica: Recepción y registro del vehículo
     Entonces el sistema debe registrarla a nombre del Responsable de Flotilla
     Y no debe permitir registrar al conductor como autorizante
 
+  @US-016 @CA-064 @v3.1
+  Escenario: CA-064 Flotilla: el mensaje dice a nombre de quién y con qué rol
+    Dado que la orden es de un cliente de flotilla de la empresa «Transportes Norte», cuyo Responsable de Flotilla es «Ana Torres»
+    Cuando el asesor registra la decisión con el rol «Cliente» o a nombre de otra persona
+    Entonces el sistema no debe registrarla
+    Y debe indicar la empresa, el nombre del Responsable de Flotilla y el rol con el que se registra: «Para la flotilla de Transportes Norte, registre la decisión a nombre de su Responsable de Flotilla, Ana Torres, con el rol «Responsable de Flotilla».»
+
   # ---------------------------------------------------------------- US-027 (Asesor de Servicio)
 
   @US-027 @CA-055 @v3.1

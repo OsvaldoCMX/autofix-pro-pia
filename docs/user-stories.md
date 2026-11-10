@@ -14,7 +14,7 @@ Este documento contiene las User Stories derivadas del levantamiento de requerim
 
 Las historias siguen el formato *Como… quiero… para…* y cada criterio de aceptación está escrito en Gherkin (*Dado / Cuando / Entonces / Y*). Los mismos criterios, palabra por palabra, están en los archivos `docs/gherkin/*.feature` con las etiquetas `@US-xxx` y `@CA-xxx`, para que cada escenario se pueda relacionar con su prueba automatizada (convención `test_ca_0XX_…`). Los nombres de estados, roles y términos son los del [Glosario del Dominio](glosario.md).
 
-**Resumen:** 16 necesidades · 27 User Stories · 62 criterios de aceptación · 8 archivos `.feature`.
+**Resumen:** 16 necesidades · 27 User Stories · 64 criterios de aceptación · 8 archivos `.feature`.
 
 ## 1. Trazabilidad con el BRD
 
@@ -129,6 +129,7 @@ Los criterios marcados con **(v3.0)** se agregaron o se precisaron en el PIA y l
 | **CA-010**<br>Registrar la autorización total o parcial | **Dado** que el cliente (o el Responsable de Flotilla) revisó la cotización<br>**Cuando** el asesor selecciona los trabajos autorizados y guarda la decisión<br>**Entonces** el sistema debe cambiar la cotización a «Autorizada» o «Autorizada Parcialmente»<br>**Y** debe cambiar la orden a «Autorizada»<br>**Y** debe registrar la fecha, la hora y el nombre de quien autorizó<br>**Y** debe marcar los trabajos no aceptados como «No Autorizado» |
 | **CA-011**<br>Solo se asignan los trabajos autorizados | **Dado** que el cliente autorizó parcialmente la cotización<br>**Cuando** el asesor asigna los trabajos a un técnico<br>**Entonces** el sistema solo debe permitir seleccionar los trabajos autorizados |
 | **CA-012**<br>Registrar el rechazo total | **Dado** que el cliente no acepta ningún trabajo de la cotización<br>**Cuando** el asesor registra el rechazo total<br>**Entonces** el sistema debe cambiar la cotización a «Rechazada»<br>**Y** debe impedir la asignación de trabajos<br>**Y** debe habilitar la opción «Entregar sin reparación» |
+| **CA-063**<br>El nombre del autorizante con espacios de más **(v3.1, H-PIA-27)** | **Dado** que el cliente particular se llama «Luis Peña»<br>**Cuando** el asesor registra la decisión a nombre de «Luis  Peña» (con dos espacios), « luis peña » o «LUIS PEÑA»<br>**Entonces** el sistema debe aceptar el nombre como el mismo<br>**Y** si el nombre se escribe sin acento («Luis Pena»), debe rechazarlo e indicar a nombre de quién se registra la decisión |
 
 ### US-007
 
@@ -220,6 +221,7 @@ Los criterios marcados con **(v3.0)** se agregaron o se precisaron en el PIA y l
 |---|---|
 | **CA-028**<br>Registrar un cliente de flotilla | **Dado** que el asesor registra una orden para un vehículo de empresa<br>**Cuando** selecciona el tipo de cliente «Flotilla»<br>**Entonces** el sistema debe pedir la empresa<br>**Y** debe mostrar los datos de su Responsable de Flotilla (nombre, teléfono y correo)<br>**Y** debe permitir registrarlos si la empresa es nueva |
 | **CA-029**<br>En flotillas solo autoriza el Responsable de Flotilla | **Dado** que la orden es de un cliente de flotilla<br>**Cuando** el asesor registra la decisión sobre una cotización (inicial o adicional)<br>**Entonces** el sistema debe registrarla a nombre del Responsable de Flotilla<br>**Y** no debe permitir registrar al conductor como autorizante |
+| **CA-064**<br>Flotilla: el mensaje dice a nombre de quién y con qué rol **(v3.1, H-PIA-27)** | **Dado** que la orden es de un cliente de flotilla de la empresa «Transportes Norte», cuyo Responsable de Flotilla es «Ana Torres»<br>**Cuando** el asesor registra la decisión con el rol «Cliente» o a nombre de otra persona<br>**Entonces** el sistema no debe registrarla<br>**Y** debe indicar la empresa, el nombre del Responsable de Flotilla y el rol con el que se registra: «Para la flotilla de Transportes Norte, registre la decisión a nombre de su Responsable de Flotilla, Ana Torres, con el rol «Responsable de Flotilla».» |
 
 ### US-017
 
@@ -330,11 +332,11 @@ Los criterios marcados con **(v3.0)** se agregaron o se precisaron en el PIA y l
 |---|---|---|---|
 | N-01 | US-001, US-002, US-003 | CA-001, CA-002, CA-003, CA-004, CA-052, CA-059 | Fase 1: Recepción y registro |
 | N-02 | US-004 | CA-005, CA-006, CA-060 | Fase 2: Diagnóstico y cotización; Fase 3: Autorización |
-| N-03 | US-006 | CA-010, CA-011, CA-012 | Fase 3: Autorización |
+| N-03 | US-006 | CA-010, CA-011, CA-012, CA-063 | Fase 3: Autorización |
 | N-04 | US-005 | CA-007, CA-008, CA-009 | Fase 2: Diagnóstico y cotización |
 | N-05 | US-012 | CA-023 | Fase 4: Gestión de refacciones |
 | N-06 | US-009, US-019 | CA-016, CA-017, CA-018, CA-034, CA-061 | Fase 5: Reparación y ampliación |
-| N-07 | US-016, US-022 | CA-028, CA-029, CA-039, CA-041 | Fase 1, Fase 3 y Fase 6: Cierre, pago y entrega |
+| N-07 | US-016, US-022 | CA-028, CA-029, CA-039, CA-041, CA-064 | Fase 1, Fase 3 y Fase 6: Cierre, pago y entrega |
 | N-08 | US-017, US-018 | CA-030, CA-031 | Consulta transversal (no es una tarea del flujo) |
 | N-09 | US-007, US-008, US-019, US-020 | CA-013, CA-014, CA-015, CA-032, CA-033, CA-035, CA-036, CA-046, CA-053, CA-054 | Fase 1, Fase 2 y Fase 5 |
 | N-10 | US-010, US-011 | CA-019, CA-020, CA-021, CA-022, CA-062 | Fase 4: Gestión de refacciones |

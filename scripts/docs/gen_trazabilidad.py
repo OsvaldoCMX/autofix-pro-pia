@@ -65,7 +65,7 @@ assert set(RN_COMPONENTE) == set(REGLAS)
 
 ESPECS = [
     ("E1", "RequiereAprobacionGerencial", "EsCotizacionInicial AND TotalMayorAlUmbral($15,000)", "AND", "RN-04", "CA-005, CA-007, CA-016, CA-048, CA-049"),
-    ("E2", "AutorizanteValido", "(EsClienteParticular AND AutorizaElCliente) OR (EsClienteDeFlotilla AND AutorizaSuResponsableDeFlotilla)", "AND, OR", "RN-07", "CA-010, CA-029"),
+    ("E2", "AutorizanteValido", "(EsClienteParticular AND AutorizaElCliente) OR (EsClienteDeFlotilla AND AutorizaSuResponsableDeFlotilla)", "AND, OR", "RN-07", "CA-010, CA-029, CA-063, CA-064"),
     ("E3", "PuedeEntregarse", "EstaPagada OR EstaPorCobrarACredito OR (EstaCotizada AND TieneRechazoTotal)", "OR, AND", "RN-18", "CA-041, CA-042, CA-043"),
     ("E4", "PuedeCancelarse", "EstaRecibida OR EstaEnDiagnostico", "OR", "RN-19", "CA-044, CA-045"),
     ("E5", "PuedeIniciarTrabajo", "TrabajoPendiente AND AsignadoAlTecnico AND NOT OrdenPausadaPorRetiro", "AND, NOT", "RN-14", "CA-014, CA-046"),

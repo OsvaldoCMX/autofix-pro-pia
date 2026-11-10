@@ -99,7 +99,7 @@ Base: `Especificacion[T]` con `es_satisfecha_por(candidato) -> bool` y los combi
 | E7 | `RequiereAlertaDeRefaccion` | `SolicitudPendiente() & MasDeDiasHabiles(3) & ~ClienteYaAvisado()` | `SolicitudDeCompra` + fecha de revisión | `ServicioDeRevisionDePlazos` | RN-11 · CA-023 |
 | E8 | `RequiereRecontacto` | `PendienteDeAutorizacion() & FuePresentada() & MasDeHorasDesdeElUltimoContacto(48)` | `Cotizacion` + fecha de revisión | `ServicioDeRevisionDePlazos` | RN-12, RN-26 · CA-040, CA-051 |
 
-En E2, `AutorizaElCliente` y `AutorizaSuResponsableDeFlotilla` comprueban el rol y el nombre del autorizante, sin distinguir mayúsculas, contra el cliente o su Responsable de Flotilla.
+En E2, `AutorizaElCliente` y `AutorizaSuResponsableDeFlotilla` comprueban el rol y el nombre del autorizante, sin distinguir mayúsculas, contra el cliente o su Responsable de Flotilla. *(v3.1, CA-063)* Tampoco cuentan los espacios repetidos ni los de los extremos; los acentos sí cuentan («Luis Pena» no es «Luis Peña»). *(v3.1, CA-064)* Si no se cumple para una flotilla, el mensaje dice la empresa, el nombre del Responsable de Flotilla y el rol con el que se registra la decisión.
 
 En E8, el «último contacto» es la fecha de presentación o el recontacto más reciente **posterior** a ella. Al corregir una cotización la presentación vuelve a quedar vacía (`FuePresentada` no se cumple hasta presentarla otra vez) y los recontactos anteriores se conservan como historial, pero ya no cuentan (v3.1, CA-051).
 

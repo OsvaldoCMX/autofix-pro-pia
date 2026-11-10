@@ -70,7 +70,7 @@ Contrato de la API que se implementa con FastAPI (ADR-008). Cuando la API esté 
 
 | Método | Ruta | Rol | Descripción | Éxito | Errores | Caso de uso | Criterios | Prioridad |
 |---|---|---|---|---|---|---|---|---|
-| POST | `/api/cotizaciones/{id}/decision` | Asesor | Registrar la decisión del cliente o del Responsable de Flotilla. | 200 | 401, 403, 404, 409, 422 | `ServicioDeAutorizacion.registrar_decision` | CA-010, CA-012, CA-017, CA-018, CA-029 | P1 |
+| POST | `/api/cotizaciones/{id}/decision` | Asesor | Registrar la decisión del cliente o del Responsable de Flotilla. | 200 | 401, 403, 404, 409, 422 | `ServicioDeAutorizacion.registrar_decision` | CA-010, CA-012, CA-017, CA-018, CA-029, CA-063, CA-064 | P1 |
 
 ### Reparación
 

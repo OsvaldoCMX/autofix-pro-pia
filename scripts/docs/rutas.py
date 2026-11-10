@@ -41,7 +41,7 @@ RUTAS = [
     ("POST", "/api/cotizaciones/{id}/recontactos", A, "Registrar el recontacto al cliente (48 h).", "201", "401, 403, 404, 409", "ServicioDeCotizacion.registrar_recontacto", ["CA-040"], "P1", "Cotización"),
     ("GET", "/api/gerencia/cotizaciones-por-aprobar", G, "Cotizaciones en «Pendiente de Aprobación Gerencial».", "200", "401, 403", "ListarCotizacionesPendientesDeAprobacion", ["CA-007"], "P1", "Cotización"),
     # autorización
-    ("POST", "/api/cotizaciones/{id}/decision", A, "Registrar la decisión del cliente o del Responsable de Flotilla.", "200", "401, 403, 404, 409, 422", "ServicioDeAutorizacion.registrar_decision", ["CA-010", "CA-012", "CA-017", "CA-018", "CA-029"], "P1", "Autorización"),
+    ("POST", "/api/cotizaciones/{id}/decision", A, "Registrar la decisión del cliente o del Responsable de Flotilla.", "200", "401, 403, 404, 409, 422", "ServicioDeAutorizacion.registrar_decision", ["CA-010", "CA-012", "CA-017", "CA-018", "CA-029", "CA-063", "CA-064"], "P1", "Autorización"),
     # reparación
     ("POST", "/api/ordenes/{numero}/asignacion-trabajos", A, "Asignar trabajos autorizados a un técnico.", "200", "401, 403, 404, 409, 422", "ServicioDeReparacion.asignar_trabajos", ["CA-011", "CA-012", "CA-036"], "P1", "Reparación"),
     ("POST", "/api/ordenes/{numero}/trabajos/{id}/inicio", T, "Pasar un trabajo a «En Progreso».", "200", "401, 403, 404, 409", "ServicioDeReparacion.iniciar_trabajo", ["CA-014", "CA-046"], "P1", "Reparación"),

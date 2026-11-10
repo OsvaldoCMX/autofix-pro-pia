@@ -28,11 +28,11 @@ NECESIDADES = [
 TRAZA_NECESIDAD = {
     "N-01": (["US-001", "US-002", "US-003"], ["CA-001", "CA-002", "CA-003", "CA-004", "CA-052", "CA-059"], "Fase 1: Recepción y registro"),
     "N-02": (["US-004"], ["CA-005", "CA-006", "CA-060"], "Fase 2: Diagnóstico y cotización; Fase 3: Autorización"),
-    "N-03": (["US-006"], ["CA-010", "CA-011", "CA-012"], "Fase 3: Autorización"),
+    "N-03": (["US-006"], ["CA-010", "CA-011", "CA-012", "CA-063"], "Fase 3: Autorización"),
     "N-04": (["US-005"], ["CA-007", "CA-008", "CA-009"], "Fase 2: Diagnóstico y cotización"),
     "N-05": (["US-012"], ["CA-023"], "Fase 4: Gestión de refacciones"),
     "N-06": (["US-009", "US-019"], ["CA-016", "CA-017", "CA-018", "CA-034", "CA-061"], "Fase 5: Reparación y ampliación"),
-    "N-07": (["US-016", "US-022"], ["CA-028", "CA-029", "CA-039", "CA-041"], "Fase 1, Fase 3 y Fase 6: Cierre, pago y entrega"),
+    "N-07": (["US-016", "US-022"], ["CA-028", "CA-029", "CA-039", "CA-041", "CA-064"], "Fase 1, Fase 3 y Fase 6: Cierre, pago y entrega"),
     "N-08": (["US-017", "US-018"], ["CA-030", "CA-031"], "Consulta transversal (no es una tarea del flujo)"),
     "N-09": (["US-007", "US-008", "US-019", "US-020"], ["CA-013", "CA-014", "CA-015", "CA-032", "CA-033", "CA-035", "CA-036", "CA-046", "CA-053", "CA-054"], "Fase 1, Fase 2 y Fase 5"),
     "N-10": (["US-010", "US-011"], ["CA-019", "CA-020", "CA-021", "CA-022", "CA-062"], "Fase 4: Gestión de refacciones"),
@@ -709,6 +709,24 @@ ca("CA-062", "US-010", [
 ], F4, ["RN-34", "RN-09"], "OrdenDeServicio (crear_solicitud_de_compra), SolicitudDeCompra, error SolicitudNoPermitida",
    "ServicioDeRefacciones.solicitar", "POST /api/ordenes/{numero}/solicitudes-de-compra (409)", TEC,
    cambio="H-PIA-26", nombre="No se repite la solicitud de una refacción pendiente", planeado=True)
+
+ca("CA-063", "US-006", [
+    (D, "que el cliente particular se llama «Luis Peña»"),
+    (C, "el asesor registra la decisión a nombre de «Luis  Peña» (con dos espacios), « luis peña » o «LUIS PEÑA»"),
+    (E, "el sistema debe aceptar el nombre como el mismo"),
+    (Y, "si el nombre se escribe sin acento («Luis Pena»), debe rechazarlo e indicar a nombre de quién se registra la decisión"),
+], F3, ["RN-07"], "spec AutorizanteValido (AutorizaElCliente, AutorizaSuResponsableDeFlotilla)",
+   "ServicioDeAutorizacion.registrar_decision", "POST /api/cotizaciones/{id}/decision", ASE,
+   cambio="H-PIA-27", nombre="El nombre del autorizante con espacios de más", planeado=True)
+
+ca("CA-064", "US-016", [
+    (D, "que la orden es de un cliente de flotilla de la empresa «Transportes Norte», cuyo Responsable de Flotilla es «Ana Torres»"),
+    (C, "el asesor registra la decisión con el rol «Cliente» o a nombre de otra persona"),
+    (E, "el sistema no debe registrarla"),
+    (Y, "debe indicar la empresa, el nombre del Responsable de Flotilla y el rol con el que se registra: «Para la flotilla de Transportes Norte, registre la decisión a nombre de su Responsable de Flotilla, Ana Torres, con el rol «Responsable de Flotilla».»"),
+], F3, ["RN-07"], "VerificadorDeAutorizante, error AutorizanteNoValido",
+   "ServicioDeAutorizacion.registrar_decision", "POST /api/cotizaciones/{id}/decision (409)", ASE,
+   cambio="H-PIA-27", nombre="Flotilla: el mensaje dice a nombre de quién y con qué rol", planeado=True)
 
 # ----------------------------------------------------------------------------- áreas (archivos .feature)
 AREAS = [
