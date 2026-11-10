@@ -37,17 +37,17 @@ Antes de empezar la implementación del PIA se revisaron juntos el BRD, las User
 
 ## 3. Conteos finales
 
-| Elemento | U3 | PIA v3.0 | v3.1 (Fase 13) |
+| Elemento | U3 | PIA v3.0 | v3.1 (Fase 14) |
 |---|---|---|---|
 | Necesidades | 14 | 15 | 16 |
 | User Stories | 24 | 25 | 27 |
-| Criterios de aceptación | 43 | 46 | 66 (20 planeados) |
+| Criterios de aceptación | 43 | 46 | 66 |
 | Estados (orden / cotización / trabajo / solicitud) | 24 (12/6/4/2) | 25 (13/6/4/2) | 25 (sin cambios; 1 transición nueva en la cotización) |
-| Reglas de negocio trazadas | — | 24 (RN-01 a RN-24) | 35 (11 planeadas) |
+| Reglas de negocio trazadas | — | 24 (RN-01 a RN-24) | 35 (RN-01 a RN-35) |
 | Specifications | 0 (1 política) | 8 (E1–E8) | 8 (E2 y E8 se precisan) |
 | ADR | 5 | 16 | 18 |
-| Domain Events | 15 | 26 | 31 (5 planeados) |
-| Rutas de la API | — | 43 | 51 (8 planeadas) |
+| Domain Events | 15 | 26 | 31 |
+| Rutas de la API | — | 43 | 51 (`GET /api/sesion` se construye en la Fase 15) |
 
 ## 4. Decisiones confirmadas por el equipo (04/11/2026)
 

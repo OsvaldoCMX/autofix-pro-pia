@@ -29,7 +29,7 @@ Orden en que se construye el sistema a partir de esta documentación. Cada fase 
 | 11 | README técnico, evidencias y cierre | Terminada | 06/11/2026 | `docs: README técnico, guion de demostración y evidencia de pruebas` |
 | 12 | Auditoría «¿y si me equivoco?» | Terminada | 09/11/2026 | `docs: decisiones del equipo en la auditoría` |
 | 13 | Documentar la interfaz web y las correcciones aprobadas | Terminada | 09/11/2026 | `docs: cerrar la Fase 13` |
-| 14 | Correcciones en el dominio y la API | Pendiente | — | — |
+| 14 | Correcciones en el dominio y la API | Terminada | 10/11/2026 | `docs: cerrar la Fase 14` |
 | 15 | Base de la interfaz web | Pendiente | — | — |
 | 16 | Pantallas del Asesor | Pendiente | — | — |
 | 17 | Pantallas de Técnico, Gerente, Compras y Caja | Pendiente | — | — |
@@ -294,6 +294,14 @@ La prioridad es **Alta** si el profesor lo puede encontrar en una demo de 10 min
 **Listo cuando:** todo en verde, cobertura ≥ 90 % y los criterios nuevos aparecen en la evidencia.
 
 **Commits:** uno por corrección (`feat(cotizacion): corregir una cotización antes de la decisión del cliente`, …).
+
+**Resultado (10/11/2026).** Se construyeron los 8 puntos del orden de prioridad, con `push` al terminar cada uno; no hubo que recortar nada, así que la corrección de placas (P2) también quedó construida y ya no responde 501. Solo `GET /api/sesion` sigue marcada «Planeado» porque es de la Fase 15. Decisiones durante la fase:
+- RN-27 con los datos del profesor: los 60 vehículos ya tienen una orden «Recibida», así que para abrirles otra primero se cierra o se cancela la suya. Las pruebas de cliente recurrente (CA-003) cancelan primero la visita anterior; los 120 casos y las 20 transiciones siguen con «coincide = SI» y sin cambiar los oráculos (decisión del equipo).
+- Las reglas de captura nuevas (teléfono, correo, año, kilometraje, largo de textos, trabajos de más de $0.00) solo se aplican al capturar o corregir; lo guardado se lee tal cual, y una prueba abre el expediente de las 60 órdenes de los datos iniciales (condición del equipo). Los datos del profesor cumplen todas las reglas nuevas.
+- El VIN de otro vehículo al corregir responde 422, como al registrar (el contrato decía 409).
+- El teléfono se guarda como se capturó (sin espacios en los extremos); los textos de 1,000 caracteres se revisan en los esquemas de la API, igual que los demás largos de columna.
+- Pruebas que cambiaron sin debilitarse: la máquina de la cotización (transición nueva), `test_esquema` (19 tablas, índices únicos con su condición y `ON UPDATE`), las de CA-003 y la de la numeración de adicionales (RN-27 y RN-33), la de CA-029 (mensaje nuevo de CA-064) y los teléfonos de los datos de prueba (10 dígitos).
+- Verificado con SQLite y con PostgreSQL 16 en Docker, cargando `01`, `02` y `03` por la entrada estándar; nunca contra Supabase.
 
 ## Fase 15 — Base de la interfaz web
 

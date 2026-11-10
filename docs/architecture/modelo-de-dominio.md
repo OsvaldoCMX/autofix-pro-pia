@@ -1,6 +1,6 @@
 # Modelo de dominio — AutoFix Pro (PIA v3.1)
 
-Este documento es la referencia del dominio para la implementación del PIA: Aggregates, Value Objects, Specifications, máquinas de estados, Domain Events y errores. Continúa el mapa de dominio de la Unidad 3 (ADR-001 y ADR-002) y agrega lo que pide el PIA (Specification, máquinas de estados de todos los objetos con estado y Domain Events con reacciones). La v3.1 agrega las correcciones aprobadas después de la revisión del 09/11/2026 (H-PIA-21 en adelante, `auditoria-errores-de-usuario.md`); mientras la Fase 14 no las construya, la matriz de trazabilidad las marca como «Planeado». Las reglas de negocio `RN-xx` están en la [matriz de trazabilidad](../trazabilidad/matriz-trazabilidad.md#2-reglas-de-negocio).
+Este documento es la referencia del dominio para la implementación del PIA: Aggregates, Value Objects, Specifications, máquinas de estados, Domain Events y errores. Continúa el mapa de dominio de la Unidad 3 (ADR-001 y ADR-002) y agrega lo que pide el PIA (Specification, máquinas de estados de todos los objetos con estado y Domain Events con reacciones). La v3.1 agrega las correcciones aprobadas después de la revisión del 09/11/2026 (H-PIA-21 en adelante, `auditoria-errores-de-usuario.md`); todas se construyeron en la Fase 14 (10/11/2026). Las reglas de negocio `RN-xx` están en la [matriz de trazabilidad](../trazabilidad/matriz-trazabilidad.md#2-reglas-de-negocio).
 
 Diagramas: [mapa de dominio](diagramas/mapa-dominio.png) · [clases por capa](diagramas/clases-dominio.png) · [estados de la orden](diagramas/estados-orden.png) · [estados de cotización, trabajo y solicitud](diagramas/estados-cotizacion-trabajo-solicitud.png).
 
@@ -237,7 +237,7 @@ Las alertas por tiempo (CA-023 y CA-040) no vienen de un evento sino de la revis
 | `EmpresaYaRegistrada` | *(v3.1)* Se registra una empresa de flotilla que ya existe con datos distintos de su Responsable de Flotilla; el mensaje dice el nombre y el teléfono del responsable registrado (CA-065). | 409 |
 | `OrdenNoEncontrada`, `CotizacionNoEncontrada`, `ClienteNoEncontrado`, `VehiculoNoEncontrado`, `EmpleadoNoEncontrado`, `TrabajoNoEncontrado`, `SolicitudNoEncontrada` | El identificador no existe. | 404 |
 
-*(v3.1)* Los errores con **«409 · Planeado»** en la columna HTTP están aprobados (Fase 13) pero todavía no existen en el código; `tests/api/test_errores_http.py` solo compara los demás, y la Fase 14 quita la marca al crear cada uno.
+*(v3.1)* Un error con **«409 · Planeado»** en la columna HTTP estaría aprobado pero sin construir: `tests/api/test_errores_http.py` solo compara los demás. Desde la Fase 14 no queda ninguno.
 
 Todos heredan de `ErrorDeDominio` y su mensaje está escrito para el usuario del taller (se devuelve tal cual en el campo `detalle` de la respuesta): dice qué pasó y qué puede hacer, sin términos internos («inhabilitado» es un término de este modelo; el usuario lee «servicios que el taller no ofrece por ahora»).
 
