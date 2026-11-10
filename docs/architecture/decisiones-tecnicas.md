@@ -53,8 +53,9 @@ autofix-pro/
 │       ├── rutas/             recepcion, diagnostico, cotizaciones, autorizacion, reparacion, refacciones,
 │       │                      retiro, caja, entrega, cancelacion, consultas, alertas, revisiones, salud
 │       │                      (v3.1: sesion)
-│       └── web/               (v3.1) la página: index.html, estilos.css y módulos JS (api, sesion, formato,
-│                              ui y uno por puesto); la sirve FastAPI en `/` (ADR-017)
+│       ├── interfaz.py        (v3.1) sirve la página: `/` entrega index.html y `/web/…` sus archivos
+│       └── web/               (v3.1) la página: index.html, estilos.css y módulos JS (principal, api,
+│                              sesion, formato, ui y uno por puesto); la sirve FastAPI en `/` (ADR-017)
 ├── tests/
 │   ├── unit/domain/ · unit/application/ · integration/ · api/ · datos_profesor/
 │   └── conftest.py
@@ -66,7 +67,7 @@ autofix-pro/
 ├── Dockerfile · docker-compose.yml · .env.example · pyproject.toml · README.md
 ```
 
-La interfaz web vive dentro de `src/api/web/` porque es parte de la capa de presentación: así `src/` conserva sus 4 paquetes y el Dockerfile no cambia. `/docs`, `/openapi.json`, `/health` y `/api/*` siguen funcionando igual, y la página solo habla con la API (nunca con Supabase).
+La interfaz web vive dentro de `src/api/web/` porque es parte de la capa de presentación: así `src/` conserva sus 4 paquetes y el Dockerfile no cambia. `/docs`, `/openapi.json`, `/health` y `/api/*` siguen funcionando igual, y la página solo habla con la API (nunca con Supabase). Los archivos de la página se sirven en `/web/…` y no directamente en `/`, para que una dirección que no existe siga respondiendo el error 404 de siempre; ni `/` ni `/web/…` aparecen en Swagger (`interfaz-web.md` §8).
 
 **Regla de dependencias:** `api → application → domain` e `infrastructure → application/domain`. El dominio no importa nada de las otras capas; la composición (qué implementación se usa) vive solo en `api/dependencias.py` (Composition Root). Una prueba de arquitectura (como la de la U5) verifica estas dependencias.
 

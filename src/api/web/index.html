@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AutoFix Pro</title>
+  <link rel="stylesheet" href="/web/estilos.css">
+  <script type="module" src="/web/principal.js"></script>
+</head>
+<body>
+  <header class="encabezado">
+    <a class="marca" id="marca" href="#/inicio">AutoFix Pro</a>
+    <nav class="menu" id="menu" aria-label="Menú del puesto" hidden></nav>
+    <div class="usuario" id="usuario" hidden>
+      <span class="saludo" id="saludo"></span>
+      <button class="boton boton-secundario" id="cerrar-sesion" type="button">Cerrar sesión</button>
+    </div>
+  </header>
+  <div class="avisos" id="avisos" aria-live="polite"></div>
+  <main class="pantalla" id="pantalla">
+    <p class="cargando">Cargando…</p>
+  </main>
+  <noscript>
+    <p class="aviso aviso-error">Para usar AutoFix Pro, active JavaScript en su navegador.</p>
+  </noscript>
+</body>
+</html>

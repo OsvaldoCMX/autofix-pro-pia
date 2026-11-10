@@ -8,6 +8,7 @@ from fastapi import Depends, FastAPI
 from api.dependencias import Contenedor, crear_contenedor
 from api.errores import registrar_manejadores
 from api.esquemas.comunes import rechazar_caracteres_no_validos
+from api.interfaz import montar_interfaz
 from api.rutas import (
     alertas,
     autorizacion,
@@ -59,6 +60,7 @@ def crear_app(contenedor: Contenedor | None = None) -> FastAPI:
     registrar_manejadores(app)
     for router in ROUTERS:
         app.include_router(router)
+    montar_interfaz(app)
     return app
 
 
