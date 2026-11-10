@@ -624,7 +624,7 @@ ca("CA-053", "US-020", [
     (E, "el sistema debe mostrar la clave y el nombre de cada empleado con rol Técnico"),
     (Y, "no debe mostrar empleados de otros puestos"),
 ], F2, ["RN-28"], "Empleado (RolDeEmpleado.TECNICO), modelo de lectura TecnicoVista", "Consulta ListarTecnicos",
-   "GET /api/tecnicos", ASE, cambio="H-PIA-23", nombre="Lista de técnicos para asignar", planeado=True)
+   "GET /api/tecnicos", ASE, cambio="H-PIA-23", nombre="Lista de técnicos para asignar")
 
 ca("CA-054", "US-020", [
     (D, "que una orden está en «En Diagnóstico» y el técnico asignado todavía no registra el diagnóstico"),
@@ -817,7 +817,7 @@ REGLAS = {
 }
 
 # Reglas aprobadas en la Fase 13 que todavía no se construyen (misma idea que `planeado` en los CA).
-REGLAS_PLANEADAS = {"RN-28", "RN-29", "RN-30", "RN-31", "RN-32", "RN-33", "RN-34", "RN-35"}
+REGLAS_PLANEADAS = {"RN-29", "RN-30", "RN-31", "RN-32", "RN-33", "RN-34", "RN-35"}
 
 # ----------------------------------------------------------------------------- pruebas previstas
 # Convención: toda prueba de aceptación se llama test_ca_0XX_<descripcion> para poder

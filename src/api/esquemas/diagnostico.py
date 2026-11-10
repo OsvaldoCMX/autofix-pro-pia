@@ -34,6 +34,11 @@ class FallaAdicionalRegistrada(ModeloDeSalida):
     reportada_en: datetime
 
 
+class TecnicoDelTaller(ModeloDeSalida):
+    id_empleado: str
+    nombre: str
+
+
 class OrdenDelPanel(ModeloDeSalida):
     numero_orden: str
     estado: str

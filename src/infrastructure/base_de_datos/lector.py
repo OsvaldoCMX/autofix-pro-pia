@@ -20,6 +20,7 @@ from application.consultas.vistas import (
     OrdenDelPanelVista,
     OrdenResumenVista,
     SolicitudVista,
+    TecnicoVista,
     VehiculoConClienteVista,
     vista_de_cliente,
     vista_de_cotizacion,
@@ -45,6 +46,7 @@ from infrastructure.base_de_datos.tablas import (
     alertas_internas,
     clientes,
     cotizaciones,
+    empleados,
     ordenes,
     solicitudes_de_compra,
     trabajos,
@@ -87,6 +89,15 @@ class LectorDeOrdenesSqlAlchemy(LectorDeOrdenes):
             for fila in filas
             if buscada in (fila["empresa"] or "").casefold()
         ]
+
+    def tecnicos(self) -> list[TecnicoVista]:
+        consulta = (
+            select(empleados.c.id, empleados.c.nombre)
+            .where(empleados.c.rol == RolDeEmpleado.TECNICO.value)
+            .order_by(empleados.c.id)
+        )
+        with self._motor.connect() as conexion:
+            return [TecnicoVista(fila.id, fila.nombre) for fila in conexion.execute(consulta)]
 
     def panel_del_tecnico(self, id_tecnico: str) -> list[OrdenDelPanelVista]:
         con_trabajos = select(trabajos.c.numero_orden).where(

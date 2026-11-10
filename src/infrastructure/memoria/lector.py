@@ -14,6 +14,7 @@ from application.consultas.vistas import (
     OrdenDelPanelVista,
     OrdenResumenVista,
     SolicitudVista,
+    TecnicoVista,
     VehiculoConClienteVista,
     vista_de_cliente,
     vista_de_cotizacion,
@@ -49,6 +50,14 @@ class LectorEnMemoria(LectorDeOrdenes):
             for cliente in self._almacen.datos.clientes.values()
             if (tipo is None or cliente.tipo is tipo)
             and buscada in (cliente.empresa or "").casefold()
+        ]
+
+    def tecnicos(self) -> list[TecnicoVista]:
+        empleados = sorted(self._almacen.datos.empleados.values(), key=lambda e: e.id_empleado)
+        return [
+            TecnicoVista(empleado.id_empleado, empleado.nombre)
+            for empleado in empleados
+            if empleado.rol is RolDeEmpleado.TECNICO
         ]
 
     def panel_del_tecnico(self, id_tecnico: str) -> list[OrdenDelPanelVista]:

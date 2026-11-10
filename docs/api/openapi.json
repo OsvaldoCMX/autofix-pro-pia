@@ -1014,6 +1014,56 @@
         }
       }
     },
+    "/api/tecnicos": {
+      "get": {
+        "tags": [
+          "Diagnóstico"
+        ],
+        "summary": "Técnicos del taller (clave y nombre) para asignarlos",
+        "operationId": "listar_tecnicos_api_tecnicos_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TecnicoDelTaller"
+                  },
+                  "type": "array",
+                  "title": "Response Listar Tecnicos Api Tecnicos Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Falta el token o no es válido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o trabajo de otro técnico.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "TokenDeEmpleado": []
+          }
+        ]
+      }
+    },
     "/api/tecnicos/me/panel": {
       "get": {
         "tags": [
@@ -5836,6 +5886,24 @@
           "dias_habiles_transcurridos"
         ],
         "title": "SolicitudPendiente"
+      },
+      "TecnicoDelTaller": {
+        "properties": {
+          "id_empleado": {
+            "type": "string",
+            "title": "Id Empleado"
+          },
+          "nombre": {
+            "type": "string",
+            "title": "Nombre"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id_empleado",
+          "nombre"
+        ],
+        "title": "TecnicoDelTaller"
       },
       "TipoCliente": {
         "type": "string",

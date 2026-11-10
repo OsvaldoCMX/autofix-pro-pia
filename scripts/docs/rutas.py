@@ -30,7 +30,7 @@ RUTAS = [
     ("POST", "/api/ordenes/{numero}/diagnostico", T, "Registrar el diagnóstico (fallas y recomendaciones).", "201", "401, 403, 404, 409, 422", "ServicioDeDiagnostico.registrar_diagnostico", ["CA-032", "CA-033"], "P1", "Diagnóstico"),
     ("POST", "/api/ordenes/{numero}/fallas-adicionales", T, "Reportar una falla adicional durante la reparación.", "201", "401, 403, 404, 409, 422", "ServicioDeDiagnostico.reportar_falla_adicional", ["CA-034"], "P1", "Diagnóstico"),
     ("GET", "/api/tecnicos/me/panel", T, "Órdenes y trabajos asignados, en orden de la fila.", "200", "401, 403", "ConsultarPanelDelTecnico", ["CA-013", "CA-035", "CA-036", "CA-054"], "P1", "Diagnóstico"),
-    ("GET", "/api/tecnicos", A, "Técnicos del taller (clave y nombre) para asignarlos.", "200", "401, 403", "ListarTecnicos", ["CA-053"], P1_PLANEADA, "Diagnóstico"),
+    ("GET", "/api/tecnicos", A, "Técnicos del taller (clave y nombre) para asignarlos.", "200", "401, 403", "ListarTecnicos", ["CA-053"], "P1", "Diagnóstico"),
     # cotización
     ("POST", "/api/ordenes/{numero}/cotizaciones", A, "Generar la cotización inicial (v.1).", "201", "401, 403, 404, 409, 422", "ServicioDeCotizacion.generar_inicial", ["CA-005", "CA-007", "CA-060"], "P1", "Cotización"),
     ("POST", "/api/ordenes/{numero}/cotizaciones-adicionales", A, "Generar una cotización adicional (v.2, v.3…).", "201", "401, 403, 404, 409, 422", "ServicioDeCotizacion.generar_adicional", ["CA-016", "CA-060", "CA-061"], "P1", "Cotización"),

@@ -113,6 +113,14 @@ class LineaVista:
 
 
 @dataclass(frozen=True)
+class TecnicoVista:
+    """Técnico del taller para elegirlo por su nombre al asignar (CA-053)."""
+
+    id_empleado: str
+    nombre: str
+
+
+@dataclass(frozen=True)
 class CorreccionVista:
     """Una corrección del historial de la cotización (H-PIA-21)."""
 

@@ -21,6 +21,7 @@ from tests.api.pasos import (
     cotizada,
     en_diagnostico,
     en_reparacion,
+    exigir,
     expediente_de,
     panel_de,
     recibida,
@@ -199,3 +200,20 @@ def test_alertas_solo_del_empleado_y_de_su_rol(cliente: TestClient) -> None:
 def test_las_alertas_exigen_token_de_empleado(cliente: TestClient) -> None:
     assert cliente.get("/api/alertas").status_code == 401
     assert cliente.get("/api/alertas", headers=SISTEMA).status_code == 403
+
+
+def test_ca_053_el_asesor_ve_la_lista_de_tecnicos(cliente: TestClient) -> None:
+    tecnicos = exigir(cliente.get("/api/tecnicos", headers=ASESOR), 200)
+
+    assert tecnicos == [
+        {"id_empleado": "EMP-002", "nombre": "Carlos Ruiz"},
+        {"id_empleado": "EMP-003", "nombre": "Diego Salinas"},
+    ]
+
+
+def test_rn_28_la_lista_no_incluye_otros_puestos(cliente: TestClient) -> None:
+    tecnicos = exigir(cliente.get("/api/tecnicos", headers=ASESOR), 200)
+
+    assert {tecnico["id_empleado"] for tecnico in tecnicos}.isdisjoint(
+        {"EMP-001", "EMP-004", "EMP-005", "EMP-006"}
+    )

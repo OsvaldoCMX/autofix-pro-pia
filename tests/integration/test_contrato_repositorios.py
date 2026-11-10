@@ -348,3 +348,12 @@ def test_rn_27_si_la_base_rechaza_la_segunda_orden_lanza_el_mismo_error(
     assert str(error.value) == esperado
     with taller_en_base.uow() as uow:
         assert uow.ordenes.abierta_del_vehiculo(primera.placas) is not None
+
+
+def test_ca_053_lista_solo_empleados_con_rol_tecnico(taller: Taller) -> None:
+    tecnicos = taller.lector().tecnicos()
+
+    assert [(t.id_empleado, t.nombre) for t in tecnicos] == [
+        ("EMP-002", "Carlos Ruiz"),
+        ("EMP-003", "Diego Salinas"),
+    ]

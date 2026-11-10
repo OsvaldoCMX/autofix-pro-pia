@@ -15,6 +15,7 @@ from application.consultas.vistas import (
     OrdenDelPanelVista,
     OrdenResumenVista,
     SolicitudPendienteVista,
+    TecnicoVista,
     VehiculoConClienteVista,
 )
 from application.puertos import AlertaInterna, Reloj
@@ -82,6 +83,19 @@ class ManejadorConsultarPanelDelTecnico:
 
     def ejecutar(self, consulta: ConsultarPanelDelTecnico) -> list[OrdenDelPanelVista]:
         return self._lector.panel_del_tecnico(consulta.id_tecnico)
+
+
+@dataclass(frozen=True)
+class ListarTecnicos:
+    pass
+
+
+class ManejadorListarTecnicos:
+    def __init__(self, lector: LectorDeOrdenes) -> None:
+        self._lector = lector
+
+    def ejecutar(self, consulta: ListarTecnicos) -> list[TecnicoVista]:
+        return self._lector.tecnicos()
 
 
 # ------------------------------------------------------------------ compras
