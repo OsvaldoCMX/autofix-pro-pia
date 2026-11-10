@@ -33,6 +33,7 @@ CODIGOS_DE_ERROR: dict[type[dominio.ErrorDeDominio], int] = {
     dominio.CancelacionNoPermitida: 409,
     dominio.VehiculoConOrdenAbierta: 409,
     dominio.CorreccionNoPermitida: 409,
+    dominio.EmpresaYaRegistrada: 409,
     dominio.OrdenNoEncontrada: 404,
     dominio.CotizacionNoEncontrada: 404,
     dominio.ClienteNoEncontrado: 404,
@@ -47,6 +48,12 @@ _IMPORTE_CON_DECIMALES = (
     "El dato «{campo}» debe ser un importe con dos decimales, por ejemplo \"1500.00\"."
 )
 _NUMERO_DEMASIADO_GRANDE = "El número de «{campo}» es demasiado grande. Revise el dato."
+_IMPORTE_NEGATIVO = "El dato «{campo}» no puede ser negativo. Corríjalo e intente de nuevo."
+# El número que va en la dirección se llama según la ruta (AU-38).
+_NOMBRES_DEL_IDENTIFICADOR = (
+    ("/solicitudes-de-compra/", "número de solicitud"),
+    ("/trabajos/", "número de trabajo"),
+)
 _MENSAJES_DE_VALIDACION = {
     "missing": "Falta el dato «{campo}». Captúrelo e intente de nuevo.",
     "extra_forbidden": "El dato «{campo}» no se reconoce. Quítelo e intente de nuevo.",
@@ -142,7 +149,9 @@ class TokenInvalido(ErrorDeAcceso):
 
 class RolNoPermitido(ErrorDeAcceso):
     codigo = 403
-    mensaje = "Su rol no tiene permiso para usar esta función. Pida apoyo al área encargada."
+    mensaje = (
+        "Esta función es de otro puesto del taller. Pida a la persona encargada que la realice."
+    )
 
 
 class FuncionNoImplementada(Exception):
@@ -163,17 +172,36 @@ def codigo_de(error: dominio.ErrorDeDominio) -> int:
     return CODIGOS_DE_ERROR.get(type(error), _CODIGO_POR_DEFECTO)
 
 
-def mensaje_de_validacion(error: Mapping[str, Any]) -> str:
+def mensaje_de_validacion(error: Mapping[str, Any], ruta: str = "") -> str:
     """Pydantic escribe en inglés: el usuario del taller recibe el mensaje en español."""
     ubicacion = error["loc"][1:]  # el primero es body, query o path
     if not ubicacion:
         return _SIN_CUERPO if error["type"] == "missing" else _FORMATO_INCORRECTO
     # El nombre de un dato desconocido viene del cliente: podría no poder escribirse como UTF-8.
-    campo = nombre_del_campo(ubicacion).encode("utf-8", "replace").decode("utf-8")
+    campo = _nombre_en_la_ruta(ubicacion, ruta) or nombre_del_campo(ubicacion)
+    campo = campo.encode("utf-8", "replace").decode("utf-8")
     contexto = dict(error.get("ctx", {}))
     if "expected" in contexto:
         contexto["expected"] = _opciones_en_espanol(contexto["expected"])
+    if _es_importe_negativo(error):
+        return _IMPORTE_NEGATIVO.format(campo=campo)
     return _plantilla_de(error["type"], ubicacion, contexto).format(campo=campo, **contexto)
+
+
+def _nombre_en_la_ruta(ubicacion: Sequence[str | int], ruta: str) -> str | None:
+    if tuple(ubicacion) != ("id",):
+        return None
+    return next((nombre for tramo, nombre in _NOMBRES_DEL_IDENTIFICADOR if tramo in ruta), None)
+
+
+def _es_importe_negativo(error: Mapping[str, Any]) -> bool:
+    """«-1500.00» no es un formato equivocado: es un importe negativo (AU-19)."""
+    valor = error.get("input")
+    return (
+        error["type"] == "string_pattern_mismatch"
+        and isinstance(valor, str)
+        and valor.strip().startswith("-")
+    )
 
 
 def nombre_del_campo(ubicacion: Sequence[str | int]) -> str:
@@ -236,12 +264,13 @@ def _funcion_no_implementada(_: Request, error: Exception) -> JSONResponse:
     return respuesta_de_error(type(error).__name__, str(error), 501)
 
 
-def _error_de_validacion(_: Request, error: Exception) -> JSONResponse:
+def _error_de_validacion(peticion: Request, error: Exception) -> JSONResponse:
     assert isinstance(error, RequestValidationError)
     problemas = error.errors()
     if any(problema["type"] == "json_invalid" for problema in problemas):
         return respuesta_de_error("JsonMalFormado", _FORMATO_INCORRECTO, 400)
-    return respuesta_de_error("ValorInvalido", mensaje_de_validacion(problemas[0]), 422)
+    mensaje = mensaje_de_validacion(problemas[0], peticion.url.path)
+    return respuesta_de_error("ValorInvalido", mensaje, 422)
 
 
 def _error_http(_: Request, error: Exception) -> JSONResponse:

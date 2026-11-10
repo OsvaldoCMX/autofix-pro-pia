@@ -181,10 +181,16 @@ def _actualizar_cliente(uow: UnidadDeTrabajo, cliente: Cliente, datos: Registrar
 
 
 def _obtener_o_crear_cliente(uow: UnidadDeTrabajo, datos: RegistrarCliente) -> Cliente:
-    """Una empresa ya registrada no se duplica: se devuelve con su Responsable (CA-028)."""
+    """Una empresa ya registrada no se duplica: se devuelve con su Responsable (CA-028).
+
+    Si llegan datos distintos de su Responsable, se avisa en lugar de ignorarlos (CA-065).
+    """
     if datos.tipo is TipoCliente.FLOTILLA and datos.empresa:
         existente = uow.clientes.buscar_flotilla(datos.empresa)
         if existente is not None:
+            existente.exigir_mismo_responsable(
+                datos.responsable_nombre, datos.responsable_telefono, datos.responsable_correo
+            )
             return existente
     cliente = Cliente.registrar(
         uow.clientes.siguiente_id(),

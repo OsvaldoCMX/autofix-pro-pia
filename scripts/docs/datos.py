@@ -736,7 +736,7 @@ ca("CA-065", "US-016", [
     (Y, "si los datos del responsable son los mismos, debe devolver la empresa registrada, como hasta ahora"),
 ], F1, ["RN-07"], "Cliente (TipoCliente.FLOTILLA), ResponsableDeFlotilla, error EmpresaYaRegistrada",
    "ServicioDeRecepcion.registrar_cliente", "POST /api/clientes (409)", ASE,
-   cambio="H-PIA-28", nombre="La empresa de flotilla ya está registrada", planeado=True)
+   cambio="H-PIA-28", nombre="La empresa de flotilla ya está registrada")
 
 ca("CA-066", "US-027", [
     (D, "que una orden está en «Recibida» o «En Diagnóstico» y las placas de su vehículo se capturaron mal"),

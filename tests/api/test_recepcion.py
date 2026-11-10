@@ -454,3 +454,26 @@ def test_ca_064_flotilla_con_rol_de_cliente_dice_el_responsable(cliente: TestCli
         "Para la flotilla de Transportes Norte, registre la decisión a nombre de su Responsable "
         "de Flotilla, Ana Torres, con el rol «Responsable de Flotilla»."
     )
+
+
+# ------------------------------------------------------------------ empresa ya registrada (H-PIA-28)
+def test_ca_065_empresa_con_otro_responsable_responde_409(cliente: TestClient) -> None:
+    exigir(cliente.post("/api/clientes", json=CLIENTE_DE_FLOTILLA, headers=ASESOR), 201)
+    otro = {**CLIENTE_DE_FLOTILLA, "responsable_nombre": "Ana Torres Ruiz"}
+
+    respuesta = exigir(cliente.post("/api/clientes", json=otro, headers=ASESOR), 409)
+
+    assert respuesta["error"] == "EmpresaYaRegistrada"
+    assert respuesta["detalle"] == (
+        "La empresa «Transportes Norte» ya está registrada con su Responsable de Flotilla "
+        f"Ana Torres (teléfono {CLIENTE_DE_FLOTILLA['responsable_telefono']}). Use ese registro."
+    )
+
+
+def test_ca_065_con_los_mismos_datos_devuelve_la_empresa_registrada(cliente: TestClient) -> None:
+    primera = exigir(cliente.post("/api/clientes", json=CLIENTE_DE_FLOTILLA, headers=ASESOR), 201)
+    igual = {**CLIENTE_DE_FLOTILLA, "responsable_nombre": "  ana   TORRES "}
+
+    segunda = exigir(cliente.post("/api/clientes", json=igual, headers=ASESOR), 201)
+
+    assert segunda["id_cliente"] == primera["id_cliente"]

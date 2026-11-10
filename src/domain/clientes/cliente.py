@@ -4,7 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum
 
-from domain.compartido.errores import ValorInvalido
+from domain.compartido.errores import EmpresaYaRegistrada, ValorInvalido
 from domain.compartido.valores import Correo, Telefono, texto_requerido
 
 
@@ -28,6 +28,18 @@ class ResponsableDeFlotilla:
             ("correo", "El Responsable de Flotilla debe tener correo."),
         ):
             object.__setattr__(self, campo, texto_requerido(getattr(self, campo), mensaje))
+
+    def coincide_con(self, nombre: str | None, telefono: str | None, correo: str | None) -> bool:
+        """Los datos que no se capturaron no cuentan; los demás se comparan sin formato."""
+        capturados = (
+            (nombre, self.nombre, _sin_espacios_de_mas),
+            (telefono, self.telefono, _solo_digitos),
+            (correo, self.correo, _sin_espacios_de_mas),
+        )
+        return all(
+            not (dato or "").strip() or limpiar(dato or "") == limpiar(registrado)
+            for dato, registrado, limpiar in capturados
+        )
 
     @classmethod
     def capturar(cls, nombre: str, telefono: str, correo: str) -> ResponsableDeFlotilla:
@@ -87,6 +99,18 @@ class Cliente:
             responsable,
         )
 
+    def exigir_mismo_responsable(
+        self, nombre: str | None, telefono: str | None, correo: str | None
+    ) -> None:
+        """CA-065: registrar otra vez la empresa no cambia en silencio a su Responsable."""
+        responsable = self.responsable
+        if responsable is None or responsable.coincide_con(nombre, telefono, correo):
+            return
+        raise EmpresaYaRegistrada(
+            f"La empresa «{self.empresa}» ya está registrada con su Responsable de Flotilla "
+            f"{responsable.nombre} (teléfono {responsable.telefono}). Use ese registro."
+        )
+
     @property
     def es_de_flotilla(self) -> bool:
         return self.tipo is TipoCliente.FLOTILLA
@@ -97,3 +121,12 @@ class Cliente:
         telefono_limpio = Telefono.capturado(telefono)
         correo_limpio = Correo.capturado(correo)
         self.nombre, self.telefono, self.correo = nombre_limpio, telefono_limpio, correo_limpio
+
+
+def _sin_espacios_de_mas(texto: str) -> str:
+    return " ".join(texto.split()).casefold()
+
+
+def _solo_digitos(texto: str) -> str:
+    return "".join(caracter for caracter in texto if caracter.isdigit())
+

@@ -248,3 +248,15 @@ def test_ca_054_con_diagnostico_responde_409_y_no_cambia(cliente: TestClient) ->
         f"El diagnóstico de la orden {numero} ya está registrado; ya no se puede cambiar el técnico."
     )
     assert expediente_de(cliente, numero)["tecnico_de_diagnostico"] == ID_TECNICO
+
+
+# ------------------------------------------------------------------ recomendaciones opcionales (H-PIA-28)
+def test_el_diagnostico_sin_recomendaciones_se_registra(cliente: TestClient) -> None:
+    numero = en_diagnostico(cliente)
+
+    respuesta = cliente.post(
+        f"/api/ordenes/{numero}/diagnostico", json={"fallas": "Balatas gastadas"}, headers=TECNICO
+    )
+
+    assert respuesta.status_code == 201
+    assert expediente_de(cliente, numero)["diagnostico_recomendaciones"] == ""

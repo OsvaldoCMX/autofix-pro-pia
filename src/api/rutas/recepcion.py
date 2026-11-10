@@ -92,7 +92,7 @@ def buscar_clientes(
     status_code=status.HTTP_201_CREATED,
     summary="Registrar cliente particular o de flotilla",
     dependencies=[SOLO_ASESOR],
-    responses=errores(400, 401, 403, 422),
+    responses=errores(400, 401, 403, 409, 422),
 )
 def registrar_cliente(datos: NuevoCliente, contenedor: ContenedorDeLaApp) -> ResultadoDeCliente:
     return contenedor.recepcion().registrar_cliente(datos.a_comando())

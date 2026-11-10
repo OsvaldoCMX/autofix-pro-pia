@@ -13,7 +13,7 @@ class AsignacionDeDiagnostico(ModeloDeEntrada):
 
 class DatosDeDiagnostico(ModeloDeEntrada):
     fallas: TextoLargo
-    recomendaciones: TextoLargo
+    recomendaciones: TextoLargo = ""
 
 
 class DatosDeFallaAdicional(ModeloDeEntrada):
