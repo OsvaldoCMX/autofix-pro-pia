@@ -271,9 +271,10 @@ La prioridad es **Alta** si el profesor lo puede encontrar en una demo de 10 min
 | 2 | H-PIA-22: una sola orden abierta por vehículo (AU-06), con índice único parcial y prueba de integración: si la base rechaza un segundo registro simultáneo, la API responde el **mismo 409** `VehiculoConOrdenAbierta`, nunca un 500 | CA-052 · RN-27 | 409 en `POST /api/ordenes` |
 | 3 | H-PIA-23: lista de técnicos (AU-13) | CA-053 · RN-28 | `GET /api/tecnicos` |
 | 4 | H-PIA-23: cambio del técnico de diagnóstico (AU-12) | CA-054 · RN-28 | la misma `asignacion-diagnostico` |
-| 5 | H-PIA-24: correcciones de datos: cliente (AU-02), vehículo (AU-03), recepción (AU-05) y forma de pago (AU-34) | CA-055 a CA-058 · RN-29, RN-30 | 4 rutas `PUT` |
-| 6 | Cambios chicos, en este orden: H-PIA-25 (AU-08 a AU-11, AU-18), H-PIA-26 (AU-20, AU-28 a), H-PIA-27 (AU-15, AU-16), H-PIA-28 (AU-04 a, AU-19, AU-27, AU-38, AU-39) | CA-059 a CA-065 · RN-31 a RN-34 | 409 en `POST /api/clientes` |
-| 7 | H-PIA-29: corrección de placas, **P2**, solo si sobra tiempo (AU-01) | CA-066 · RN-35 | `PUT /api/ordenes/{numero}/placas` |
+| 5 | Expediente completo (`interfaz-web.md` §7): `GET /api/ordenes/{numero}` agrega el nombre y el tipo del cliente (y su Responsable de Flotilla), la marca, el modelo y el año del vehículo y el nombre del técnico asignado; lo necesita la página en las Fases 16 y 17. Se documenta en el contrato de la API y lleva su prueba | — | la misma `GET /api/ordenes/{numero}` |
+| 6 | H-PIA-24: correcciones de datos: cliente (AU-02), vehículo (AU-03), recepción (AU-05) y forma de pago (AU-34) | CA-055 a CA-058 · RN-29, RN-30 | 4 rutas `PUT` |
+| 7 | Cambios chicos, en este orden: H-PIA-25 (AU-08 a AU-11, AU-18), H-PIA-26 (AU-20, AU-28 a), H-PIA-27 (AU-15, AU-16), H-PIA-28 (AU-04 a, AU-19, AU-27, AU-38, AU-39) | CA-059 a CA-065 · RN-31 a RN-34 | 409 en `POST /api/clientes` |
+| 8 | H-PIA-29: corrección de placas, **P2**, solo si sobra tiempo (AU-01) | CA-066 · RN-35 | `PUT /api/ordenes/{numero}/placas` |
 
 `GET /api/sesion` también está planeada, pero se construye en la Fase 15.
 

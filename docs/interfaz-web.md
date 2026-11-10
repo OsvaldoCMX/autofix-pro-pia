@@ -4,7 +4,7 @@
 
 Este documento dice **qué pantallas** tiene la página web, qué ve cada usuario, qué botones tiene, en qué estados aparece cada botón, qué ruta de la API llama y qué criterios cubre. La página se construye en las Fases 15 a 17 y se revisa a mano en la Fase 18. Según la regla 1 de `CLAUDE.md`, ninguna pantalla se programa hasta que el equipo apruebe este documento; si una pantalla necesita algo que no está aquí, primero se cambia este documento.
 
-**Estado:** propuesta de la Fase 13, en revisión del equipo.
+**Estado:** aprobado por el equipo (09/11/2026).
 
 ## 1. Principios
 
@@ -196,9 +196,9 @@ Según el plan (Fases 16 y 17), si una pantalla necesita un dato que la API no d
 
 | Dato | Lo necesita | Dónde se agregaría |
 |---|---|---|
-| Nombre y tipo del cliente (y su Responsable de Flotilla), marca, modelo y año del vehículo | A-03, A-04, K-01, K-02 (pago o crédito según el tipo) | Expediente `GET /api/ordenes/{numero}` (hoy solo trae `id_cliente` y `placas`; el Asesor puede usar `GET /api/vehiculos/{placas}`, pero Caja no) |
+| Nombre y tipo del cliente (y su Responsable de Flotilla), marca, modelo y año del vehículo | A-03, A-04, K-01, K-02 (pago o crédito según el tipo) | Expediente `GET /api/ordenes/{numero}` (hoy solo trae `id_cliente` y `placas`). **Se agrega en la Fase 14** (punto 5 de su orden de prioridad). |
 | Historial de correcciones de la cotización | A-03, G-01 | `GET /api/cotizaciones/{id}` y el expediente (lo agrega la Fase 14 con H-PIA-21) |
-| Nombre del técnico asignado | A-03, G-02 | Hoy el expediente trae la clave (`EMP-002`); el Asesor puede cruzarla con `GET /api/tecnicos`, el Gerente no |
+| Nombre del técnico asignado | A-03, G-02 | Hoy el expediente trae la clave (`EMP-002`). **Se agrega al expediente en la Fase 14** (punto 5), junto con los datos del cliente y del vehículo. |
 | Nombre y puesto del empleado de la clave | P-03 | `GET /api/sesion` (Fase 15) |
 
 ## 8. Estructura de archivos (Fase 15)
