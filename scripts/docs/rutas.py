@@ -13,11 +13,14 @@ RUTAS = [
     ("GET", "/health", P, "Salud del servicio (lo usa Render y Docker Compose).", "200", "—", "—", [], "P1", "Sistema"),
     # recepción
     ("GET", "/api/vehiculos/{placas}", A, "Buscar vehículo y cliente por placas.", "200", "401, 403, 404", "BuscarVehiculoPorPlacas", ["CA-003", "CA-004"], "P1", "Recepción"),
+    ("PUT", "/api/vehiculos/{placas}", A, "Corregir el VIN, la marca, el modelo o el año del vehículo (las placas no cambian).", "200", "401, 403, 404, 409, 422", "ServicioDeRecepcion.corregir_vehiculo", ["CA-056"], P1_PLANEADA, "Recepción"),
     ("GET", "/api/clientes?tipo=Flotilla&empresa=", A, "Buscar la empresa de flotilla y su Responsable.", "200", "401, 403", "BuscarClientes", ["CA-028"], "P1", "Recepción"),
     ("POST", "/api/clientes", A, "Registrar cliente particular o de flotilla (con Responsable).", "201", "400, 401, 403, 422", "ServicioDeRecepcion.registrar_cliente", ["CA-028"], "P1", "Recepción"),
+    ("PUT", "/api/clientes/{id}", A, "Corregir el nombre, el teléfono o el correo del cliente.", "200", "401, 403, 404, 422", "ServicioDeRecepcion.corregir_cliente", ["CA-055"], P1_PLANEADA, "Recepción"),
     ("POST", "/api/ordenes", A, "Registrar la orden: cliente, vehículo, motivo, kilometraje y combustible. Si las placas ya existen, reutiliza el registro y actualiza los datos enviados. *Planeado (H-PIA-22):* 409 si el vehículo ya tiene una orden abierta.", "201", "400, 401, 403, 404, 422", "ServicioDeRecepcion.registrar_orden", ["CA-001", "CA-002", "CA-004", "CA-052"], "P1", "Recepción"),
     ("POST", "/api/ordenes/{numero}/fotos", A, "Adjuntar foto de daños (multipart).", "201", "401, 403, 404, 422", "ServicioDeRecepcion.adjuntar_foto", ["CA-002"], "P2", "Recepción"),
     ("GET", "/api/ordenes/{numero}", f"{A}, {G}, {T}, {CJ}", "Expediente completo de la orden (estado, cotizaciones, trabajos, solicitudes, pagos).", "200", "401, 403, 404", "ConsultarExpedienteDeOrden", [], "P1", "Recepción"),
+    ("PUT", "/api/ordenes/{numero}/recepcion", A, "Corregir el kilometraje, el nivel de combustible o el motivo de ingreso (orden «Recibida» o «En Diagnóstico»).", "200", "401, 403, 404, 409, 422", "ServicioDeRecepcion.corregir_recepcion", ["CA-057"], P1_PLANEADA, "Recepción"),
     # cancelación
     ("POST", "/api/ordenes/{numero}/cancelacion", A, "Cancelar la orden con motivo (solo sin cotización).", "200", "401, 403, 404, 409, 422", "ServicioDeCancelacion.cancelar", ["CA-044", "CA-045"], "P1", "Cancelación"),
     # diagnóstico
@@ -55,6 +58,7 @@ RUTAS = [
     ("POST", "/api/ordenes/{numero}/reactivacion", A, "Reactivar la orden cuando el vehículo regresa (al final de la fila).", "200", "401, 403, 404, 409", "ServicioDeRetiro.reactivar", ["CA-025"], "P1", "Retiro anticipado"),
     # caja
     ("POST", "/api/ordenes/{numero}/pago", CJ, "Registrar el pago de contado de un cliente particular.", "201", "401, 403, 404, 409, 422", "ServicioDeCaja.registrar_pago", ["CA-026"], "P1", "Caja"),
+    ("PUT", "/api/ordenes/{numero}/pago", CJ, "Corregir la forma de pago mientras la orden está «Pagada».", "200", "401, 403, 404, 409, 422", "ServicioDeCaja.corregir_forma_de_pago", ["CA-058"], P1_PLANEADA, "Caja"),
     ("GET", "/api/ordenes/{numero}/recibo/pdf", CJ, "PDF del recibo interno.", "200", "401, 403, 404, 409", "ServicioDeCaja.generar_recibo", ["CA-027"], "P2", "Caja"),
     ("POST", "/api/ordenes/{numero}/cargo-a-credito", CJ, "Registrar el cargo a crédito de una flotilla.", "201", "401, 403, 404, 409", "ServicioDeCaja.registrar_cargo_a_credito", ["CA-039"], "P1", "Caja"),
     # entrega

@@ -32,7 +32,7 @@ Los Aggregates se relacionan **solo por identidad** (`numero_orden`, `id_cliente
 | Value Objects | `EstadoDeRecepcion` (kilometraje, nivel de combustible, fotos), `Diagnostico`, `Pago`, `CargoACredito`, `NotaDeResponsabilidad`, `Cancelacion`. |
 | Responsabilidades | Ciclo de vida completo del servicio: recepción, diagnóstico, cotizada, decisión, asignación y avance de trabajos, fallas adicionales, refacciones, retiro anticipado, pago o crédito, entrega y cancelación. |
 | Invariantes | Solo cambia de estado por la tabla de su máquina de estados (RN-22) · sin diagnóstico no hay cotización y después el diagnóstico no cambia (RN-02, RN-03) · solo se asignan e inician trabajos autorizados (RN-08) · refacciones solo de trabajos autorizados (RN-09) · «En Espera de Refacción» mientras exista una solicitud «Solicitada» (RN-10) · nadie trabaja la orden con el vehículo fuera del taller y cada trabajo lo inicia su técnico (RN-14) · «Lista para Entrega» cuando todos los trabajos autorizados están completados y no hay cotización adicional sin decisión (RN-15) · el pago cubre el total autorizado y las flotillas no pagan de contado; después ya no cambian los costos (RN-16) · el vencimiento del crédito es la entrega + 15 días naturales (RN-17) · se entrega solo con pago, crédito o rechazo total (RN-18) · se cancela solo sin cotización, con motivo (RN-19). |
-| Eventos | `OrdenRecibida`, `TecnicoAsignadoParaDiagnostico`, `DiagnosticoRegistrado`, `OrdenAutorizada`, `TrabajosAsignados`, `TrabajoIniciado`, `FallaAdicionalReportada`, `SolicitudDeCompraCreada`, `RefaccionDisponible`, `ClienteAvisadoDelRetraso`, `VehiculoRetirado`, `OrdenReactivada`, `OrdenListaParaEntrega`, `PagoRegistrado`, `CargoACreditoRegistrado`, `VehiculoEntregado`, `OrdenCancelada`, `TecnicoDeDiagnosticoReasignado` (v3.1). |
+| Eventos | `OrdenRecibida`, `TecnicoAsignadoParaDiagnostico`, `DiagnosticoRegistrado`, `OrdenAutorizada`, `TrabajosAsignados`, `TrabajoIniciado`, `FallaAdicionalReportada`, `SolicitudDeCompraCreada`, `RefaccionDisponible`, `ClienteAvisadoDelRetraso`, `VehiculoRetirado`, `OrdenReactivada`, `OrdenListaParaEntrega`, `PagoRegistrado`, `CargoACreditoRegistrado`, `VehiculoEntregado`, `OrdenCancelada`, `TecnicoDeDiagnosticoReasignado`, `DatosDeRecepcionCorregidos`, `FormaDePagoCorregida` (v3.1). |
 | Repositorio | `RepositorioDeOrdenes`: `obtener(numero)`, `agregar(orden)`, `guardar(orden)`, `siguiente_numero()` y, en la v3.1, `abierta_del_vehiculo(placas)`. |
 
 ### 2.2 Cotización — raíz `Cotizacion`
@@ -49,11 +49,11 @@ Los Aggregates se relacionan **solo por identidad** (`numero_orden`, `id_cliente
 
 ### 2.3 Cliente — raíz `Cliente`
 
-Identidad `id_cliente`; `TipoCliente` (Particular/Flotilla); nombre, teléfono, correo; si es flotilla, `empresa` y `ResponsableDeFlotilla` (VO: nombre, teléfono, correo). **Invariante:** un cliente de flotilla siempre tiene empresa y Responsable de Flotilla (CA-028). `actualizar_contacto` cambia nombre, teléfono y correo de un cliente recurrente (CA-003). Repositorio: `RepositorioDeClientes` (`obtener`, `agregar`, `guardar`, `buscar_flotilla(empresa)`, `siguiente_id()`, folio CLI-0001). Sin eventos.
+Identidad `id_cliente`; `TipoCliente` (Particular/Flotilla); nombre, teléfono, correo; si es flotilla, `empresa` y `ResponsableDeFlotilla` (VO: nombre, teléfono, correo). **Invariante:** un cliente de flotilla siempre tiene empresa y Responsable de Flotilla (CA-028). `actualizar_contacto` cambia nombre, teléfono y correo de un cliente recurrente (CA-003) y, en la v3.1, también corrige los datos mal capturados (`PUT /api/clientes/{id}`, CA-055, RN-29). Repositorio: `RepositorioDeClientes` (`obtener`, `agregar`, `guardar`, `buscar_flotilla(empresa)`, `siguiente_id()`, folio CLI-0001). Sin eventos.
 
 ### 2.4 Vehículo — raíz `Vehiculo`
 
-Identidad `Placas` (VO normalizado: sin espacios ni guiones, en mayúsculas) y `VIN`; marca, modelo, año e `id_cliente`. **Invariante:** placas y VIN obligatorios; el año está entre 1900 y 2100 (como el `CHECK` de la base). `actualizar_datos` cambia VIN, marca, modelo y año de un vehículo que regresa (CA-003). Repositorio: `RepositorioDeVehiculos` (`por_placas`, `agregar`, `guardar`). Sin eventos. En los datos del profesor no hay vehículos: se crea uno por operación con las placas derivadas de `referencia` (ADR-013).
+Identidad `Placas` (VO normalizado: sin espacios ni guiones, en mayúsculas) y `VIN`; marca, modelo, año e `id_cliente`. **Invariante:** placas y VIN obligatorios; el año está entre 1900 y 2100 (como el `CHECK` de la base). `actualizar_datos` cambia VIN, marca, modelo y año de un vehículo que regresa (CA-003) y, en la v3.1, también corrige los datos mal capturados sin repetir un VIN (`PUT /api/vehiculos/{placas}`, CA-056, RN-29). Repositorio: `RepositorioDeVehiculos` (`por_placas`, `agregar`, `guardar`). Sin eventos. En los datos del profesor no hay vehículos: se crea uno por operación con las placas derivadas de `referencia` (ADR-013).
 
 **Una sola orden abierta por vehículo (v3.1, RN-27, H-PIA-22).** Antes de registrar una orden, `VerificadorDeOrdenUnica` consulta `RepositorioDeOrdenes.abierta_del_vehiculo(placas)` (una orden que no está en «Cerrada», «Cerrada sin Reparación» ni «Cancelada») y, si existe, lanza `VehiculoConOrdenAbierta` con el folio y el estado de esa orden. Como respaldo ante dos registros simultáneos (doble clic), la base tiene un índice único parcial en `ordenes(placas)` para las órdenes abiertas; si la base rechaza el segundo registro, la API responde el **mismo 409 con el mismo mensaje**, nunca un error 500 (lo comprueba una prueba de integración de la Fase 14). Las 60 órdenes del profesor tienen un vehículo cada una, así que el índice no las afecta.
 
@@ -71,11 +71,11 @@ Identidad `id_empleado`; nombre; `RolDeEmpleado` (Asesor, Técnico, Gerente, Com
 | `VIN` | 17 caracteres alfanuméricos (sin I, O, Q). Antes de validar se quitan los espacios de los extremos y se pasa a mayúsculas. |
 | `VersionCotizacion` | Empieza en 1; se muestra como `v.1`. |
 | `RefaccionCotizada` | Descripción no vacía, cantidad > 0, importe = precio × cantidad. |
-| `EstadoDeRecepcion` | Kilometraje ≥ 0, nivel de combustible de la lista (Reserva, 1/4, 1/2, 3/4, Lleno), fotos opcionales. Obligatorios al registrar una orden por la API; vacíos solo en las 60 órdenes importadas del profesor (no vienen en los datos). |
+| `EstadoDeRecepcion` | Kilometraje ≥ 0, nivel de combustible de la lista (Reserva, 1/4, 1/2, 3/4, Lleno), fotos opcionales. Obligatorios al registrar una orden por la API; vacíos solo en las 60 órdenes importadas del profesor (no vienen en los datos). *(v3.1)* Junto con el motivo de ingreso, se corrige con `corregir_datos_de_recepcion` mientras la orden esté «Recibida» o «En Diagnóstico» (RN-29). |
 | `Diagnostico` | Fallas encontradas (no vacío), trabajos y refacciones recomendados, técnico y fecha/hora (CA-032, H-PIA-05). |
 | `Autorizante` | Nombre no vacío y rol (Cliente o Responsable de Flotilla). |
 | `DecisionDelCliente` | Trabajos autorizados y no autorizados, autorizante, fecha/hora y tipo de cotización. |
-| `Pago` | Monto, `FormaDePago` (Efectivo, Tarjeta, Transferencia) y fecha/hora. |
+| `Pago` | Monto, `FormaDePago` (Efectivo, Tarjeta, Transferencia) y fecha/hora. *(v3.1)* La forma de pago se corrige con `corregir_forma_de_pago` mientras la orden esté «Pagada»; se reemplaza el `Pago` con el mismo monto y la misma fecha (RN-30). |
 | `CargoACredito` | Monto y fecha de registro; `fecha_vencimiento` = fecha de entrega + 15 días naturales, se fija al entregar (H-PIA-02). |
 | `NotaDeResponsabilidad` | Fecha de salida, si ya se firmó y fecha de firma. |
 | `Cancelacion` | Motivo (no vacío), fecha/hora y asesor (H-PIA-01). |
@@ -135,6 +135,8 @@ Una clase genérica `MaquinaDeEstados[E]` guarda la tabla `{estado: {estados des
 | Pagada | Cerrada | `entregar` | E3 | `VehiculoEntregado` | CA-041 |
 | Por Cobrar (Crédito) | Cerrada | `entregar` (fija el vencimiento) | E3 | `VehiculoEntregado(vence=…)` | CA-041 |
 | En Diagnóstico | (mismo estado) | `asignar_tecnico_para_diagnostico` *(v3.1: cambio de técnico)* | sin diagnóstico registrado y empleado con rol Técnico (RN-28) | `TecnicoDeDiagnosticoReasignado` | CA-054 |
+| Recibida / En Diagnóstico | (mismo estado) | `corregir_datos_de_recepcion` *(v3.1)* | orden «Recibida» o «En Diagnóstico» (RN-29) | `DatosDeRecepcionCorregidos` | CA-057 |
+| Pagada | (mismo estado) | `corregir_forma_de_pago` *(v3.1)* | orden «Pagada»; el monto no cambia (RN-30) | `FormaDePagoCorregida` | CA-058 |
 
 Estados finales: **Cerrada**, **Cerrada sin Reparación** y **Cancelada**. Cualquier otra combinación (por ejemplo, Recibida → Autorizada, «saltar estado») se rechaza con `TransicionDeEstadoNoPermitida` (HTTP 409).
 
@@ -204,7 +206,7 @@ Los eventos se registran dentro del Aggregate, la Unidad de Trabajo los recolect
 | `RefaccionDisponible` | Orden | alertas al técnico y al asesor | CA-022 |
 | `OrdenListaParaEntrega` | Orden | alerta al asesor | CA-015 |
 | `OrdenCancelada` | Orden | se quita del panel del técnico | CA-044 |
-| `CotizacionGenerada`, `CotizacionPresentada`, `RecontactoRegistrado`, `OrdenAutorizada`, `TrabajosAsignados`, `TrabajoIniciado`, `SolicitudDeCompraCreada`, `ClienteAvisadoDelRetraso`, `VehiculoRetirado`, `OrdenReactivada`, `PagoRegistrado`, `CargoACreditoRegistrado`, `VehiculoEntregado`, `CotizacionAjustada`, `CotizacionCorregida`, `CotizacionRechazadaPorCliente` | Orden / Cotización | bitácora de eventos (evidencia de la trazabilidad y de las pruebas de transición) | varios |
+| `CotizacionGenerada`, `CotizacionPresentada`, `RecontactoRegistrado`, `OrdenAutorizada`, `TrabajosAsignados`, `TrabajoIniciado`, `SolicitudDeCompraCreada`, `ClienteAvisadoDelRetraso`, `VehiculoRetirado`, `OrdenReactivada`, `PagoRegistrado`, `CargoACreditoRegistrado`, `VehiculoEntregado`, `CotizacionAjustada`, `CotizacionCorregida`, `DatosDeRecepcionCorregidos`, `FormaDePagoCorregida`, `CotizacionRechazadaPorCliente` | Orden / Cotización | bitácora de eventos (evidencia de la trazabilidad y de las pruebas de transición) | varios |
 
 Las alertas por tiempo (CA-023 y CA-040) no vienen de un evento sino de la revisión periódica de plazos (E7 y E8, ADR-015).
 
@@ -224,7 +226,7 @@ Las alertas por tiempo (CA-023 y CA-040) no vienen de un evento sino de la revis
 | `EntregaNoPermitida` | E3 no se cumple. | 409 |
 | `CancelacionNoPermitida` | E4 no se cumple. | 409 |
 | `VehiculoConOrdenAbierta` | *(v3.1)* El vehículo ya tiene una orden abierta (RN-27), también cuando la base rechaza un segundo registro simultáneo. | 409 · Planeado |
-| `CorreccionNoPermitida` | *(v3.1)* Una corrección de la orden fuera del estado que la permite: cambiar el técnico de diagnóstico cuando el diagnóstico ya está registrado (RN-28) y, desde H-PIA-24, corregir la recepción, la forma de pago o las placas. | 409 · Planeado |
+| `CorreccionNoPermitida` | *(v3.1)* Una corrección de la orden fuera del estado que la permite: cambiar el técnico de diagnóstico cuando el diagnóstico ya está registrado (RN-28) corregir la recepción después de la cotización (RN-29), la forma de pago fuera de «Pagada» (RN-30) o, en P2, las placas. | 409 · Planeado |
 | `OrdenNoEncontrada`, `CotizacionNoEncontrada`, `ClienteNoEncontrado`, `VehiculoNoEncontrado`, `EmpleadoNoEncontrado`, `TrabajoNoEncontrado`, `SolicitudNoEncontrada` | El identificador no existe. | 404 |
 
 *(v3.1)* Los errores con **«409 · Planeado»** en la columna HTTP están aprobados (Fase 13) pero todavía no existen en el código; `tests/api/test_errores_http.py` solo compara los demás, y la Fase 14 quita la marca al crear cada uno.

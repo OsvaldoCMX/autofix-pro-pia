@@ -18,6 +18,14 @@ Característica: Caja y entrega del vehículo
     Entonces el sistema debe cambiar el estado de la orden a «Pagada»
     Y debe impedir que se modifiquen los costos
 
+  @US-014 @CA-058 @v3.1
+  Escenario: CA-058 Corregir la forma de pago antes de la entrega
+    Dado que Caja registró el pago de una orden con la forma de pago equivocada y la orden sigue «Pagada»
+    Cuando Caja corrige la forma de pago
+    Entonces el sistema debe guardar la forma de pago correcta sin cambiar el monto, la fecha del pago ni el estado de la orden
+    Y debe dejar constancia de la forma de pago anterior y de la nueva
+    Y si el vehículo ya se entregó, no debe permitir el cambio
+
   # ---------------------------------------------------------------- US-015 (Personal de Caja)
 
   @US-015 @CA-027 @v3

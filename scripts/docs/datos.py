@@ -36,13 +36,13 @@ TRAZA_NECESIDAD = {
     "N-08": (["US-017", "US-018"], ["CA-030", "CA-031"], "Consulta transversal (no es una tarea del flujo)"),
     "N-09": (["US-007", "US-008", "US-019", "US-020"], ["CA-013", "CA-014", "CA-015", "CA-032", "CA-033", "CA-035", "CA-036", "CA-046", "CA-053", "CA-054"], "Fase 1, Fase 2 y Fase 5"),
     "N-10": (["US-010", "US-011"], ["CA-019", "CA-020", "CA-021", "CA-022"], "Fase 4: Gestión de refacciones"),
-    "N-11": (["US-014", "US-015", "US-024"], ["CA-026", "CA-027", "CA-041", "CA-042", "CA-043"],
+    "N-11": (["US-014", "US-015", "US-024"], ["CA-026", "CA-027", "CA-041", "CA-042", "CA-043", "CA-058"],
              "Fase 6: Cierre, pago y entrega (y Fase 3 para la entrega sin reparación)"),
     "N-12": (["US-013"], ["CA-024", "CA-025"], "Diagrama 2 (Casos especiales): Retiro anticipado"),
     "N-13": (["US-021"], ["CA-037", "CA-038"], "Consulta transversal (no es una tarea del flujo)"),
     "N-14": (["US-023"], ["CA-040"], "Fase 3: Autorización (temporizador de 48 h)"),
     "N-15": (["US-025"], ["CA-044", "CA-045"], "Diagrama 2 (Casos especiales): Cliente desiste antes de la cotización"),
-    "N-16": (["US-026", "US-020"], ["CA-047", "CA-048", "CA-049", "CA-050", "CA-051", "CA-054"],
+    "N-16": (["US-026", "US-020", "US-027", "US-014"], ["CA-047", "CA-048", "CA-049", "CA-050", "CA-051", "CA-054", "CA-055", "CA-056", "CA-057", "CA-058"],
              "Fase 2 y Fase 3: corrección de la cotización (v3.1)"),
 }
 
@@ -74,6 +74,7 @@ US = {
     "US-024": ("Asesor de Servicio", "Como Asesor de Servicio, quiero registrar la entrega del vehículo al cliente, para cerrar la orden de servicio y dejar constancia de cuándo salió el vehículo del taller."),
     "US-025": ("Asesor de Servicio", "Como Asesor de Servicio, quiero cancelar una orden cuando el cliente desiste del servicio antes de que se genere la cotización, para cerrar el expediente sin cobro y dejar registrado el motivo."),
     "US-026": ("Asesor de Servicio", "Como Asesor de Servicio, quiero corregir una cotización con un importe o una descripción mal capturados mientras espera la revisión del Gerente o la decisión del cliente, indicando el motivo, para presentar un documento correcto sin perder el historial de lo que cambió."),
+    "US-027": ("Asesor de Servicio", "Como Asesor de Servicio, quiero corregir los datos del cliente, del vehículo y del estado de recepción que capturé mal, para que el expediente quede correcto sin tener que abrir otra orden."),
 }
 
 # ----------------------------------------------------------------------------- criterios
@@ -635,11 +636,46 @@ ca("CA-054", "US-020", [
    "ServicioDeDiagnostico.asignar_tecnico", "POST /api/ordenes/{numero}/asignacion-diagnostico · GET /api/tecnicos/me/panel", ASE,
    cambio="H-PIA-23", nombre="Cambiar el técnico de diagnóstico", planeado=True)
 
+ca("CA-055", "US-027", [
+    (D, "que el nombre, el teléfono o el correo de un cliente se capturaron mal"),
+    (C, "el asesor los corrige"),
+    (E, "el sistema debe guardar los datos corregidos sin cambiar las órdenes ni las cotizaciones del cliente"),
+    (Y, "las decisiones que se registren después deben compararse con el nombre corregido"),
+], F1, ["RN-29", "RN-07"], "Cliente (actualizar_contacto)", "ServicioDeRecepcion.corregir_cliente",
+   "PUT /api/clientes/{id}", ASE, cambio="H-PIA-24", nombre="Corregir los datos del cliente", planeado=True)
+
+ca("CA-056", "US-027", [
+    (D, "que el VIN, la marca, el modelo o el año de un vehículo se capturaron mal"),
+    (C, "el asesor los corrige"),
+    (E, "el sistema debe guardar los datos corregidos sin cambiar las placas"),
+    (Y, "si el VIN corregido ya pertenece a otro vehículo, no debe permitirlo e indicar que revise el dato"),
+], F1, ["RN-29"], "Vehiculo (actualizar_datos), VIN (VO)", "ServicioDeRecepcion.corregir_vehiculo",
+   "PUT /api/vehiculos/{placas}", ASE, cambio="H-PIA-24", nombre="Corregir los datos del vehículo", planeado=True)
+
+ca("CA-057", "US-027", [
+    (D, "que una orden está en «Recibida» o «En Diagnóstico»"),
+    (C, "el asesor corrige el kilometraje, el nivel de combustible o el motivo de ingreso"),
+    (E, "el sistema debe guardar los datos corregidos sin cambiar el estado de la orden"),
+    (Y, "si la orden ya tiene cotización, no debe permitirlo e indicar que esos datos solo se corrigen antes de la cotización"),
+], F1, ["RN-29"], "OrdenDeServicio (corregir_datos_de_recepcion), EstadoDeRecepcion, evento DatosDeRecepcionCorregidos, error CorreccionNoPermitida",
+   "ServicioDeRecepcion.corregir_recepcion", "PUT /api/ordenes/{numero}/recepcion", ASE,
+   cambio="H-PIA-24", nombre="Corregir el estado de recepción", planeado=True)
+
+ca("CA-058", "US-014", [
+    (D, "que Caja registró el pago de una orden con la forma de pago equivocada y la orden sigue «Pagada»"),
+    (C, "Caja corrige la forma de pago"),
+    (E, "el sistema debe guardar la forma de pago correcta sin cambiar el monto, la fecha del pago ni el estado de la orden"),
+    (Y, "debe dejar constancia de la forma de pago anterior y de la nueva"),
+    (Y, "si el vehículo ya se entregó, no debe permitir el cambio"),
+], F6, ["RN-30", "RN-16"], "OrdenDeServicio (corregir_forma_de_pago), Pago, FormaDePago, evento FormaDePagoCorregida, error CorreccionNoPermitida",
+   "ServicioDeCaja.corregir_forma_de_pago", "PUT /api/ordenes/{numero}/pago", CAJ,
+   cambio="H-PIA-24", nombre="Corregir la forma de pago antes de la entrega", planeado=True)
+
 # ----------------------------------------------------------------------------- áreas (archivos .feature)
 AREAS = [
     ("01_recepcion", "Recepción y registro del vehículo",
      "Registrar digitalmente al cliente, al vehículo y su estado de ingreso para abrir la Orden de Servicio.",
-     ["US-001", "US-002", "US-003", "US-016"]),
+     ["US-001", "US-002", "US-003", "US-016", "US-027"]),
     ("02_diagnostico", "Asignación y diagnóstico",
      "Asignar técnicos, registrar el diagnóstico y reportar fallas adicionales.",
      ["US-020", "US-019", "US-007"]),
@@ -694,10 +730,12 @@ REGLAS = {
     "RN-26": ("Al corregir se vuelve a evaluar E1 y la cotización se presenta otra vez: si es inicial y supera $15,000 MXN regresa al Gerente aunque ya la hubiera aprobado o ajustado, porque RN-05 solo protege el ajuste que pidió el Gerente y una corrección cambia el monto que él revisó; el plazo de 48 horas cuenta desde la nueva presentación.", "H-PIA-21; BRD Restricciones 2, 4 y 11; ADR-018"),
     "RN-27": ("Un vehículo tiene a lo más una orden abierta (en un estado que no sea «Cerrada», «Cerrada sin Reparación» ni «Cancelada»); un segundo registro se rechaza con el mismo mensaje aunque llegue al mismo tiempo.", "Revisión del 09/11/2026 (H-PIA-22); BRD Restricción 12"),
     "RN-28": ("El técnico de diagnóstico se elige entre los empleados con rol Técnico y se puede cambiar mientras la orden está «En Diagnóstico» sin diagnóstico registrado; el cambio no modifica el estado de la orden.", "Revisión del 09/11/2026 (H-PIA-23); US-020"),
+    "RN-29": ("El Asesor corrige los datos del cliente (nombre, teléfono, correo) y del vehículo (VIN, marca, modelo, año) con las mismas validaciones del registro y sin repetir un VIN; el kilometraje, el nivel de combustible y el motivo de ingreso solo se corrigen con la orden «Recibida» o «En Diagnóstico».", "Revisión del 09/11/2026 (H-PIA-24); CA-003"),
+    "RN-30": ("Caja corrige la forma de pago solo mientras la orden está «Pagada» (antes de la entrega); el monto y la fecha del pago no cambian y queda constancia de la forma anterior.", "Revisión del 09/11/2026 (H-PIA-24); BRD Restricción 9"),
 }
 
 # Reglas aprobadas en la Fase 13 que todavía no se construyen (misma idea que `planeado` en los CA).
-REGLAS_PLANEADAS = {"RN-25", "RN-26", "RN-27", "RN-28"}
+REGLAS_PLANEADAS = {"RN-25", "RN-26", "RN-27", "RN-28", "RN-29", "RN-30"}
 
 # ----------------------------------------------------------------------------- pruebas previstas
 # Convención: toda prueba de aceptación se llama test_ca_0XX_<descripcion> para poder

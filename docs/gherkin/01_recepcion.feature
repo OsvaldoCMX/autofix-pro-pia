@@ -8,6 +8,7 @@ Característica: Recepción y registro del vehículo
     US-002: Como Asesor de Servicio, quiero poder capturar el kilometraje, nivel de combustible y tomar fotos de los daños visibles del vehículo al momento de la recepción, para tener evidencia del estado en el que ingresó el vehículo y evitar futuras disputas con el cliente.
     US-003: Como Asesor de Servicio, quiero buscar un vehículo por su número de placas al inicio del registro, para recuperar automáticamente la información del cliente y vehículo si ya es un cliente recurrente, y así agilizar el proceso de recepción.
     US-016: Como Asesor de Servicio, quiero registrar a un cliente como tipo «Flotilla», vinculado a su empresa y a su Responsable de Flotilla, para que las decisiones sobre las cotizaciones se registren a nombre del responsable y no del conductor.
+    US-027: Como Asesor de Servicio, quiero corregir los datos del cliente, del vehículo y del estado de recepción que capturé mal, para que el expediente quede correcto sin tener que abrir otra orden.
 
   # ---------------------------------------------------------------- US-001 (Asesor de Servicio)
 
@@ -68,3 +69,26 @@ Característica: Recepción y registro del vehículo
     Cuando el asesor registra la decisión sobre una cotización (inicial o adicional)
     Entonces el sistema debe registrarla a nombre del Responsable de Flotilla
     Y no debe permitir registrar al conductor como autorizante
+
+  # ---------------------------------------------------------------- US-027 (Asesor de Servicio)
+
+  @US-027 @CA-055 @v3.1
+  Escenario: CA-055 Corregir los datos del cliente
+    Dado que el nombre, el teléfono o el correo de un cliente se capturaron mal
+    Cuando el asesor los corrige
+    Entonces el sistema debe guardar los datos corregidos sin cambiar las órdenes ni las cotizaciones del cliente
+    Y las decisiones que se registren después deben compararse con el nombre corregido
+
+  @US-027 @CA-056 @v3.1
+  Escenario: CA-056 Corregir los datos del vehículo
+    Dado que el VIN, la marca, el modelo o el año de un vehículo se capturaron mal
+    Cuando el asesor los corrige
+    Entonces el sistema debe guardar los datos corregidos sin cambiar las placas
+    Y si el VIN corregido ya pertenece a otro vehículo, no debe permitirlo e indicar que revise el dato
+
+  @US-027 @CA-057 @v3.1
+  Escenario: CA-057 Corregir el estado de recepción
+    Dado que una orden está en «Recibida» o «En Diagnóstico»
+    Cuando el asesor corrige el kilometraje, el nivel de combustible o el motivo de ingreso
+    Entonces el sistema debe guardar los datos corregidos sin cambiar el estado de la orden
+    Y si la orden ya tiene cotización, no debe permitirlo e indicar que esos datos solo se corrigen antes de la cotización

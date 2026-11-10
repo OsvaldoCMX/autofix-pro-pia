@@ -68,6 +68,7 @@ Este glosario establece el **lenguaje ubicuo** del proyecto: los mismos término
 | Motivo de Corrección | *(v3.1)* Texto obligatorio que el asesor captura al corregir una cotización para explicar qué estaba mal capturado. |
 | Historial de Correcciones | *(v3.1)* Registro de cada corrección de una cotización: asesor, fecha y hora, motivo, total anterior y total nuevo. Es la evidencia de lo que cambió entre lo que revisó el Gerente o se presentó al cliente y lo que se presenta después. |
 | Orden Abierta | *(v3.1)* Orden que no está en un estado final («Cerrada», «Cerrada sin Reparación» o «Cancelada»). Un vehículo solo puede tener una orden abierta a la vez: para volver a atenderlo se usa la orden que ya tiene. |
+| Corrección de Datos Capturados | *(v3.1)* Acción con la que el asesor arregla los datos mal escritos del cliente (nombre, teléfono, correo), del vehículo (VIN, marca, modelo, año) o del estado de recepción (kilometraje, nivel de combustible, motivo de ingreso; solo antes de la cotización), y con la que Caja corrige la forma de pago antes de la entrega. No cambia el estado de la orden. |
 
 ## 2. Estados del sistema
 

@@ -95,11 +95,11 @@ Toda la configuración viene del entorno; `.env.example` se sube al repositorio 
 
 | Rol | Puede |
 |---|---|
-| Asesor | Recepción, clientes, cancelación, asignaciones, cotizaciones (generar, presentar, ajustar, recontactar), decisión del cliente, avisos al cliente, retiro y reactivación, entrega. |
+| Asesor | Recepción, clientes, cancelación, asignaciones (con la lista de técnicos, v3.1), cotizaciones (generar, presentar, ajustar, corregir, recontactar), decisión del cliente, avisos al cliente, retiro y reactivación, entrega y, en la v3.1, corrección de los datos del cliente, del vehículo, de la recepción y de las placas (P2). |
 | Técnico | Su panel, diagnóstico, fallas adicionales, iniciar/completar **sus** trabajos, solicitudes de compra. |
 | Gerente | Revisión gerencial, cotizaciones por aprobar, listado de órdenes, ingresos del día, expediente. |
 | Compras | Solicitudes pendientes y registro de llegada. |
-| Caja | Pago, cargo a crédito, recibo interno. |
+| Caja | Pago, cargo a crédito, recibo interno y, en la v3.1, corrección de la forma de pago. |
 | Sistema | Solo la revisión de plazos. |
 | Público | Consulta de estado (sin token) y `/health`. |
 

@@ -12,7 +12,7 @@ Contrato de la API que se implementa con FastAPI (ADR-008). Cuando la API esté 
 - Importes como texto con dos decimales (`"1500.00"`); fechas ISO 8601 con zona horaria.
 - **Planeado** en la columna Prioridad: la ruta está aprobada (Fase 13, revisión del 09/11/2026) y todavía no existe en la API; la Fase 14 quita la marca al construirla (`tests/api/test_contrato.py` comprueba que una ruta planeada aún no exista).
 
-## Rutas (45)
+## Rutas (49)
 
 ### Sistema
 
@@ -26,11 +26,14 @@ Contrato de la API que se implementa con FastAPI (ADR-008). Cuando la API esté 
 | Método | Ruta | Rol | Descripción | Éxito | Errores | Caso de uso | Criterios | Prioridad |
 |---|---|---|---|---|---|---|---|---|
 | GET | `/api/vehiculos/{placas}` | Asesor | Buscar vehículo y cliente por placas. | 200 | 401, 403, 404 | `BuscarVehiculoPorPlacas` | CA-003, CA-004 | P1 |
+| PUT | `/api/vehiculos/{placas}` | Asesor | Corregir el VIN, la marca, el modelo o el año del vehículo (las placas no cambian). | 200 | 401, 403, 404, 409, 422 | `ServicioDeRecepcion.corregir_vehiculo` | CA-056 | P1 · Planeado |
 | GET | `/api/clientes?tipo=Flotilla&empresa=` | Asesor | Buscar la empresa de flotilla y su Responsable. | 200 | 401, 403 | `BuscarClientes` | CA-028 | P1 |
 | POST | `/api/clientes` | Asesor | Registrar cliente particular o de flotilla (con Responsable). | 201 | 400, 401, 403, 422 | `ServicioDeRecepcion.registrar_cliente` | CA-028 | P1 |
+| PUT | `/api/clientes/{id}` | Asesor | Corregir el nombre, el teléfono o el correo del cliente. | 200 | 401, 403, 404, 422 | `ServicioDeRecepcion.corregir_cliente` | CA-055 | P1 · Planeado |
 | POST | `/api/ordenes` | Asesor | Registrar la orden: cliente, vehículo, motivo, kilometraje y combustible. Si las placas ya existen, reutiliza el registro y actualiza los datos enviados. *Planeado (H-PIA-22):* 409 si el vehículo ya tiene una orden abierta. | 201 | 400, 401, 403, 404, 422 | `ServicioDeRecepcion.registrar_orden` | CA-001, CA-002, CA-004, CA-052 | P1 |
 | POST | `/api/ordenes/{numero}/fotos` | Asesor | Adjuntar foto de daños (multipart). | 201 | 401, 403, 404, 422 | `ServicioDeRecepcion.adjuntar_foto` | CA-002 | P2 |
 | GET | `/api/ordenes/{numero}` | Asesor, Gerente, Técnico, Caja | Expediente completo de la orden (estado, cotizaciones, trabajos, solicitudes, pagos). | 200 | 401, 403, 404 | `ConsultarExpedienteDeOrden` | — | P1 |
+| PUT | `/api/ordenes/{numero}/recepcion` | Asesor | Corregir el kilometraje, el nivel de combustible o el motivo de ingreso (orden «Recibida» o «En Diagnóstico»). | 200 | 401, 403, 404, 409, 422 | `ServicioDeRecepcion.corregir_recepcion` | CA-057 | P1 · Planeado |
 
 ### Cancelación
 
@@ -100,6 +103,7 @@ Contrato de la API que se implementa con FastAPI (ADR-008). Cuando la API esté 
 | Método | Ruta | Rol | Descripción | Éxito | Errores | Caso de uso | Criterios | Prioridad |
 |---|---|---|---|---|---|---|---|---|
 | POST | `/api/ordenes/{numero}/pago` | Caja | Registrar el pago de contado de un cliente particular. | 201 | 401, 403, 404, 409, 422 | `ServicioDeCaja.registrar_pago` | CA-026 | P1 |
+| PUT | `/api/ordenes/{numero}/pago` | Caja | Corregir la forma de pago mientras la orden está «Pagada». | 200 | 401, 403, 404, 409, 422 | `ServicioDeCaja.corregir_forma_de_pago` | CA-058 | P1 · Planeado |
 | GET | `/api/ordenes/{numero}/recibo/pdf` | Caja | PDF del recibo interno. | 200 | 401, 403, 404, 409 | `ServicioDeCaja.generar_recibo` | CA-027 | P2 |
 | POST | `/api/ordenes/{numero}/cargo-a-credito` | Caja | Registrar el cargo a crédito de una flotilla. | 201 | 401, 403, 404, 409 | `ServicioDeCaja.registrar_cargo_a_credito` | CA-039 | P1 |
 

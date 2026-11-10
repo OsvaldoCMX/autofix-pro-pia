@@ -14,7 +14,7 @@ Este documento contiene las User Stories derivadas del levantamiento de requerim
 
 Las historias siguen el formato *Como… quiero… para…* y cada criterio de aceptación está escrito en Gherkin (*Dado / Cuando / Entonces / Y*). Los mismos criterios, palabra por palabra, están en los archivos `docs/gherkin/*.feature` con las etiquetas `@US-xxx` y `@CA-xxx`, para que cada escenario se pueda relacionar con su prueba automatizada (convención `test_ca_0XX_…`). Los nombres de estados, roles y términos son los del [Glosario del Dominio](glosario.md).
 
-**Resumen:** 16 necesidades · 26 User Stories · 54 criterios de aceptación · 8 archivos `.feature`.
+**Resumen:** 16 necesidades · 27 User Stories · 58 criterios de aceptación · 8 archivos `.feature`.
 
 ## 1. Trazabilidad con el BRD
 
@@ -35,7 +35,7 @@ Las historias siguen el formato *Como… quiero… para…* y cada criterio de a
 | N-13 | Permitir al cliente consultar el estado de su vehículo sin llamar al taller. | US-021 |
 | N-14 | (Implícita) Dar seguimiento a las cotizaciones que lleven más de 48 horas sin respuesta. | US-023 |
 | N-15 | (Implícita, v3.0) Cancelar la orden cuando el cliente desiste antes de que se genere la cotización. | US-025 |
-| N-16 | (Implícita, v3.1) Corregir los datos mal capturados dejando constancia y evitar registros repetidos (revisión del 09/11/2026). | US-026, US-020 |
+| N-16 | (Implícita, v3.1) Corregir los datos mal capturados dejando constancia y evitar registros repetidos (revisión del 09/11/2026). | US-026, US-020, US-027, US-014 |
 
 ## 2. Listado de User Stories
 
@@ -67,6 +67,7 @@ Las historias siguen el formato *Como… quiero… para…* y cada criterio de a
 | US-024 | Asesor de Servicio | Como Asesor de Servicio, quiero registrar la entrega del vehículo al cliente, para cerrar la orden de servicio y dejar constancia de cuándo salió el vehículo del taller. | `06_caja_y_entrega.feature` |
 | US-025 | Asesor de Servicio | Como Asesor de Servicio, quiero cancelar una orden cuando el cliente desiste del servicio antes de que se genere la cotización, para cerrar el expediente sin cobro y dejar registrado el motivo. | `08_cancelacion.feature` |
 | US-026 | Asesor de Servicio | Como Asesor de Servicio, quiero corregir una cotización con un importe o una descripción mal capturados mientras espera la revisión del Gerente o la decisión del cliente, indicando el motivo, para presentar un documento correcto sin perder el historial de lo que cambió. | `03_cotizacion.feature` |
+| US-027 | Asesor de Servicio | Como Asesor de Servicio, quiero corregir los datos del cliente, del vehículo y del estado de recepción que capturé mal, para que el expediente quede correcto sin tener que abrir otra orden. | `01_recepcion.feature` |
 
 ## 3. Criterios de aceptación en Gherkin
 
@@ -197,6 +198,7 @@ Los criterios marcados con **(v3.0)** se agregaron o se precisaron en el PIA y l
 | ID | Criterio de aceptación |
 |---|---|
 | **CA-026**<br>Registrar el pago de contado | **Dado** que una orden de cliente particular está en estado «Lista para Entrega»<br>**Cuando** Caja registra el pago del total y la forma de pago (efectivo, tarjeta o transferencia)<br>**Entonces** el sistema debe cambiar el estado de la orden a «Pagada»<br>**Y** debe impedir que se modifiquen los costos |
+| **CA-058**<br>Corregir la forma de pago antes de la entrega **(v3.1, H-PIA-24)** | **Dado** que Caja registró el pago de una orden con la forma de pago equivocada y la orden sigue «Pagada»<br>**Cuando** Caja corrige la forma de pago<br>**Entonces** el sistema debe guardar la forma de pago correcta sin cambiar el monto, la fecha del pago ni el estado de la orden<br>**Y** debe dejar constancia de la forma de pago anterior y de la nueva<br>**Y** si el vehículo ya se entregó, no debe permitir el cambio |
 
 ### US-015
 
@@ -308,6 +310,16 @@ Los criterios marcados con **(v3.0)** se agregaron o se precisaron en el PIA y l
 | **CA-050**<br>No se corrige sin motivo ni una cotización por ajustar o ya decidida **(v3.1, H-PIA-21)** | **Dado** que el asesor intenta corregir una cotización<br>**Cuando** la cotización está en «Requiere Ajuste», «Autorizada», «Autorizada Parcialmente» o «Rechazada», o el asesor no captura el motivo<br>**Entonces** el sistema no debe permitirlo<br>**Y** si falta el motivo, debe pedir que lo capture<br>**Y** si está en «Requiere Ajuste», debe indicar que se guarde la cotización ajustada según las observaciones del Gerente<br>**Y** si ya tiene la decisión del cliente, debe indicar que ya no se corrige y que los trabajos nuevos se cotizan con una cotización adicional |
 | **CA-051**<br>El plazo de 48 horas después de una corrección **(v3.1, H-PIA-21)** | **Dado** que una cotización presentada, con recontactos registrados, se corrigió y quedó en «Pendiente de Autorización del Cliente»<br>**Cuando** el sistema ejecuta su revisión de plazos antes de que el asesor la presente otra vez<br>**Entonces** no debe generar la alerta de 48 horas<br>**Y** debe conservar los recontactos anteriores como historial<br>**Cuando** el asesor la presenta otra vez<br>**Entonces** el plazo de 48 horas debe contar solo desde la nueva presentación y los recontactos posteriores a ella |
 
+### US-027
+
+> Como Asesor de Servicio, quiero corregir los datos del cliente, del vehículo y del estado de recepción que capturé mal, para que el expediente quede correcto sin tener que abrir otra orden.
+
+| ID | Criterio de aceptación |
+|---|---|
+| **CA-055**<br>Corregir los datos del cliente **(v3.1, H-PIA-24)** | **Dado** que el nombre, el teléfono o el correo de un cliente se capturaron mal<br>**Cuando** el asesor los corrige<br>**Entonces** el sistema debe guardar los datos corregidos sin cambiar las órdenes ni las cotizaciones del cliente<br>**Y** las decisiones que se registren después deben compararse con el nombre corregido |
+| **CA-056**<br>Corregir los datos del vehículo **(v3.1, H-PIA-24)** | **Dado** que el VIN, la marca, el modelo o el año de un vehículo se capturaron mal<br>**Cuando** el asesor los corrige<br>**Entonces** el sistema debe guardar los datos corregidos sin cambiar las placas<br>**Y** si el VIN corregido ya pertenece a otro vehículo, no debe permitirlo e indicar que revise el dato |
+| **CA-057**<br>Corregir el estado de recepción **(v3.1, H-PIA-24)** | **Dado** que una orden está en «Recibida» o «En Diagnóstico»<br>**Cuando** el asesor corrige el kilometraje, el nivel de combustible o el motivo de ingreso<br>**Entonces** el sistema debe guardar los datos corregidos sin cambiar el estado de la orden<br>**Y** si la orden ya tiene cotización, no debe permitirlo e indicar que esos datos solo se corrigen antes de la cotización |
+
 ## 4. Validación y trazabilidad
 
 | ID Necesidad | User Stories relacionadas | Criterios de aceptación | Proceso modelado en BPMN |
@@ -322,12 +334,12 @@ Los criterios marcados con **(v3.0)** se agregaron o se precisaron en el PIA y l
 | N-08 | US-017, US-018 | CA-030, CA-031 | Consulta transversal (no es una tarea del flujo) |
 | N-09 | US-007, US-008, US-019, US-020 | CA-013, CA-014, CA-015, CA-032, CA-033, CA-035, CA-036, CA-046, CA-053, CA-054 | Fase 1, Fase 2 y Fase 5 |
 | N-10 | US-010, US-011 | CA-019, CA-020, CA-021, CA-022 | Fase 4: Gestión de refacciones |
-| N-11 | US-014, US-015, US-024 | CA-026, CA-027, CA-041, CA-042, CA-043 | Fase 6: Cierre, pago y entrega (y Fase 3 para la entrega sin reparación) |
+| N-11 | US-014, US-015, US-024 | CA-026, CA-027, CA-041, CA-042, CA-043, CA-058 | Fase 6: Cierre, pago y entrega (y Fase 3 para la entrega sin reparación) |
 | N-12 | US-013 | CA-024, CA-025 | Diagrama 2 (Casos especiales): Retiro anticipado |
 | N-13 | US-021 | CA-037, CA-038 | Consulta transversal (no es una tarea del flujo) |
 | N-14 | US-023 | CA-040 | Fase 3: Autorización (temporizador de 48 h) |
 | N-15 | US-025 | CA-044, CA-045 | Diagrama 2 (Casos especiales): Cliente desiste antes de la cotización |
-| N-16 | US-026, US-020 | CA-047, CA-048, CA-049, CA-050, CA-051, CA-054 | Fase 2 y Fase 3: corrección de la cotización (v3.1) |
+| N-16 | US-026, US-020, US-027, US-014 | CA-047, CA-048, CA-049, CA-050, CA-051, CA-054, CA-055, CA-056, CA-057, CA-058 | Fase 2 y Fase 3: corrección de la cotización (v3.1) |
 
 La trazabilidad completa de cada criterio hasta la regla de negocio, el componente, la ruta de la API y la prueba está en [trazabilidad/matriz-trazabilidad.md](trazabilidad/matriz-trazabilidad.md).
 
