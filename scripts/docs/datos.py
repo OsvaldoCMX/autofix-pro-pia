@@ -659,7 +659,7 @@ ca("CA-057", "US-027", [
     (Y, "si la orden ya tiene cotización, no debe permitirlo e indicar que esos datos solo se corrigen antes de la cotización"),
 ], F1, ["RN-29"], "OrdenDeServicio (corregir_datos_de_recepcion), EstadoDeRecepcion, evento DatosDeRecepcionCorregidos, error CorreccionNoPermitida",
    "ServicioDeRecepcion.corregir_recepcion", "PUT /api/ordenes/{numero}/recepcion", ASE,
-   cambio="H-PIA-24", nombre="Corregir el estado de recepción", planeado=True)
+   cambio="H-PIA-24", nombre="Corregir el estado de recepción")
 
 ca("CA-058", "US-014", [
     (D, "que Caja registró el pago de una orden con la forma de pago equivocada y la orden sigue «Pagada»"),

@@ -16,6 +16,7 @@ from api.esquemas.comunes import (
     TextoDeNombre,
     TextoDeTelefono,
     TextoDeVin,
+    TextoLargo,
 )
 from api.esquemas.cotizaciones import CotizacionDetallada
 from application.comandos import DatosDeVehiculo, RegistrarCliente, RegistrarOrden
@@ -43,6 +44,14 @@ class DatosDeContacto(ModeloDeEntrada):
     nombre: TextoDeNombre
     telefono: TextoDeTelefono | None = None
     correo: TextoDeNombre | None = None
+
+
+class DatosDeRecepcion(ModeloDeEntrada):
+    """Corrección del estado de recepción (CA-057)."""
+
+    kilometraje: EnteroNoNegativo
+    nivel_de_combustible: NivelDeCombustible
+    motivo_de_ingreso: TextoLargo
 
 
 class NuevoVehiculo(ModeloDeEntrada):
@@ -93,6 +102,14 @@ class ClienteCorregido(ModeloDeSalida):
     tipo: str
     telefono: str | None
     correo: str | None
+
+
+class RecepcionCorregida(ModeloDeSalida):
+    numero_orden: str
+    estado: str
+    kilometraje: int
+    nivel_de_combustible: str
+    motivo_de_ingreso: str
 
 
 class VehiculoCorregido(ModeloDeSalida):

@@ -36,6 +36,16 @@ class CorregirCliente:
 
 
 @dataclass(frozen=True)
+class CorregirRecepcion:
+    """Corrige el kilometraje, el combustible o el motivo antes de la cotización (CA-057)."""
+
+    numero_orden: str
+    kilometraje: int
+    nivel_de_combustible: NivelDeCombustible
+    motivo_de_ingreso: str
+
+
+@dataclass(frozen=True)
 class CorregirVehiculo:
     """Corrige el VIN, la marca, el modelo o el año; las placas no cambian (CA-056)."""
 

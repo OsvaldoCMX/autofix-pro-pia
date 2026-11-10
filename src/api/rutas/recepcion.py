@@ -13,16 +13,18 @@ from api.esquemas.recepcion import (
     ClienteEncontrado,
     ClienteRegistrado,
     DatosDeContacto,
+    DatosDeRecepcion,
     ExpedienteDeOrden,
     NuevaOrden,
     NuevoCliente,
     NuevoVehiculo,
     OrdenRegistrada,
+    RecepcionCorregida,
     VehiculoCorregido,
     VehiculoEncontrado,
 )
 from api.seguridad import SOLO_ASESOR, Asesor, requiere_rol
-from application.comandos import CorregirCliente, CorregirVehiculo
+from application.comandos import CorregirCliente, CorregirRecepcion, CorregirVehiculo
 from application.consultas.consultas import (
     BuscarClientes,
     BuscarVehiculoPorPlacas,
@@ -33,7 +35,7 @@ from application.consultas.vistas import (
     ExpedienteDeOrdenVista,
     VehiculoConClienteVista,
 )
-from application.resultados import ResultadoDeCliente, ResultadoDeVehiculo
+from application.resultados import ResultadoDeCliente, ResultadoDeRecepcion, ResultadoDeVehiculo
 from domain.clientes.cliente import TipoCliente
 from domain.empleados.empleado import RolDeEmpleado
 
@@ -146,3 +148,19 @@ def adjuntar_foto(numero: str, archivo: UploadFile) -> None:
 )
 def consultar_expediente(numero: str, contenedor: ContenedorDeLaApp) -> ExpedienteDeOrdenVista:
     return contenedor.consultar_expediente().ejecutar(ConsultarExpedienteDeOrden(numero))
+
+
+@router.put(
+    "/ordenes/{numero}/recepcion",
+    response_model=RecepcionCorregida,
+    summary="Corregir el kilometraje, el combustible o el motivo de ingreso",
+    dependencies=[SOLO_ASESOR],
+    responses=errores(400, 401, 403, 404, 409, 422),
+)
+def corregir_recepcion(
+    numero: str, datos: DatosDeRecepcion, contenedor: ContenedorDeLaApp
+) -> ResultadoDeRecepcion:
+    comando = CorregirRecepcion(
+        numero, datos.kilometraje, datos.nivel_de_combustible, datos.motivo_de_ingreso
+    )
+    return contenedor.recepcion().corregir_recepcion(comando)

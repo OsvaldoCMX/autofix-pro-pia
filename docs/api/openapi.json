@@ -778,6 +778,113 @@
         }
       }
     },
+    "/api/ordenes/{numero}/recepcion": {
+      "put": {
+        "tags": [
+          "Recepción"
+        ],
+        "summary": "Corregir el kilometraje, el combustible o el motivo de ingreso",
+        "operationId": "corregir_recepcion_api_ordenes__numero__recepcion_put",
+        "security": [
+          {
+            "TokenDeEmpleado": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "numero",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Numero"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DatosDeRecepcion"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecepcionCorregida"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "JSON mal formado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Falta el token o no es válido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o trabajo de otro técnico.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Viola una regla o transición del negocio.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Un dato es inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/ordenes/{numero}/cancelacion": {
       "post": {
         "tags": [
@@ -4837,6 +4944,33 @@
         ],
         "title": "DatosDePago"
       },
+      "DatosDeRecepcion": {
+        "properties": {
+          "kilometraje": {
+            "type": "integer",
+            "maximum": 2147483647.0,
+            "minimum": 0.0,
+            "title": "Kilometraje"
+          },
+          "nivel_de_combustible": {
+            "$ref": "#/components/schemas/NivelDeCombustible"
+          },
+          "motivo_de_ingreso": {
+            "type": "string",
+            "maxLength": 1000,
+            "title": "Motivo De Ingreso"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "kilometraje",
+          "nivel_de_combustible",
+          "motivo_de_ingreso"
+        ],
+        "title": "DatosDeRecepcion",
+        "description": "Corrección del estado de recepción (CA-057)."
+      },
       "DatosDeRevision": {
         "properties": {
           "aprobada": {
@@ -6009,6 +6143,39 @@
           "registrado_en"
         ],
         "title": "PagoRegistrado"
+      },
+      "RecepcionCorregida": {
+        "properties": {
+          "numero_orden": {
+            "type": "string",
+            "title": "Numero Orden"
+          },
+          "estado": {
+            "type": "string",
+            "title": "Estado"
+          },
+          "kilometraje": {
+            "type": "integer",
+            "title": "Kilometraje"
+          },
+          "nivel_de_combustible": {
+            "type": "string",
+            "title": "Nivel De Combustible"
+          },
+          "motivo_de_ingreso": {
+            "type": "string",
+            "title": "Motivo De Ingreso"
+          }
+        },
+        "type": "object",
+        "required": [
+          "numero_orden",
+          "estado",
+          "kilometraje",
+          "nivel_de_combustible",
+          "motivo_de_ingreso"
+        ],
+        "title": "RecepcionCorregida"
       },
       "RecontactoRegistrado": {
         "properties": {

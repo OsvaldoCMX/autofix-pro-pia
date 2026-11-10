@@ -360,3 +360,27 @@ def test_ca_056_vin_de_otro_vehiculo_responde_422(cliente: TestClient) -> None:
     )
 
     assert "Ya existe un vehículo con el VIN" in respuesta["detalle"]
+
+
+def test_ca_057_corrige_la_recepcion_de_una_orden_recibida(cliente: TestClient) -> None:
+    numero = recibida(cliente)
+    datos = {"kilometraje": 46000, "nivel_de_combustible": "Lleno", "motivo_de_ingreso": "Frenos"}
+
+    respuesta = exigir(
+        cliente.put(f"/api/ordenes/{numero}/recepcion", json=datos, headers=ASESOR), 200
+    )
+
+    assert respuesta == {"numero_orden": numero, "estado": "Recibida", **datos}
+    expediente = expediente_de(cliente, numero)
+    assert (expediente["kilometraje"], expediente["motivo_de_ingreso"]) == (46000, "Frenos")
+
+
+def test_ca_057_despues_de_cotizar_responde_409(cliente: TestClient) -> None:
+    numero, _ = cotizada(cliente)
+    datos = {"kilometraje": 1, "nivel_de_combustible": "Lleno", "motivo_de_ingreso": "Frenos"}
+
+    respuesta = exigir(
+        cliente.put(f"/api/ordenes/{numero}/recepcion", json=datos, headers=ASESOR), 409
+    )
+
+    assert respuesta["error"] == "CorreccionNoPermitida"

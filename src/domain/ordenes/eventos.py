@@ -27,6 +27,15 @@ class TecnicoAsignadoParaDiagnostico(EventoDeOrden):
 
 
 @dataclass(frozen=True)
+class DatosDeRecepcionCorregidos(EventoDeOrden):
+    """El asesor corrigió el kilometraje, el combustible o el motivo (RN-29, H-PIA-24)."""
+
+    kilometraje: int
+    nivel_de_combustible: str
+    motivo_de_ingreso: str
+
+
+@dataclass(frozen=True)
 class TecnicoDeDiagnosticoReasignado(EventoDeOrden):
     """El asesor cambió al técnico antes del diagnóstico (RN-28, H-PIA-23)."""
 

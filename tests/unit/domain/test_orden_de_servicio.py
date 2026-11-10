@@ -1286,3 +1286,38 @@ def test_rn_28_despues_de_cotizar_el_mensaje_dice_cuando_si_se_puede() -> None:
 
     with pytest.raises(TransicionDeEstadoNoPermitida, match="antes del diagnóstico"):
         orden.asignar_tecnico_para_diagnostico(c.OTRO_TECNICO, DESPUES)
+
+
+# ------------------------------------------------------------------ corrección de recepción (H-PIA-24)
+@pytest.mark.parametrize("constructor", [c.recibida, c.en_diagnostico])
+def test_ca_057_corrige_la_recepcion_sin_cambiar_el_estado(constructor: c.Constructor) -> None:
+    orden = c.sin_eventos(constructor())
+    estado = orden.estado
+    nueva = EstadoDeRecepcion(46000, NivelDeCombustible.LLENO)
+
+    orden.corregir_datos_de_recepcion(nueva, "  Ruido al frenar y vibración  ", DESPUES)
+
+    assert orden.estado is estado
+    assert orden.estado_de_recepcion == nueva
+    assert orden.motivo_de_ingreso == "Ruido al frenar y vibración"
+    assert [type(e) for e in orden.extraer_eventos()] == [ev.DatosDeRecepcionCorregidos]
+
+
+@pytest.mark.parametrize("constructor", [c.cotizada, c.autorizada, c.cancelada])
+def test_rn_29_recepcion_no_se_corrige_despues_de_cotizar(constructor: c.Constructor) -> None:
+    orden = constructor()
+    anterior = orden.estado_de_recepcion
+
+    with pytest.raises(CorreccionNoPermitida, match="antes de la cotización"):
+        orden.corregir_datos_de_recepcion(
+            EstadoDeRecepcion(1, NivelDeCombustible.RESERVA), "Otro", DESPUES
+        )
+
+    assert orden.estado_de_recepcion == anterior
+
+
+def test_rn_29_motivo_vacio_no_se_corrige() -> None:
+    orden = c.recibida()
+
+    with pytest.raises(ValorInvalido):
+        orden.corregir_datos_de_recepcion(c.RECEPCION, "   ", DESPUES)

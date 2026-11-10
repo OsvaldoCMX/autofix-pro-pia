@@ -156,6 +156,30 @@ class OrdenDeServicio(RaizDeAgregado):
         self.tecnico_de_diagnostico = tecnico
         self._registrar(ev.TecnicoAsignadoParaDiagnostico(fecha, str(self.numero), tecnico))
 
+    def corregir_datos_de_recepcion(
+        self, recepcion: EstadoDeRecepcion, motivo_de_ingreso: str, fecha: datetime
+    ) -> None:
+        """RN-29: solo antes de la cotización; no cambia el estado de la orden (CA-057)."""
+        if self.estado not in (_O.RECIBIDA, _O.EN_DIAGNOSTICO):
+            raise CorreccionNoPermitida(
+                f"Los datos de recepción de la orden {self.numero} solo se corrigen antes de la "
+                f"cotización (orden «{_O.RECIBIDA.value}» o «{_O.EN_DIAGNOSTICO.value}»); "
+                f"ahora está en «{self.estado.value}»."
+            )
+        motivo = texto_requerido(motivo_de_ingreso, "La orden debe indicar el motivo de ingreso.")
+        self.estado_de_recepcion = recepcion
+        self.motivo_de_ingreso = motivo
+        self.ultima_actualizacion = fecha
+        self._registrar(
+            ev.DatosDeRecepcionCorregidos(
+                fecha,
+                str(self.numero),
+                recepcion.kilometraje,
+                recepcion.nivel_de_combustible.value,
+                motivo,
+            )
+        )
+
     def _cambiar_tecnico_de_diagnostico(self, tecnico: str, fecha: datetime) -> None:
         """No cambia el estado: la orden sale del panel del técnico anterior (RN-28)."""
         if self.diagnostico is not None:

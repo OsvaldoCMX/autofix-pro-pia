@@ -6,17 +6,23 @@ from __future__ import annotations
 
 from application.comandos import (
     CorregirCliente,
+    CorregirRecepcion,
     CorregirVehiculo,
     DatosDeVehiculo,
     RegistrarCliente,
     RegistrarOrden,
 )
 from application.puertos import PublicadorDeEventos, Reloj
-from application.resultados import ResultadoDeCliente, ResultadoDeOrden, ResultadoDeVehiculo
+from application.resultados import (
+    ResultadoDeCliente,
+    ResultadoDeOrden,
+    ResultadoDeRecepcion,
+    ResultadoDeVehiculo,
+)
 from application.unidad_de_trabajo import UnidadDeTrabajo
 from domain.clientes.cliente import Cliente, ResponsableDeFlotilla, TipoCliente
 from domain.compartido.errores import ValorInvalido, VehiculoNoEncontrado
-from domain.compartido.valores import VIN, Placas
+from domain.compartido.valores import VIN, NumeroOrden, Placas
 from domain.ordenes.orden_de_servicio import OrdenDeServicio
 from domain.ordenes.valores import EstadoDeRecepcion
 from domain.servicios.verificador_de_orden_unica import VerificadorDeOrdenUnica
@@ -57,6 +63,24 @@ class ServicioDeRecepcion:
             uow.confirmar()
         return ResultadoDeVehiculo(
             str(vehiculo.placas), str(vehiculo.vin), vehiculo.marca, vehiculo.modelo, vehiculo.anio
+        )
+
+    def corregir_recepcion(self, comando: CorregirRecepcion) -> ResultadoDeRecepcion:
+        recepcion = EstadoDeRecepcion(comando.kilometraje, comando.nivel_de_combustible)
+        with self._uow as uow:
+            orden = uow.ordenes.obtener(NumeroOrden(comando.numero_orden))
+            orden.corregir_datos_de_recepcion(
+                recepcion, comando.motivo_de_ingreso, self._reloj.ahora()
+            )
+            uow.ordenes.guardar(orden)
+            uow.confirmar()
+        self._publicador.publicar(uow.eventos_confirmados())
+        return ResultadoDeRecepcion(
+            str(orden.numero),
+            orden.estado.value,
+            recepcion.kilometraje,
+            recepcion.nivel_de_combustible.value,
+            orden.motivo_de_ingreso,
         )
 
     def registrar_orden(self, comando: RegistrarOrden) -> ResultadoDeOrden:
