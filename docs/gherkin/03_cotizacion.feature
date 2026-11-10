@@ -26,6 +26,13 @@ Característica: Cotización y aprobación gerencial
     Cuando el asesor la marca como presentada (al cliente o, si es flotilla, al Responsable de Flotilla)
     Entonces el sistema debe registrar la fecha y hora de presentación, a partir de la cual corre el plazo de 48 horas
 
+  @US-004 @CA-060 @v3.1
+  Escenario: CA-060 Cada trabajo de la cotización vale más de $0.00
+    Dado que el asesor captura los trabajos de una cotización
+    Cuando un trabajo suma $0.00 entre su mano de obra y sus refacciones
+    Entonces el sistema no debe guardar la cotización
+    Y debe indicar qué trabajo vale $0.00 y pedir que capture su importe
+
   # ---------------------------------------------------------------- US-005 (Gerente de Taller)
 
   @US-005 @CA-007

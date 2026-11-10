@@ -28,9 +28,9 @@ Contrato de la API que se implementa con FastAPI (ADR-008). Cuando la API esté 
 | GET | `/api/vehiculos/{placas}` | Asesor | Buscar vehículo y cliente por placas. | 200 | 401, 403, 404 | `BuscarVehiculoPorPlacas` | CA-003, CA-004 | P1 |
 | PUT | `/api/vehiculos/{placas}` | Asesor | Corregir el VIN, la marca, el modelo o el año del vehículo (las placas no cambian). | 200 | 401, 403, 404, 409, 422 | `ServicioDeRecepcion.corregir_vehiculo` | CA-056 | P1 · Planeado |
 | GET | `/api/clientes?tipo=Flotilla&empresa=` | Asesor | Buscar la empresa de flotilla y su Responsable. | 200 | 401, 403 | `BuscarClientes` | CA-028 | P1 |
-| POST | `/api/clientes` | Asesor | Registrar cliente particular o de flotilla (con Responsable). | 201 | 400, 401, 403, 422 | `ServicioDeRecepcion.registrar_cliente` | CA-028 | P1 |
+| POST | `/api/clientes` | Asesor | Registrar cliente particular o de flotilla (con Responsable). | 201 | 400, 401, 403, 422 | `ServicioDeRecepcion.registrar_cliente` | CA-028, CA-059 | P1 |
 | PUT | `/api/clientes/{id}` | Asesor | Corregir el nombre, el teléfono o el correo del cliente. | 200 | 401, 403, 404, 422 | `ServicioDeRecepcion.corregir_cliente` | CA-055 | P1 · Planeado |
-| POST | `/api/ordenes` | Asesor | Registrar la orden: cliente, vehículo, motivo, kilometraje y combustible. Si las placas ya existen, reutiliza el registro y actualiza los datos enviados. *Planeado (H-PIA-22):* 409 si el vehículo ya tiene una orden abierta. | 201 | 400, 401, 403, 404, 422 | `ServicioDeRecepcion.registrar_orden` | CA-001, CA-002, CA-004, CA-052 | P1 |
+| POST | `/api/ordenes` | Asesor | Registrar la orden: cliente, vehículo, motivo, kilometraje y combustible. Si las placas ya existen, reutiliza el registro y actualiza los datos enviados. *Planeado (H-PIA-22):* 409 si el vehículo ya tiene una orden abierta. | 201 | 400, 401, 403, 404, 422 | `ServicioDeRecepcion.registrar_orden` | CA-001, CA-002, CA-004, CA-052, CA-059 | P1 |
 | POST | `/api/ordenes/{numero}/fotos` | Asesor | Adjuntar foto de daños (multipart). | 201 | 401, 403, 404, 422 | `ServicioDeRecepcion.adjuntar_foto` | CA-002 | P2 |
 | GET | `/api/ordenes/{numero}` | Asesor, Gerente, Técnico, Caja | Expediente completo de la orden (estado, cotizaciones, trabajos, solicitudes, pagos). | 200 | 401, 403, 404 | `ConsultarExpedienteDeOrden` | — | P1 |
 | PUT | `/api/ordenes/{numero}/recepcion` | Asesor | Corregir el kilometraje, el nivel de combustible o el motivo de ingreso (orden «Recibida» o «En Diagnóstico»). | 200 | 401, 403, 404, 409, 422 | `ServicioDeRecepcion.corregir_recepcion` | CA-057 | P1 · Planeado |
@@ -55,8 +55,8 @@ Contrato de la API que se implementa con FastAPI (ADR-008). Cuando la API esté 
 
 | Método | Ruta | Rol | Descripción | Éxito | Errores | Caso de uso | Criterios | Prioridad |
 |---|---|---|---|---|---|---|---|---|
-| POST | `/api/ordenes/{numero}/cotizaciones` | Asesor | Generar la cotización inicial (v.1). | 201 | 401, 403, 404, 409, 422 | `ServicioDeCotizacion.generar_inicial` | CA-005, CA-007 | P1 |
-| POST | `/api/ordenes/{numero}/cotizaciones-adicionales` | Asesor | Generar una cotización adicional (v.2, v.3…). | 201 | 401, 403, 404, 409, 422 | `ServicioDeCotizacion.generar_adicional` | CA-016 | P1 |
+| POST | `/api/ordenes/{numero}/cotizaciones` | Asesor | Generar la cotización inicial (v.1). | 201 | 401, 403, 404, 409, 422 | `ServicioDeCotizacion.generar_inicial` | CA-005, CA-007, CA-060 | P1 |
+| POST | `/api/ordenes/{numero}/cotizaciones-adicionales` | Asesor | Generar una cotización adicional (v.2, v.3…). | 201 | 401, 403, 404, 409, 422 | `ServicioDeCotizacion.generar_adicional` | CA-016, CA-060 | P1 |
 | GET | `/api/cotizaciones/{id}` | Asesor, Gerente | Detalle de la cotización con su desglose y estado. | 200 | 401, 403, 404 | `ConsultarCotizacion` | CA-005 | P1 |
 | GET | `/api/cotizaciones/{id}/pdf` | Asesor | PDF de la cotización. | 200 | 401, 403, 404 | `ServicioDeCotizacion.generar_pdf` | CA-005 | P2 |
 | POST | `/api/cotizaciones/{id}/presentacion` | Asesor | Marcar como presentada (inicia las 48 h). | 200 | 401, 403, 404, 409 | `ServicioDeCotizacion.presentar` | CA-006, CA-007, CA-051 | P1 |

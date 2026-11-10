@@ -26,8 +26,8 @@ NECESIDADES = [
 
 # necesidad -> (US, CA, proceso BPMN)
 TRAZA_NECESIDAD = {
-    "N-01": (["US-001", "US-002", "US-003"], ["CA-001", "CA-002", "CA-003", "CA-004", "CA-052"], "Fase 1: Recepción y registro"),
-    "N-02": (["US-004"], ["CA-005", "CA-006"], "Fase 2: Diagnóstico y cotización; Fase 3: Autorización"),
+    "N-01": (["US-001", "US-002", "US-003"], ["CA-001", "CA-002", "CA-003", "CA-004", "CA-052", "CA-059"], "Fase 1: Recepción y registro"),
+    "N-02": (["US-004"], ["CA-005", "CA-006", "CA-060"], "Fase 2: Diagnóstico y cotización; Fase 3: Autorización"),
     "N-03": (["US-006"], ["CA-010", "CA-011", "CA-012"], "Fase 3: Autorización"),
     "N-04": (["US-005"], ["CA-007", "CA-008", "CA-009"], "Fase 2: Diagnóstico y cotización"),
     "N-05": (["US-012"], ["CA-023"], "Fase 4: Gestión de refacciones"),
@@ -671,6 +671,26 @@ ca("CA-058", "US-014", [
    "ServicioDeCaja.corregir_forma_de_pago", "PUT /api/ordenes/{numero}/pago", CAJ,
    cambio="H-PIA-24", nombre="Corregir la forma de pago antes de la entrega", planeado=True)
 
+ca("CA-059", "US-001", [
+    (D, "que el asesor captura los datos del cliente, del Responsable de Flotilla, del vehículo y del estado de recepción"),
+    (C, "escribe un teléfono que no tiene 10 dígitos, un correo sin la forma nombre@dominio.algo, un año mayor al año actual + 1, un kilometraje mayor a 2,000,000 o un texto de más de 1,000 caracteres"),
+    (E, "el sistema no debe guardar el registro"),
+    (Y, "debe indicar qué dato está mal y cómo debe capturarse, por ejemplo «El teléfono debe tener 10 dígitos, por ejemplo 81 1234 5678.»"),
+    (Y, "un teléfono o un correo con solo espacios debe tratarse como no capturado"),
+], F1, ["RN-31"], "Telefono y Correo (VO), Vehiculo (año), EstadoDeRecepcion (kilometraje), textos libres con largo máximo",
+   "ServicioDeRecepcion.registrar_orden / registrar_cliente", "POST /api/ordenes (422) · POST /api/clientes (422)", ASE,
+   cambio="H-PIA-25", nombre="Datos de captura con forma y rango razonables", planeado=True)
+
+ca("CA-060", "US-004", [
+    (D, "que el asesor captura los trabajos de una cotización"),
+    (C, "un trabajo suma $0.00 entre su mano de obra y sus refacciones"),
+    (E, "el sistema no debe guardar la cotización"),
+    (Y, "debe indicar qué trabajo vale $0.00 y pedir que capture su importe"),
+], F2, ["RN-32", "RN-23"], "LineaDeCotizacion (subtotal), Dinero",
+   "ServicioDeCotizacion.generar_inicial / generar_adicional / ajustar / corregir",
+   "POST /api/ordenes/{numero}/cotizaciones (422) · POST /api/ordenes/{numero}/cotizaciones-adicionales (422)", ASE,
+   cambio="H-PIA-25", nombre="Cada trabajo de la cotización vale más de $0.00", planeado=True)
+
 # ----------------------------------------------------------------------------- áreas (archivos .feature)
 AREAS = [
     ("01_recepcion", "Recepción y registro del vehículo",
@@ -732,10 +752,12 @@ REGLAS = {
     "RN-28": ("El técnico de diagnóstico se elige entre los empleados con rol Técnico y se puede cambiar mientras la orden está «En Diagnóstico» sin diagnóstico registrado; el cambio no modifica el estado de la orden.", "Revisión del 09/11/2026 (H-PIA-23); US-020"),
     "RN-29": ("El Asesor corrige los datos del cliente (nombre, teléfono, correo) y del vehículo (VIN, marca, modelo, año) con las mismas validaciones del registro y sin repetir un VIN; el kilometraje, el nivel de combustible y el motivo de ingreso solo se corrigen con la orden «Recibida» o «En Diagnóstico».", "Revisión del 09/11/2026 (H-PIA-24); CA-003"),
     "RN-30": ("Caja corrige la forma de pago solo mientras la orden está «Pagada» (antes de la entrega); el monto y la fecha del pago no cambian y queda constancia de la forma anterior.", "Revisión del 09/11/2026 (H-PIA-24); BRD Restricción 9"),
+    "RN-31": ("Los datos de captura tienen forma y rango razonables: teléfono con 10 dígitos (se aceptan espacios, guiones y paréntesis), correo con la forma nombre@dominio.algo, año del vehículo hasta el año actual + 1 (America/Monterrey), kilometraje hasta 2,000,000 y textos libres de hasta 1,000 caracteres; un teléfono o un correo con solo espacios cuenta como no capturado.", "Revisión del 09/11/2026 (H-PIA-25); BRD §5"),
+    "RN-32": ("Cada trabajo de una cotización vale más de $0.00 (mano de obra más refacciones); el taller no maneja trabajos sin costo.", "Revisión del 09/11/2026 (H-PIA-25); BRD §5 (sin garantías ni promociones)"),
 }
 
 # Reglas aprobadas en la Fase 13 que todavía no se construyen (misma idea que `planeado` en los CA).
-REGLAS_PLANEADAS = {"RN-25", "RN-26", "RN-27", "RN-28", "RN-29", "RN-30"}
+REGLAS_PLANEADAS = {"RN-25", "RN-26", "RN-27", "RN-28", "RN-29", "RN-30", "RN-31", "RN-32"}
 
 # ----------------------------------------------------------------------------- pruebas previstas
 # Convención: toda prueba de aceptación se llama test_ca_0XX_<descripcion> para poder

@@ -14,7 +14,7 @@ Este documento contiene las User Stories derivadas del levantamiento de requerim
 
 Las historias siguen el formato *Como… quiero… para…* y cada criterio de aceptación está escrito en Gherkin (*Dado / Cuando / Entonces / Y*). Los mismos criterios, palabra por palabra, están en los archivos `docs/gherkin/*.feature` con las etiquetas `@US-xxx` y `@CA-xxx`, para que cada escenario se pueda relacionar con su prueba automatizada (convención `test_ca_0XX_…`). Los nombres de estados, roles y términos son los del [Glosario del Dominio](glosario.md).
 
-**Resumen:** 16 necesidades · 27 User Stories · 58 criterios de aceptación · 8 archivos `.feature`.
+**Resumen:** 16 necesidades · 27 User Stories · 60 criterios de aceptación · 8 archivos `.feature`.
 
 ## 1. Trazabilidad con el BRD
 
@@ -81,6 +81,7 @@ Los criterios marcados con **(v3.0)** se agregaron o se precisaron en el PIA y l
 |---|---|
 | **CA-001**<br>Registrar un vehículo nuevo y abrir su orden | **Dado** que un vehículo llega al taller y el asesor abre la pantalla «Nueva Orden»<br>**Cuando** el asesor ingresa los datos del cliente (nombre, teléfono y correo), los del vehículo (marca, modelo, año, placas y VIN) y el motivo de ingreso<br>**Entonces** el sistema debe guardar la información<br>**Y** debe generar un número de orden de servicio único<br>**Y** debe asignarle el estado «Recibida»<br>**Y** debe mostrar un mensaje de éxito |
 | **CA-052**<br>No se abre una segunda orden del mismo vehículo **(v3.1, H-PIA-22)** | **Dado** que el vehículo con placas XYZ998 ya tiene una orden abierta (en un estado distinto de «Cerrada», «Cerrada sin Reparación» y «Cancelada»)<br>**Cuando** el asesor intenta registrar otra orden para ese vehículo, por ejemplo con un doble clic en «Registrar»<br>**Entonces** el sistema no debe abrir una segunda orden<br>**Y** debe mostrar el mensaje «El vehículo con placas XYZ998 ya tiene abierta la orden OS-0001 (estado «Recibida»). Ábrala en lugar de registrar otra.»<br>**Y** aunque las dos solicitudes lleguen al mismo tiempo, solo una orden debe quedar registrada y la otra debe recibir el mismo mensaje |
+| **CA-059**<br>Datos de captura con forma y rango razonables **(v3.1, H-PIA-25)** | **Dado** que el asesor captura los datos del cliente, del Responsable de Flotilla, del vehículo y del estado de recepción<br>**Cuando** escribe un teléfono que no tiene 10 dígitos, un correo sin la forma nombre@dominio.algo, un año mayor al año actual + 1, un kilometraje mayor a 2,000,000 o un texto de más de 1,000 caracteres<br>**Entonces** el sistema no debe guardar el registro<br>**Y** debe indicar qué dato está mal y cómo debe capturarse, por ejemplo «El teléfono debe tener 10 dígitos, por ejemplo 81 1234 5678.»<br>**Y** un teléfono o un correo con solo espacios debe tratarse como no capturado |
 
 ### US-002
 
@@ -107,6 +108,7 @@ Los criterios marcados con **(v3.0)** se agregaron o se precisaron en el PIA y l
 |---|---|
 | **CA-005**<br>Generar la cotización inicial | **Dado** que la orden tiene un diagnóstico registrado por el técnico<br>**Cuando** el asesor agrega los trabajos (mano de obra) y las refacciones con sus costos y guarda la cotización<br>**Entonces** el sistema debe generarla con número único, versión 1, fecha, desglose y costo total<br>**Y** debe generar su PDF<br>**Y** debe cambiar la orden a «Cotizada»<br>**Y** si el total es menor o igual a $15,000 MXN, debe asignar a la cotización el estado «Pendiente de Autorización del Cliente» |
 | **CA-006**<br>Marcar la cotización como presentada | **Dado** que una cotización está en «Pendiente de Autorización del Cliente»<br>**Cuando** el asesor la marca como presentada (al cliente o, si es flotilla, al Responsable de Flotilla)<br>**Entonces** el sistema debe registrar la fecha y hora de presentación, a partir de la cual corre el plazo de 48 horas |
+| **CA-060**<br>Cada trabajo de la cotización vale más de $0.00 **(v3.1, H-PIA-25)** | **Dado** que el asesor captura los trabajos de una cotización<br>**Cuando** un trabajo suma $0.00 entre su mano de obra y sus refacciones<br>**Entonces** el sistema no debe guardar la cotización<br>**Y** debe indicar qué trabajo vale $0.00 y pedir que capture su importe |
 
 ### US-005
 
@@ -324,8 +326,8 @@ Los criterios marcados con **(v3.0)** se agregaron o se precisaron en el PIA y l
 
 | ID Necesidad | User Stories relacionadas | Criterios de aceptación | Proceso modelado en BPMN |
 |---|---|---|---|
-| N-01 | US-001, US-002, US-003 | CA-001, CA-002, CA-003, CA-004, CA-052 | Fase 1: Recepción y registro |
-| N-02 | US-004 | CA-005, CA-006 | Fase 2: Diagnóstico y cotización; Fase 3: Autorización |
+| N-01 | US-001, US-002, US-003 | CA-001, CA-002, CA-003, CA-004, CA-052, CA-059 | Fase 1: Recepción y registro |
+| N-02 | US-004 | CA-005, CA-006, CA-060 | Fase 2: Diagnóstico y cotización; Fase 3: Autorización |
 | N-03 | US-006 | CA-010, CA-011, CA-012 | Fase 3: Autorización |
 | N-04 | US-005 | CA-007, CA-008, CA-009 | Fase 2: Diagnóstico y cotización |
 | N-05 | US-012 | CA-023 | Fase 4: Gestión de refacciones |

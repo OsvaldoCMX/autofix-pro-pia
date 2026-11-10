@@ -29,6 +29,14 @@ Característica: Recepción y registro del vehículo
     Y debe mostrar el mensaje «El vehículo con placas XYZ998 ya tiene abierta la orden OS-0001 (estado «Recibida»). Ábrala en lugar de registrar otra.»
     Y aunque las dos solicitudes lleguen al mismo tiempo, solo una orden debe quedar registrada y la otra debe recibir el mismo mensaje
 
+  @US-001 @CA-059 @v3.1
+  Escenario: CA-059 Datos de captura con forma y rango razonables
+    Dado que el asesor captura los datos del cliente, del Responsable de Flotilla, del vehículo y del estado de recepción
+    Cuando escribe un teléfono que no tiene 10 dígitos, un correo sin la forma nombre@dominio.algo, un año mayor al año actual + 1, un kilometraje mayor a 2,000,000 o un texto de más de 1,000 caracteres
+    Entonces el sistema no debe guardar el registro
+    Y debe indicar qué dato está mal y cómo debe capturarse, por ejemplo «El teléfono debe tener 10 dígitos, por ejemplo 81 1234 5678.»
+    Y un teléfono o un correo con solo espacios debe tratarse como no capturado
+
   # ---------------------------------------------------------------- US-002 (Asesor de Servicio)
 
   @US-002 @CA-002
