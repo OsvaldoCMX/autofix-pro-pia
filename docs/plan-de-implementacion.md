@@ -32,7 +32,7 @@ Orden en que se construye el sistema a partir de esta documentación. Cada fase 
 | 14 | Correcciones en el dominio y la API | Terminada | 10/11/2026 | `docs: cerrar la Fase 14` |
 | 15 | Base de la interfaz web | Terminada | 10/11/2026 | `docs: cerrar la Fase 15` |
 | 16 | Pantallas del Asesor | Terminada | 10/11/2026 | `docs: cerrar la Fase 16` |
-| 17 | Pantallas de Técnico, Gerente, Compras y Caja | Pendiente | — | — |
+| 17 | Pantallas de Técnico, Gerente, Compras y Caja | Terminada | 10/11/2026 | `docs: cerrar la Fase 17` |
 | 18 | Revisión como usuario del taller | Pendiente | — | — |
 | 19 | Despliegue de la interfaz en Render y datos limpios en Supabase | Pendiente | — | — |
 | 20 | README, guion de demostración y reporte | Pendiente | — | — |
@@ -350,6 +350,14 @@ La prioridad es **Alta** si el profesor lo puede encontrar en una demo de 10 min
 **Listo cuando:** los 6 escenarios del guion del `README.md` se completan de punta a punta solo desde la página, cambiando de puesto con cerrar sesión.
 
 **Commits:** `feat(web): pantallas del técnico` · `feat(web): pantallas del gerente` · `feat(web): compras y caja` · `feat(web): alertas`.
+
+**Resultado (10/11/2026).** Se construyeron T-01 y T-02, G-01 a G-03, C-01, K-01 y K-02 con todos los botones de sus tablas, y la campana de alertas (P-04) para todos los puestos, en dos grupos con `push` al terminar cada uno: (1) lo que necesita el recorrido completo (diagnóstico, iniciar y terminar trabajos, aprobación gerencial, pago, cargo a crédito y corregir la forma de pago) y (2) solicitar refacción, falla adicional, órdenes e ingresos del Gerente, Compras y alertas. No se agregó ninguna ruta a la API. Decisiones del equipo durante la fase:
+- Dirección nueva `#/gerente/orden/OS-0001` para el expediente solo para consulta de G-02; ahí llevan también las alertas del Gerente (`interfaz-web.md` §3 y G-02).
+- La campana cuenta solo las alertas **de hoy** (fecha en America/Monterrey) para que el número no crezca sin fin; `#/alertas` muestra todas, las más recientes arriba, en «Hoy» y «Anteriores», con enlace a la pantalla de la orden del puesto (Compras sin enlace). No hay «marcar como leída» porque la API no tiene esa ruta (`interfaz-web.md` P-04).
+- Archivo nuevo `alertas.js`, anotado en `interfaz-web.md` §8 y en `decisiones-tecnicas.md` §2. El botón, el envío con botón ocupado y el formulario pasaron de `asesor.js` a `ui.js` para que los usen todos los puestos; `expediente.js` acepta botones por trabajo (`deTrabajo`).
+- Para no repetir el texto de un botón (como en la Fase 16): en Caja, el formulario de pago aparece directamente en la orden «Lista para Entrega» de un cliente particular, con el monto de solo lectura, y su único botón es «Registrar pago»; el botón de la búsqueda dice «Buscar» (el menú ya dice «Buscar orden»); en el Técnico, el formulario de la refacción termina en «Pedir la refacción a Compras» y el de la falla en «Reportar falla al asesor».
+- `tests/api/test_web.py` revisa que las rutas de cada puesto y de la campana estén en su sección de `interfaz-web.md` (§4.1 a §4.6).
+- Verificado: 2307 pruebas con SQLite; recorrido en Chrome sin ventana, con la aplicación en memoria y cambiando de puesto con «Cerrar sesión», de los escenarios 1, 3, 4 (el registro de la flotilla y la decisión por la API, ya probados en la página en la Fase 16), 5 y 6 del guion, más el rechazo gerencial, la corrección de la forma de pago, la refacción con su llegada, la falla adicional y las alertas, sin errores de JavaScript. El escenario 2 (transiciones inválidas) no se puede intentar desde la página porque sus botones no aparecen en esos estados. La prueba con Docker Compose y los datos del profesor la hace el equipo desde una copia en `C:`.
 
 ## Fase 18 — Revisión como usuario del taller
 
