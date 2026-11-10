@@ -30,7 +30,7 @@ Orden en que se construye el sistema a partir de esta documentación. Cada fase 
 | 12 | Auditoría «¿y si me equivoco?» | Terminada | 09/11/2026 | `docs: decisiones del equipo en la auditoría` |
 | 13 | Documentar la interfaz web y las correcciones aprobadas | Terminada | 09/11/2026 | `docs: cerrar la Fase 13` |
 | 14 | Correcciones en el dominio y la API | Terminada | 10/11/2026 | `docs: cerrar la Fase 14` |
-| 15 | Base de la interfaz web | Pendiente | — | — |
+| 15 | Base de la interfaz web | Terminada | 10/11/2026 | `docs: cerrar la Fase 15` |
 | 16 | Pantallas del Asesor | Pendiente | — | — |
 | 17 | Pantallas de Técnico, Gerente, Compras y Caja | Pendiente | — | — |
 | 18 | Revisión como usuario del taller | Pendiente | — | — |
@@ -317,6 +317,13 @@ La prioridad es **Alta** si el profesor lo puede encontrar en una demo de 10 min
 **Listo cuando:** en Docker local se puede consultar una orden como cliente y entrar con la clave de cada puesto.
 
 **Commits:** `feat(web): servir la interfaz y la consulta pública` · `feat(api): ruta de sesión` · `feat(web): inicio de sesión y menú por puesto`.
+
+**Resultado (10/11/2026).** Se construyeron P-01 (inicio), P-02 (consulta pública), P-03 (inicio de sesión), el menú de cada puesto con «Cerrar sesión» siempre visible y `GET /api/sesion`; ya no queda ninguna ruta «Planeado». Las pantallas de cada puesto dicen «Esta pantalla estará disponible pronto.» hasta las Fases 16 y 17. Decisiones del equipo durante la fase:
+- `GET /api/sesion` responde `id_empleado`, `nombre`, `rol` (el valor del código) y `puesto` (el nombre del Glosario §1). Con la clave de Sistema responde 403 del mismo tipo `RolNoPermitido`, con un mensaje propio («Esta clave es del sistema automático, no de un empleado del taller…»); las demás rutas conservan el suyo. En el contrato, el caso de uso pasa de `ConsultarSesion` a `seguridad.requiere_empleado`, que es quien identifica al empleado (no hace falta una consulta en la capa de aplicación).
+- Dirección nueva `#/gerente/ingresos` (G-03) y archivo nuevo `principal.js` (lee la dirección y muestra la pantalla), anotados en `interfaz-web.md` §3 y §8 y en `decisiones-tecnicas.md` §2.
+- Los archivos de la página se sirven en `/web/…` (no en `/`) para que una dirección que no existe siga respondiendo el 404 de siempre, con `Cache-Control: no-cache`; ni `/` ni `/web/…` aparecen en Swagger.
+- Si un puesto abre la dirección de otro, regresa a su menú con el aviso «Esa pantalla es de otro puesto del taller. Le mostramos su menú.» (`interfaz-web.md` §3). Al recargar, la página vuelve a revisar la clave con la API.
+- Verificado: 2275 pruebas con SQLite y 2306 con PostgreSQL 16 en Docker (perfil `tests`), cobertura 99.80 %; recorrido del inicio de sesión, la consulta, el cambio de puesto, recargar, cerrar sesión y sin conexión en Chrome sin ventana, sin errores de JavaScript. La prueba con la aplicación de Docker Compose y los datos del profesor la hace el equipo desde una copia en `C:` (desde la USB `I:` Docker monta `database/` vacía).
 
 ## Fase 16 — Pantallas del Asesor
 
