@@ -115,7 +115,12 @@ def test_las_rutas_del_asesor_estan_en_interfaz_web(nombre: str) -> None:
     seccion = texto.split("### 4.2 Asesor de Servicio")[1].split("### 4.3")[0]
     llamadas = _rutas_que_usa(nombre)
 
-    documentadas = {f"{metodo} {ruta}" for metodo, ruta in llamadas if f"`{metodo} {ruta}`" in seccion}
+    # La tabla escribe algunas rutas con sus parámetros: `GET /api/clientes?tipo=Flotilla&empresa=`.
+    documentadas = {
+        f"{metodo} {ruta}"
+        for metodo, ruta in llamadas
+        if f"`{metodo} {ruta}`" in seccion or f"`{metodo} {ruta}?" in seccion
+    }
 
     assert llamadas, f"{nombre} no llama a la API"
     assert {f"{metodo} {ruta}" for metodo, ruta in llamadas} - documentadas == set()
