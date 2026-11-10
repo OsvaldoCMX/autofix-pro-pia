@@ -895,6 +895,113 @@
         }
       }
     },
+    "/api/ordenes/{numero}/placas": {
+      "put": {
+        "tags": [
+          "Recepción"
+        ],
+        "summary": "Corregir las placas mal capturadas",
+        "operationId": "corregir_placas_api_ordenes__numero__placas_put",
+        "security": [
+          {
+            "TokenDeEmpleado": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "numero",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Numero"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DatosDePlacas"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlacasCorregidas"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "JSON mal formado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Falta el token o no es válido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o trabajo de otro técnico.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Viola una regla o transición del negocio.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Un dato es inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/ordenes/{numero}/cancelacion": {
       "post": {
         "tags": [
@@ -5076,6 +5183,21 @@
         ],
         "title": "DatosDePago"
       },
+      "DatosDePlacas": {
+        "properties": {
+          "placas": {
+            "type": "string",
+            "title": "Placas"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "placas"
+        ],
+        "title": "DatosDePlacas",
+        "description": "Corrección de las placas (CA-066); el dominio las normaliza y valida."
+      },
       "DatosDeRecepcion": {
         "properties": {
           "kilometraje": {
@@ -6278,6 +6400,29 @@
           "registrado_en"
         ],
         "title": "PagoRegistrado"
+      },
+      "PlacasCorregidas": {
+        "properties": {
+          "numero_orden": {
+            "type": "string",
+            "title": "Numero Orden"
+          },
+          "estado": {
+            "type": "string",
+            "title": "Estado"
+          },
+          "placas": {
+            "type": "string",
+            "title": "Placas"
+          }
+        },
+        "type": "object",
+        "required": [
+          "numero_orden",
+          "estado",
+          "placas"
+        ],
+        "title": "PlacasCorregidas"
       },
       "RecepcionCorregida": {
         "properties": {

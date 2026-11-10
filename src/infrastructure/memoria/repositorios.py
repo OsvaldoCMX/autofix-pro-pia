@@ -6,6 +6,7 @@ from domain.clientes.cliente import Cliente
 from domain.clientes.repositorio import RepositorioDeClientes
 from domain.compartido.errores import (
     ClienteNoEncontrado,
+    CorreccionNoPermitida,
     CotizacionNoEncontrada,
     EmpleadoNoEncontrado,
     OrdenNoEncontrada,
@@ -167,6 +168,17 @@ class RepositorioDeVehiculosEnMemoria(RepositorioDeVehiculos):
         self._exigir_vin_libre(vehiculo)
         self._datos.vehiculos[str(vehiculo.placas)] = vehiculo
 
+    def cambiar_placas(self, anteriores: Placas, nuevas: Placas) -> Vehiculo:
+        vehiculo = self.por_placas(anteriores)
+        _exigir_placas_libres(nuevas, str(nuevas) in self._datos.vehiculos)
+        del self._datos.vehiculos[str(anteriores)]
+        vehiculo.placas = nuevas
+        self._datos.vehiculos[str(nuevas)] = vehiculo
+        for orden in self._datos.ordenes.values():
+            if orden.placas == anteriores:
+                orden.placas = nuevas
+        return vehiculo
+
     def _exigir_vin_libre(self, vehiculo: Vehiculo) -> None:
         """El VIN es único en la base (UNIQUE), así que aquí se rechaza igual."""
         for otro in self._datos.vehiculos.values():
@@ -208,3 +220,11 @@ class CatalogoDeServiciosEnMemoria(CatalogoDeServicios):
 
     def servicios_inhabilitados_de_la_orden(self, numero: NumeroOrden) -> tuple[str, ...]:
         return tuple(sorted(self._datos.servicios_inhabilitados.get(str(numero), ())))
+
+
+def _exigir_placas_libres(placas: Placas, ocupadas: bool) -> None:
+    if ocupadas:
+        raise CorreccionNoPermitida(
+            f"Las placas {placas} ya pertenecen a otro vehículo. Revise el dato capturado."
+        )
+

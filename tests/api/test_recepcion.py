@@ -477,3 +477,46 @@ def test_ca_065_con_los_mismos_datos_devuelve_la_empresa_registrada(cliente: Tes
     segunda = exigir(cliente.post("/api/clientes", json=igual, headers=ASESOR), 201)
 
     assert segunda["id_cliente"] == primera["id_cliente"]
+
+
+# ------------------------------------------------------------------ corrección de placas (H-PIA-29)
+def test_ca_066_corrige_las_placas_y_el_cliente_consulta_con_las_nuevas(
+    cliente: TestClient,
+) -> None:
+    numero = recibida(cliente)
+
+    respuesta = exigir(
+        cliente.put(f"/api/ordenes/{numero}/placas", json={"placas": "xyz-998"}, headers=ASESOR),
+        200,
+    )
+
+    assert respuesta == {"numero_orden": numero, "estado": "Recibida", "placas": "XYZ998"}
+    consulta = cliente.get("/api/consulta-de-estado", params={"orden": numero, "placas": "XYZ998"})
+    assert consulta.status_code == 200
+    assert exigir(cliente.get("/api/vehiculos/XYZ998", headers=ASESOR), 200)["placas"] == "XYZ998"
+
+
+def test_ca_066_despues_de_cotizar_responde_409(cliente: TestClient) -> None:
+    numero, _ = cotizada(cliente)
+
+    respuesta = exigir(
+        cliente.put(f"/api/ordenes/{numero}/placas", json={"placas": "XYZ998"}, headers=ASESOR),
+        409,
+    )
+
+    assert respuesta["error"] == "CorreccionNoPermitida"
+
+
+def test_ca_066_placas_de_otro_vehiculo_responde_409(cliente: TestClient) -> None:
+    numero = recibida(cliente)
+    otra = datos_de_orden()
+    exigir(cliente.post("/api/ordenes", json=otra, headers=ASESOR), 201)
+
+    respuesta = exigir(
+        cliente.put(
+            f"/api/ordenes/{numero}/placas", json={"placas": otra["placas"]}, headers=ASESOR
+        ),
+        409,
+    )
+
+    assert "ya pertenecen a otro vehículo" in respuesta["detalle"]

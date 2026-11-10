@@ -186,7 +186,11 @@ ordenes = Table(
         ["id_cliente"], ["clientes.id"], name="fk_ordenes_id_cliente", ondelete="RESTRICT"
     ),
     ForeignKeyConstraint(
-        ["placas"], ["vehiculos.placas"], name="fk_ordenes_placas", ondelete="RESTRICT"
+        ["placas"],
+        ["vehiculos.placas"],
+        name="fk_ordenes_placas",
+        ondelete="RESTRICT",
+        onupdate="CASCADE",
     ),
     ForeignKeyConstraint(
         ["asesor"], ["empleados.id"], name="fk_ordenes_asesor", ondelete="RESTRICT"

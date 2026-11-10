@@ -17,3 +17,10 @@ class RepositorioDeVehiculos(ABC):
 
     @abstractmethod
     def guardar(self, vehiculo: Vehiculo) -> None: ...
+
+    @abstractmethod
+    def cambiar_placas(self, anteriores: Placas, nuevas: Placas) -> Vehiculo:
+        """RN-35: cambia la identidad del vehículo y la de sus órdenes a la vez.
+
+        Lanza `VehiculoNoEncontrado` si no existe y `CorreccionNoPermitida` si las placas
+        nuevas ya son de otro vehículo."""

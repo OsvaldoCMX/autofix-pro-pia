@@ -11,6 +11,7 @@ from application.unidad_de_trabajo import UnidadDeTrabajo
 from domain.clientes.cliente import Cliente, ResponsableDeFlotilla, TipoCliente
 from domain.compartido.errores import (
     ClienteNoEncontrado,
+    CorreccionNoPermitida,
     CotizacionNoEncontrada,
     EmpleadoNoEncontrado,
     ErrorDeDominio,
@@ -357,3 +358,28 @@ def test_ca_053_lista_solo_empleados_con_rol_tecnico(taller: Taller) -> None:
         ("EMP-002", "Carlos Ruiz"),
         ("EMP-003", "Diego Salinas"),
     ]
+
+
+def test_rn_35_cambiar_placas_mueve_el_vehiculo_y_sus_ordenes(taller: Taller) -> None:
+    numero = recibida(taller)
+    anteriores = _placas_de(taller, numero)
+
+    with taller.uow() as uow:
+        uow.vehiculos.cambiar_placas(anteriores, Placas("XYZ998"))
+        orden = uow.ordenes.obtener(NumeroOrden(numero))
+        orden.corregir_placas(Placas("XYZ998"), AHORA)
+        uow.ordenes.guardar(orden)
+        uow.confirmar()
+
+    with taller.uow() as uow:
+        assert uow.vehiculos.por_placas(Placas("XYZ998")).placas == Placas("XYZ998")
+        assert uow.ordenes.obtener(NumeroOrden(numero)).placas == Placas("XYZ998")
+        with pytest.raises(VehiculoNoEncontrado):
+            uow.vehiculos.por_placas(anteriores)
+
+
+def test_rn_35_placas_de_otro_vehiculo_no_se_toman(taller: Taller) -> None:
+    primera, segunda = recibida(taller), recibida(taller)
+
+    with taller.uow() as uow, pytest.raises(CorreccionNoPermitida, match="otro vehículo"):
+        uow.vehiculos.cambiar_placas(_placas_de(taller, primera), _placas_de(taller, segunda))

@@ -27,7 +27,7 @@ Este documento dice **qué pantallas** tiene la página web, qué ve cada usuari
 6. **Contra el doble clic.** Mientras se envía, el botón se deshabilita y dice «Guardando…». Se vuelve a habilitar al recibir la respuesta. Además, la API rechaza los repetidos que importan (CA-052, CA-061, CA-062).
 7. **Solo los botones del puesto.** Cada puesto ve solo sus pantallas y sus botones (AU-39). Un botón solo aparece en los estados en los que la acción tiene sentido; si aun así la API rechaza la acción, se muestra su mensaje.
 8. **La regla vive en el dominio** (regla 7 de `CLAUDE.md`). Las validaciones de la página (campos obligatorios, números mayores o iguales a 0, listas desplegables, largo máximo) solo ayudan; la API vuelve a validar todo. La página **no decide reglas del negocio**: por ejemplo, puede mostrar un total preliminar mientras se captura una cotización, pero no decide si va al Gerente (E1); eso lo dice la respuesta de la API.
-9. **Sin funciones P2.** No aparecen las fotos de daños, los PDF (cotización, Nota de Responsabilidad, recibo interno) ni la corrección de placas mientras sus rutas respondan 501 (decisiones técnicas §8).
+9. **Sin funciones P2.** No aparecen las fotos de daños ni los PDF (cotización, Nota de Responsabilidad, recibo interno) mientras sus rutas respondan 501 (decisiones técnicas §8). La corrección de placas era P2, pero se construyó en la Fase 14 y sí aparece.
 
 ## 2. Mensajes
 
@@ -80,6 +80,7 @@ Cada pantalla tiene un identificador (P = pública y comunes, A = Asesor, T = T�
 | Cambiar técnico de diagnóstico | Orden «En Diagnóstico» sin diagnóstico | La misma, con el técnico nuevo | las mismas | CA-054 |
 | Corregir datos de recepción | Orden «Recibida» o «En Diagnóstico» | — | `PUT /api/ordenes/{numero}/recepcion` | CA-057 |
 | Corregir datos del cliente / del vehículo | Siempre | — | `PUT /api/clientes/{id}` · `PUT /api/vehiculos/{placas}` | CA-055, CA-056 |
+| Corregir placas | Orden «Recibida» o «En Diagnóstico» (la ruta ya no responde 501: se construyó en la Fase 14) | Con las placas anteriores y las nuevas en letra grande | `PUT /api/ordenes/{numero}/placas` | CA-066 |
 | Generar cotización | Orden «En Diagnóstico» con diagnóstico registrado | Con el total preliminar | `POST /api/ordenes/{numero}/cotizaciones` | CA-005, CA-007, CA-060 |
 | Presentar cotización al cliente | Cotización «Pendiente de Autorización del Cliente» sin presentar | — | `POST /api/cotizaciones/{id}/presentacion` | CA-006, CA-051 |
 | Registrar recontacto | Cotización «Pendiente de Autorización del Cliente» ya presentada | — (AU-21: solo el botón ocupado) | `POST /api/cotizaciones/{id}/recontactos` | CA-040 |
@@ -148,7 +149,7 @@ El recibo interno en PDF (CA-027) no aparece: es P2 y su ruta responde 501.
 ### 4.7 Sin pantalla
 
 - **Sistema:** la revisión de plazos (`POST /api/revisiones/plazos`) la llama el workflow programado; no tiene pantalla.
-- **Funciones P2:** fotos de daños, PDF de la cotización, de la Nota de Responsabilidad y del recibo, y la corrección de placas (`PUT /api/ordenes/{numero}/placas`) no aparecen mientras respondan 501.
+- **Funciones P2:** fotos de daños y PDF de la cotización, de la Nota de Responsabilidad y del recibo no aparecen mientras respondan 501.
 - **Swagger** (`/docs`) sigue disponible para la parte técnica.
 
 ## 5. Frase debajo del estado (consulta del cliente, AU-37)

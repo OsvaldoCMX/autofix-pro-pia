@@ -36,6 +36,14 @@ class DatosDeRecepcionCorregidos(EventoDeOrden):
 
 
 @dataclass(frozen=True)
+class PlacasCorregidas(EventoDeOrden):
+    """El asesor corrigió las placas mal capturadas (RN-35, H-PIA-29)."""
+
+    placas_anteriores: str
+    placas: str
+
+
+@dataclass(frozen=True)
 class TecnicoDeDiagnosticoReasignado(EventoDeOrden):
     """El asesor cambió al técnico antes del diagnóstico (RN-28, H-PIA-23)."""
 

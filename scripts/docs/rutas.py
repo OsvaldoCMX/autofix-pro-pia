@@ -22,7 +22,7 @@ RUTAS = [
     ("POST", "/api/ordenes/{numero}/fotos", A, "Adjuntar foto de daños (multipart).", "201", "401, 403, 404, 422", "ServicioDeRecepcion.adjuntar_foto", ["CA-002"], "P2", "Recepción"),
     ("GET", "/api/ordenes/{numero}", f"{A}, {G}, {T}, {CJ}", "Expediente completo de la orden (estado, cotizaciones, trabajos, solicitudes, pagos), con el nombre y el tipo del cliente (y el nombre de su Responsable de Flotilla), la marca, el modelo y el año del vehículo y el nombre del técnico de diagnóstico y de cada trabajo (`interfaz-web.md` §7).", "200", "401, 403, 404", "ConsultarExpedienteDeOrden", [], "P1", "Recepción"),
     ("PUT", "/api/ordenes/{numero}/recepcion", A, "Corregir el kilometraje, el nivel de combustible o el motivo de ingreso (orden «Recibida» o «En Diagnóstico»).", "200", "401, 403, 404, 409, 422", "ServicioDeRecepcion.corregir_recepcion", ["CA-057"], "P1", "Recepción"),
-    ("PUT", "/api/ordenes/{numero}/placas", A, "Corregir las placas mal capturadas (orden «Recibida» o «En Diagnóstico»). Mientras responda 501 no aparece en la página.", "200", "401, 403, 404, 409, 422", "ServicioDeRecepcion.corregir_placas", ["CA-066"], P2_PLANEADA, "Recepción"),
+    ("PUT", "/api/ordenes/{numero}/placas", A, "Corregir las placas mal capturadas (orden «Recibida» o «En Diagnóstico»); cambian en el vehículo y en sus órdenes. Era P2 y se construyó en la Fase 14.", "200", "401, 403, 404, 409, 422", "ServicioDeRecepcion.corregir_placas", ["CA-066"], "P1", "Recepción"),
     # cancelación
     ("POST", "/api/ordenes/{numero}/cancelacion", A, "Cancelar la orden con motivo (solo sin cotización).", "200", "401, 403, 404, 409, 422", "ServicioDeCancelacion.cancelar", ["CA-044", "CA-045"], "P1", "Cancelación"),
     # diagnóstico

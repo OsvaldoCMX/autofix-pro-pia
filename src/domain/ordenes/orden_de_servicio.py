@@ -182,6 +182,25 @@ class OrdenDeServicio(RaizDeAgregado):
             )
         )
 
+    def exigir_placas_corregibles(self) -> None:
+        """RN-35: las placas solo se corrigen antes de la cotización."""
+        if self.estado not in (_O.RECIBIDA, _O.EN_DIAGNOSTICO):
+            raise CorreccionNoPermitida(
+                f"Las placas de la orden {self.numero} solo se corrigen antes de la cotización "
+                f"(orden «{_O.RECIBIDA.value}» o «{_O.EN_DIAGNOSTICO.value}»); "
+                f"ahora está en «{self.estado.value}»."
+            )
+
+    def corregir_placas(self, placas: Placas, fecha: datetime) -> None:
+        """El vehículo ya cambió sus placas; la orden las toma (CA-066, RN-35)."""
+        self.exigir_placas_corregibles()
+        anteriores = self.placas
+        self.placas = placas
+        self.ultima_actualizacion = fecha
+        self._registrar(
+            ev.PlacasCorregidas(fecha, str(self.numero), str(anteriores), str(placas))
+        )
+
     def _cambiar_tecnico_de_diagnostico(self, tecnico: str, fecha: datetime) -> None:
         """No cambia el estado: la orden sale del panel del técnico anterior (RN-28)."""
         if self.diagnostico is not None:

@@ -85,8 +85,8 @@ class DefinicionDeTabla:
 
     columnas: dict[str, tuple[str, bool]] = field(default_factory=dict)
     llave_primaria: tuple[str, ...] = ()
-    llaves_foraneas: set[tuple[str, tuple[str, ...], str, tuple[str, ...], str]] = field(
-        default_factory=set
+    llaves_foraneas: set[tuple[str, tuple[str, ...], str, tuple[str, ...], str, str | None]] = (
+        field(default_factory=set)
     )
     unicas: set[tuple[str, tuple[str, ...]]] = field(default_factory=set)
     checks: dict[str, str] = field(default_factory=dict)
@@ -122,10 +122,11 @@ def _leer_linea(linea: str, definicion: DefinicionDeTabla) -> None:
     elif uq := re.fullmatch(r"CONSTRAINT (\w+) UNIQUE \((.*)\)", linea):
         definicion.unicas.add((uq[1], _lista(uq[2])))
     elif fk := re.fullmatch(
-        r"CONSTRAINT (\w+) FOREIGN KEY \((.*?)\) REFERENCES (\w+) \((.*?)\) ON DELETE ([A-Z ]+)",
+        r"CONSTRAINT (\w+) FOREIGN KEY \((.*?)\) REFERENCES (\w+) \((.*?)\) "
+        r"ON DELETE (RESTRICT|CASCADE|SET NULL)(?: ON UPDATE (CASCADE))?",
         linea,
     ):
-        definicion.llaves_foraneas.add((fk[1], _lista(fk[2]), fk[3], _lista(fk[4]), fk[5]))
+        definicion.llaves_foraneas.add((fk[1], _lista(fk[2]), fk[3], _lista(fk[4]), fk[5], fk[6]))
     elif ck := re.fullmatch(r"CONSTRAINT (\w+) CHECK \((.*)\)", linea):
         definicion.checks[ck[1]] = ck[2]
     else:
@@ -166,6 +167,7 @@ def _definicion_desde_tablas(tabla: Table) -> DefinicionDeTabla:
                     restriccion.referred_table.name,
                     tuple(elemento.column.name for elemento in restriccion.elements),
                     restriccion.ondelete,
+                    restriccion.onupdate,
                 )
             )
         elif isinstance(restriccion, UniqueConstraint):

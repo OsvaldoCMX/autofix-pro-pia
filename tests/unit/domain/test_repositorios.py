@@ -24,7 +24,7 @@ from domain.vehiculos.repositorio import RepositorioDeVehiculos
             {"obtener", "agregar", "guardar", "de_la_orden", "siguiente_version", "siguiente_id"},
         ),
         (RepositorioDeClientes, {"obtener", "agregar", "guardar", "buscar_flotilla", "siguiente_id"}),
-        (RepositorioDeVehiculos, {"por_placas", "agregar", "guardar"}),
+        (RepositorioDeVehiculos, {"por_placas", "agregar", "guardar", "cambiar_placas"}),
         (RepositorioDeEmpleados, {"obtener"}),
     ],
 )

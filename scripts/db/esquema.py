@@ -112,7 +112,7 @@ tabla("ordenes", "Órdenes de Servicio (Aggregate Orden de Servicio). Los Value 
     ("cancelacion_motivo", "TEXT", True, None, "Motivo de la cancelación (CA-044)"),
     ("cancelacion_registrada_en", TS, True, None, "Fecha de la cancelación"),
     ("cancelacion_asesor", "VARCHAR(20)", True, None, "Asesor que canceló"),
-], ["numero"], fks=[(["id_cliente"], "clientes", ["id"], "RESTRICT"), (["placas"], "vehiculos", ["placas"], "RESTRICT"),
+], ["numero"], fks=[(["id_cliente"], "clientes", ["id"], "RESTRICT"), (["placas"], "vehiculos", ["placas"], "RESTRICT", "CASCADE"),
                     (["asesor"], "empleados", ["id"], "RESTRICT"), (["tecnico_de_diagnostico"], "empleados", ["id"], "RESTRICT"),
                     (["cancelacion_asesor"], "empleados", ["id"], "RESTRICT")],
     uniques=[["recibo_numero"]], checks=[
@@ -334,9 +334,11 @@ def sql():
         lineas.append(f"    CONSTRAINT pk_{t['nombre']} PRIMARY KEY ({', '.join(t['pk'])})")
         for cols in t["uniques"]:
             lineas.append(f"    CONSTRAINT uq_{t['nombre']}_{'_'.join(cols)} UNIQUE ({', '.join(cols)})")
-        for cols, ref, rcols, accion in t["fks"]:
+        for cols, ref, rcols, accion, *al_actualizar in t["fks"]:
+            # RN-35: corregir las placas del vehículo las cambia también en sus órdenes.
+            cascada = f" ON UPDATE {al_actualizar[0]}" if al_actualizar else ""
             lineas.append(f"    CONSTRAINT fk_{t['nombre']}_{'_'.join(cols)} FOREIGN KEY ({', '.join(cols)}) "
-                          f"REFERENCES {ref} ({', '.join(rcols)}) ON DELETE {accion}")
+                          f"REFERENCES {ref} ({', '.join(rcols)}) ON DELETE {accion}{cascada}")
         for i, ch in enumerate(t["checks"], 1):
             lineas.append(f"    CONSTRAINT ck_{t['nombre']}_{i} CHECK ({ch})")
         o.append(f"CREATE TABLE {t['nombre']} (")
@@ -383,7 +385,7 @@ def puml():
     o.append("")
     vistos = set()
     for t in T:
-        for _cols, ref, _rc, _acc in t["fks"]:
+        for _cols, ref, _rc, _acc, *_cascada in t["fks"]:
             if (t["nombre"], ref) in vistos:
                 continue
             vistos.add((t["nombre"], ref))
@@ -411,8 +413,9 @@ def md():
                 clave = " (PK)" if c in t["pk"] else ""
                 o.append(f"| `{c}`{clave} | {tipo} | {'sí' if nulo else 'no'} | {com}{' · por defecto ' + d if d else ''} |")
             extra = []
-            for cols, ref, rc, _acc in t["fks"]:
-                extra.append(f"FK ({', '.join(cols)}) → `{ref}` ({', '.join(rc)})")
+            for cols, ref, rc, _acc, *cascada in t["fks"]:
+                al_actualizar = f", ON UPDATE {cascada[0]}" if cascada else ""
+                extra.append(f"FK ({', '.join(cols)}) → `{ref}` ({', '.join(rc)}){al_actualizar}")
             for cols in t["uniques"]:
                 extra.append(f"UNIQUE ({', '.join(cols)})")
             for ch in t["checks"]:

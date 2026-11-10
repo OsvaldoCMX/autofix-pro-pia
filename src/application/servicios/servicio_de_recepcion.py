@@ -6,6 +6,7 @@ from __future__ import annotations
 
 from application.comandos import (
     CorregirCliente,
+    CorregirPlacas,
     CorregirRecepcion,
     CorregirVehiculo,
     DatosDeVehiculo,
@@ -84,6 +85,23 @@ class ServicioDeRecepcion:
             recepcion.kilometraje,
             recepcion.nivel_de_combustible.value,
             orden.motivo_de_ingreso,
+        )
+
+    def corregir_placas(self, comando: CorregirPlacas) -> ResultadoDeOrden:
+        """RN-35: el vehículo y sus órdenes cambian de placas en la misma Unidad de Trabajo."""
+        nuevas = Placas(comando.placas)
+        with self._uow as uow:
+            orden = uow.ordenes.obtener(NumeroOrden(comando.numero_orden))
+            orden.exigir_placas_corregibles()
+            if nuevas != orden.placas:
+                uow.vehiculos.cambiar_placas(orden.placas, nuevas)
+                orden.corregir_placas(nuevas, self._reloj.ahora())
+                uow.ordenes.guardar(orden)
+            uow.confirmar()
+        self._publicador.publicar(uow.eventos_confirmados())
+        return ResultadoDeOrden(
+            str(orden.numero), orden.estado.value, orden.id_cliente, str(orden.placas),
+            orden.fecha_ingreso,
         )
 
     def registrar_orden(self, comando: RegistrarOrden) -> ResultadoDeOrden:

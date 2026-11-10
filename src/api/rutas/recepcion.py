@@ -13,18 +13,25 @@ from api.esquemas.recepcion import (
     ClienteEncontrado,
     ClienteRegistrado,
     DatosDeContacto,
+    DatosDePlacas,
     DatosDeRecepcion,
     ExpedienteDeOrden,
     NuevaOrden,
     NuevoCliente,
     NuevoVehiculo,
     OrdenRegistrada,
+    PlacasCorregidas,
     RecepcionCorregida,
     VehiculoCorregido,
     VehiculoEncontrado,
 )
 from api.seguridad import SOLO_ASESOR, Asesor, requiere_rol
-from application.comandos import CorregirCliente, CorregirRecepcion, CorregirVehiculo
+from application.comandos import (
+    CorregirCliente,
+    CorregirPlacas,
+    CorregirRecepcion,
+    CorregirVehiculo,
+)
 from application.consultas.consultas import (
     BuscarClientes,
     BuscarVehiculoPorPlacas,
@@ -35,7 +42,12 @@ from application.consultas.vistas import (
     ExpedienteDeOrdenVista,
     VehiculoConClienteVista,
 )
-from application.resultados import ResultadoDeCliente, ResultadoDeRecepcion, ResultadoDeVehiculo
+from application.resultados import (
+    ResultadoDeCliente,
+    ResultadoDeOrden,
+    ResultadoDeRecepcion,
+    ResultadoDeVehiculo,
+)
 from domain.clientes.cliente import TipoCliente
 from domain.empleados.empleado import RolDeEmpleado
 
@@ -164,3 +176,17 @@ def corregir_recepcion(
         numero, datos.kilometraje, datos.nivel_de_combustible, datos.motivo_de_ingreso
     )
     return contenedor.recepcion().corregir_recepcion(comando)
+
+
+@router.put(
+    "/ordenes/{numero}/placas",
+    response_model=PlacasCorregidas,
+    summary="Corregir las placas mal capturadas",
+    dependencies=[SOLO_ASESOR],
+    responses=errores(400, 401, 403, 404, 409, 422),
+)
+def corregir_placas(
+    numero: str, datos: DatosDePlacas, contenedor: ContenedorDeLaApp
+) -> ResultadoDeOrden:
+    return contenedor.recepcion().corregir_placas(CorregirPlacas(numero, datos.placas))
+

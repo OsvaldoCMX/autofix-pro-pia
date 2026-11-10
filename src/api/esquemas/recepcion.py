@@ -54,6 +54,12 @@ class DatosDeRecepcion(ModeloDeEntrada):
     motivo_de_ingreso: TextoLargo
 
 
+class DatosDePlacas(ModeloDeEntrada):
+    """Corrección de las placas (CA-066); el dominio las normaliza y valida."""
+
+    placas: str
+
+
 class NuevoVehiculo(ModeloDeEntrada):
     vin: TextoDeVin
     marca: TextoDeMarca
@@ -110,6 +116,12 @@ class RecepcionCorregida(ModeloDeSalida):
     kilometraje: int
     nivel_de_combustible: str
     motivo_de_ingreso: str
+
+
+class PlacasCorregidas(ModeloDeSalida):
+    numero_orden: str
+    estado: str
+    placas: str
 
 
 class VehiculoCorregido(ModeloDeSalida):

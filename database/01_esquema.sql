@@ -134,7 +134,7 @@ CREATE TABLE ordenes (
     CONSTRAINT pk_ordenes PRIMARY KEY (numero),
     CONSTRAINT uq_ordenes_recibo_numero UNIQUE (recibo_numero),
     CONSTRAINT fk_ordenes_id_cliente FOREIGN KEY (id_cliente) REFERENCES clientes (id) ON DELETE RESTRICT,
-    CONSTRAINT fk_ordenes_placas FOREIGN KEY (placas) REFERENCES vehiculos (placas) ON DELETE RESTRICT,
+    CONSTRAINT fk_ordenes_placas FOREIGN KEY (placas) REFERENCES vehiculos (placas) ON DELETE RESTRICT ON UPDATE CASCADE,
     CONSTRAINT fk_ordenes_asesor FOREIGN KEY (asesor) REFERENCES empleados (id) ON DELETE RESTRICT,
     CONSTRAINT fk_ordenes_tecnico_de_diagnostico FOREIGN KEY (tecnico_de_diagnostico) REFERENCES empleados (id) ON DELETE RESTRICT,
     CONSTRAINT fk_ordenes_cancelacion_asesor FOREIGN KEY (cancelacion_asesor) REFERENCES empleados (id) ON DELETE RESTRICT,

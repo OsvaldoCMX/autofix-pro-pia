@@ -40,7 +40,7 @@ Contrato de la API que se implementa con FastAPI (ADR-008). Cuando la API esté 
 | POST | `/api/ordenes/{numero}/fotos` | Asesor | Adjuntar foto de daños (multipart). | 201 | 401, 403, 404, 422 | `ServicioDeRecepcion.adjuntar_foto` | CA-002 | P2 |
 | GET | `/api/ordenes/{numero}` | Asesor, Gerente, Técnico, Caja | Expediente completo de la orden (estado, cotizaciones, trabajos, solicitudes, pagos), con el nombre y el tipo del cliente (y el nombre de su Responsable de Flotilla), la marca, el modelo y el año del vehículo y el nombre del técnico de diagnóstico y de cada trabajo (`interfaz-web.md` §7). | 200 | 401, 403, 404 | `ConsultarExpedienteDeOrden` | — | P1 |
 | PUT | `/api/ordenes/{numero}/recepcion` | Asesor | Corregir el kilometraje, el nivel de combustible o el motivo de ingreso (orden «Recibida» o «En Diagnóstico»). | 200 | 401, 403, 404, 409, 422 | `ServicioDeRecepcion.corregir_recepcion` | CA-057 | P1 |
-| PUT | `/api/ordenes/{numero}/placas` | Asesor | Corregir las placas mal capturadas (orden «Recibida» o «En Diagnóstico»). Mientras responda 501 no aparece en la página. | 200 | 401, 403, 404, 409, 422 | `ServicioDeRecepcion.corregir_placas` | CA-066 | P2 · Planeado |
+| PUT | `/api/ordenes/{numero}/placas` | Asesor | Corregir las placas mal capturadas (orden «Recibida» o «En Diagnóstico»); cambian en el vehículo y en sus órdenes. Era P2 y se construyó en la Fase 14. | 200 | 401, 403, 404, 409, 422 | `ServicioDeRecepcion.corregir_placas` | CA-066 | P1 |
 
 ### Cancelación
 

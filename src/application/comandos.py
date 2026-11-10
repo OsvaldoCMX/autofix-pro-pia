@@ -46,6 +46,14 @@ class CorregirRecepcion:
 
 
 @dataclass(frozen=True)
+class CorregirPlacas:
+    """Corrige las placas mal capturadas antes de la cotización (CA-066)."""
+
+    numero_orden: str
+    placas: str
+
+
+@dataclass(frozen=True)
 class CorregirVehiculo:
     """Corrige el VIN, la marca, el modelo o el año; las placas no cambian (CA-056)."""
 

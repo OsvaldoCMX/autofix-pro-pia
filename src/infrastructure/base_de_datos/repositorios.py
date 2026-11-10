@@ -20,6 +20,7 @@ from domain.clientes.cliente import Cliente, TipoCliente
 from domain.clientes.repositorio import RepositorioDeClientes
 from domain.compartido.errores import (
     ClienteNoEncontrado,
+    CorreccionNoPermitida,
     CotizacionNoEncontrada,
     EmpleadoNoEncontrado,
     OrdenNoEncontrada,
@@ -400,6 +401,25 @@ class RepositorioDeVehiculosSqlAlchemy(RepositorioDeVehiculos):
             mapeo.fila_de_vehiculo(vehiculo),
         )
         self._cargados[clave] = vehiculo
+
+    def cambiar_placas(self, anteriores: Placas, nuevas: Placas) -> Vehiculo:
+        """`ON UPDATE CASCADE` cambia también las placas de sus órdenes (RN-35)."""
+        vehiculo = self.por_placas(anteriores)
+        if self._conexion.execute(
+            select(vehiculos.c.placas).where(vehiculos.c.placas == str(nuevas))
+        ).first():
+            raise CorreccionNoPermitida(
+                f"Las placas {nuevas} ya pertenecen a otro vehículo. Revise el dato capturado."
+            )
+        self._conexion.execute(
+            update(vehiculos)
+            .where(vehiculos.c.placas == str(anteriores))
+            .values(placas=str(nuevas))
+        )
+        del self._cargados[str(anteriores)]
+        vehiculo.placas = nuevas
+        self._cargados[str(nuevas)] = vehiculo
+        return vehiculo
 
     def _exigir_vin_libre(self, vehiculo: Vehiculo) -> None:
         """Responde con el error del negocio, no con el de la restricción UNIQUE."""

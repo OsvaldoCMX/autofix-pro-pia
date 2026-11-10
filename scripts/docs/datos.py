@@ -746,7 +746,7 @@ ca("CA-066", "US-027", [
     (Y, "si las placas nuevas ya pertenecen a otro vehículo, o la orden está en otro estado, no debe permitirlo e indicar el motivo"),
 ], F1, ["RN-35"], "Vehiculo y OrdenDeServicio (corregir placas), Placas (VO), evento PlacasCorregidas, error CorreccionNoPermitida",
    "ServicioDeRecepcion.corregir_placas", "PUT /api/ordenes/{numero}/placas · GET /api/consulta-de-estado?orden=&placas=", ASE,
-   prioridad="P2", cambio="H-PIA-29", nombre="Corregir las placas mal capturadas", planeado=True)
+   cambio="H-PIA-29", nombre="Corregir las placas mal capturadas")
 
 # ----------------------------------------------------------------------------- áreas (archivos .feature)
 AREAS = [
@@ -817,7 +817,7 @@ REGLAS = {
 }
 
 # Reglas aprobadas en la Fase 13 que todavía no se construyen (misma idea que `planeado` en los CA).
-REGLAS_PLANEADAS = {"RN-35"}
+REGLAS_PLANEADAS = set()
 
 # ----------------------------------------------------------------------------- pruebas previstas
 # Convención: toda prueba de aceptación se llama test_ca_0XX_<descripcion> para poder

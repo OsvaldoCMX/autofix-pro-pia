@@ -148,4 +148,4 @@ Las reglas de conversión y las diferencias con el modelo del profesor están en
 
 - **P1 (obligatorio en el PIA):** todo el flujo de la orden, las 8 Specifications, las 4 máquinas de estados, los Domain Events con sus alertas, la revisión de plazos, las consultas, la seguridad por roles, la carga de los datos del profesor y sus pruebas.
 - **P2 (si el tiempo lo permite):** generación de PDF (cotización, Nota de Responsabilidad, recibo) y fotos de daños. Mientras no estén, las rutas P2 responden `501 Not Implemented` con un mensaje claro y la matriz de trazabilidad lo indica en la columna «Prioridad». **Decisión del equipo (06/11/2026):** P2 se omite en esta entrega por falta de tiempo; las 4 rutas siguen en 501.
-- **P2 de la v3.1 (09/11/2026):** la corrección de placas (`PUT /api/ordenes/{numero}/placas`, CA-066, H-PIA-29) se construye al final de la Fase 14 solo si sobra tiempo; si no, responde 501 y la página no la muestra.
+- **P2 de la v3.1 (09/11/2026):** la corrección de placas (`PUT /api/ordenes/{numero}/placas`, CA-066, H-PIA-29) era P2 («solo si sobra tiempo»); sí alcanzó el tiempo y se construyó al final de la Fase 14, así que ya no responde 501.

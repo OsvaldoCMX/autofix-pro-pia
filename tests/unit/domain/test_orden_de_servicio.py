@@ -23,7 +23,7 @@ from domain.compartido.errores import (
     TransicionDeEstadoNoPermitida,
     ValorInvalido,
 )
-from domain.compartido.valores import Dinero
+from domain.compartido.valores import Dinero, Placas
 from domain.ordenes import eventos as ev
 from domain.ordenes.especificaciones import RequiereAlertaDeRefaccion
 from domain.ordenes.estados import EstadoOrden, EstadoSolicitud, EstadoTrabajo
@@ -1399,3 +1399,23 @@ def test_rn_34_cuando_la_pieza_llega_se_puede_volver_a_solicitar() -> None:
     orden.crear_solicitud_de_compra(1, "Balata", 1, DESPUES)
 
     assert len(orden.solicitudes) == 2
+
+
+# ------------------------------------------------------------------ corrección de placas (RN-35)
+@pytest.mark.parametrize("constructor", [c.recibida, c.en_diagnostico])
+def test_ca_066_la_orden_toma_las_placas_corregidas(constructor: c.Constructor) -> None:
+    orden = c.sin_eventos(constructor())
+    anteriores = orden.placas
+
+    orden.corregir_placas(Placas("XYZ998"), DESPUES)
+
+    assert orden.placas == Placas("XYZ998")
+    (evento,) = orden.extraer_eventos()
+    assert isinstance(evento, ev.PlacasCorregidas)
+    assert (evento.placas_anteriores, evento.placas) == (str(anteriores), "XYZ998")
+
+
+@pytest.mark.parametrize("constructor", [c.cotizada, c.cancelada])
+def test_rn_35_despues_de_cotizar_las_placas_no_se_corrigen(constructor: c.Constructor) -> None:
+    with pytest.raises(CorreccionNoPermitida, match="solo se corrigen antes de la cotización"):
+        constructor().corregir_placas(Placas("XYZ998"), DESPUES)
