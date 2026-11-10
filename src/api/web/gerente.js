@@ -2,17 +2,20 @@
 // al Gerente (E1): la lista y el desglose los manda la API.
 
 import { pedir } from "./api.js";
-import { vistaDeCotizacion } from "./expediente.js";
-import { dinero } from "./formato.js";
+import { cargarExpediente, vistaDeCotizacion, vistaDelExpediente } from "./expediente.js";
+import { dinero, fecha, fechaYHora } from "./formato.js";
 import {
   boton,
   confirmar,
   crear,
+  decodificar,
   enviar,
+  etiquetaDeEstado,
+  lista,
   manejarError,
   mostrarCargando,
   mostrarExito,
-  pantallaEnPreparacion,
+  tabla,
 } from "./ui.js";
 
 // Direcciones de interfaz-web.md §3; el menú del encabezado muestra estas entradas.
@@ -22,13 +25,41 @@ export const MENU = [
   { texto: "Ingresos del día", direccion: "#/gerente/ingresos" },
 ];
 
+// Los 13 estados del Glosario (§2), en el orden del ciclo de vida, para el filtro de G-02.
+const ESTADOS_DE_LA_ORDEN = [
+  "Recibida",
+  "En Diagnóstico",
+  "Cotizada",
+  "Autorizada",
+  "En Reparación",
+  "En Espera de Refacción",
+  "Pausada por Retiro de Vehículo",
+  "Lista para Entrega",
+  "Pagada",
+  "Por Cobrar (Crédito)",
+  "Cerrada",
+  "Cerrada sin Reparación",
+  "Cancelada",
+];
+
 export function mostrar(ruta, pantalla) {
-  if (ruta === "/gerente") {
-    mostrarPorAprobar(pantalla);
+  const orden = /^\/gerente\/orden\/(.+)$/.exec(ruta);
+  if (orden) {
+    mostrarOrden(pantalla, decodificar(orden[1]));
     return;
   }
-  pantallaEnPreparacion(pantalla, MENU, ruta);
+  if (ruta === "/gerente/ordenes") {
+    mostrarOrdenes(pantalla);
+    return;
+  }
+  if (ruta === "/gerente/ingresos") {
+    mostrarIngresos(pantalla);
+    return;
+  }
+  mostrarPorAprobar(pantalla);
 }
+
+const direccionDeOrden = (numeroOrden) => `#/gerente/orden/${encodeURIComponent(numeroOrden)}`;
 
 // ---------------------------------------------------------------- G-01 Cotizaciones por aprobar
 
@@ -65,6 +96,7 @@ async function mostrarPorAprobar(pantalla) {
         "section",
         { className: "tarjeta" },
         crear("h2", {}, `Orden ${cotizacion.numero_orden}`),
+        crear("p", {}, crear("a", { href: direccionDeOrden(cotizacion.numero_orden) }, "Ver el expediente de la orden")),
         vistaDeCotizacion(cotizacion, [
           boton("Aprobar", (elemento) => aprobar(cotizacion, elemento, recargar)),
           boton("Rechazar con observaciones", (elemento) => rechazar(cotizacion, elemento, recargar), "boton boton-peligro"),
@@ -116,5 +148,93 @@ async function rechazar(cotizacion, elemento, recargar) {
       mostrarExito(`Cotización ${revisada.id} de la orden ${revisada.numero_orden} rechazada. Quedó «${revisada.estado}».`);
       recargar();
     },
+  );
+}
+
+// ---------------------------------------------------------------- G-02 Órdenes
+
+function mostrarOrdenes(pantalla) {
+  const opciones = [{ valor: "", texto: "Todas" }, ...ESTADOS_DE_LA_ORDEN];
+  const filtro = lista("filtro-estado", "Estado", opciones);
+  const resultado = crear("div");
+  pantalla.replaceChildren(
+    crear("section", { className: "tarjeta" }, crear("h1", {}, "Órdenes"), filtro),
+    resultado,
+  );
+  const elegir = filtro.querySelector("select");
+  const cargar = () => cargarOrdenes(resultado, elegir.value);
+  elegir.addEventListener("change", cargar);
+  cargar();
+}
+
+async function cargarOrdenes(resultado, estado) {
+  mostrarCargando(resultado);
+  let ordenes;
+  try {
+    ordenes = await pedir("GET", "/api/gerencia/ordenes", { parametros: estado ? { estado } : {} });
+  } catch (error) {
+    resultado.replaceChildren();
+    manejarError(error, () => cargarOrdenes(resultado, estado));
+    return;
+  }
+  if (ordenes.length === 0) {
+    const texto = estado ? `No hay órdenes en «${estado}».` : "Todavía no hay órdenes.";
+    resultado.replaceChildren(crear("section", { className: "tarjeta" }, crear("p", { className: "nota" }, texto)));
+    return;
+  }
+  resultado.replaceChildren(
+    crear(
+      "section",
+      { className: "tarjeta" },
+      crear("p", { className: "nota" }, ordenes.length === 1 ? "1 orden." : `${ordenes.length} órdenes.`),
+      tabla(
+        ["Folio", "Placas", "Estado", "Ingreso", "Última actualización"],
+        ordenes.map((orden) => [
+          crear("a", { href: direccionDeOrden(orden.numero_orden) }, orden.numero_orden),
+          orden.placas,
+          etiquetaDeEstado(orden.estado),
+          fechaYHora(orden.fecha_ingreso),
+          fechaYHora(orden.ultima_actualizacion),
+        ]),
+      ),
+    ),
+  );
+}
+
+// Expediente solo para consulta: el Gerente no tiene botones en la orden.
+async function mostrarOrden(pantalla, numeroOrden) {
+  mostrarCargando(pantalla);
+  const regresar = crear("div", { className: "acciones" }, crear("a", { className: "boton boton-secundario", href: "#/gerente/ordenes" }, "Regresar a órdenes"));
+  let expediente;
+  try {
+    expediente = await cargarExpediente(numeroOrden);
+  } catch (error) {
+    pantalla.replaceChildren(regresar);
+    manejarError(error, () => mostrarOrden(pantalla, numeroOrden));
+    return;
+  }
+  pantalla.replaceChildren(...vistaDelExpediente(expediente), regresar);
+}
+
+// ---------------------------------------------------------------- G-03 Ingresos del día
+
+async function mostrarIngresos(pantalla) {
+  mostrarCargando(pantalla);
+  let ingresos;
+  try {
+    ingresos = await pedir("GET", "/api/gerencia/ingresos-del-dia");
+  } catch (error) {
+    pantalla.replaceChildren();
+    manejarError(error, () => mostrarIngresos(pantalla));
+    return;
+  }
+  pantalla.replaceChildren(
+    crear(
+      "section",
+      { className: "tarjeta" },
+      crear("h1", {}, "Ingresos del día"),
+      crear("p", { className: "importe-grande" }, dinero(ingresos.total)),
+      crear("p", { className: "nota" }, `Pagos de contado del ${fecha(ingresos.fecha)}.`),
+    ),
   );
 }
