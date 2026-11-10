@@ -26,6 +26,8 @@ dev = [
     "pytest-cov>=5,<8",
     "httpx>=0.27,<1",
     "ruff>=0.17,<0.18",
+    # Lo usan los generadores de scripts/docs/ para la matriz de trazabilidad en Excel.
+    "openpyxl>=3.1,<4",
 ]
 
 [tool.setuptools.packages.find]
