@@ -27,6 +27,14 @@ class TecnicoAsignadoParaDiagnostico(EventoDeOrden):
 
 
 @dataclass(frozen=True)
+class TecnicoDeDiagnosticoReasignado(EventoDeOrden):
+    """El asesor cambió al técnico antes del diagnóstico (RN-28, H-PIA-23)."""
+
+    tecnico_anterior: str
+    tecnico: str
+
+
+@dataclass(frozen=True)
 class DiagnosticoRegistrado(EventoDeOrden):
     tecnico: str
     asesor: str

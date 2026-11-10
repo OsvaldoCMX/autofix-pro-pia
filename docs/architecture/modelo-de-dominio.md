@@ -233,7 +233,7 @@ Las alertas por tiempo (CA-023 y CA-040) no vienen de un evento sino de la revis
 | `EntregaNoPermitida` | E3 no se cumple. | 409 |
 | `CancelacionNoPermitida` | E4 no se cumple. | 409 |
 | `VehiculoConOrdenAbierta` | *(v3.1)* El vehículo ya tiene una orden abierta (RN-27), también cuando la base rechaza un segundo registro simultáneo. | 409 |
-| `CorreccionNoPermitida` | *(v3.1)* Una corrección de la orden fuera del estado que la permite: cambiar el técnico de diagnóstico cuando el diagnóstico ya está registrado (RN-28) corregir la recepción después de la cotización (RN-29), la forma de pago fuera de «Pagada» (RN-30) o, en P2, las placas. | 409 · Planeado |
+| `CorreccionNoPermitida` | *(v3.1)* Una corrección de la orden fuera del estado que la permite: cambiar el técnico de diagnóstico cuando el diagnóstico ya está registrado (RN-28) corregir la recepción después de la cotización (RN-29), la forma de pago fuera de «Pagada» (RN-30) o, en P2, las placas. | 409 |
 | `EmpresaYaRegistrada` | *(v3.1)* Se registra una empresa de flotilla que ya existe con datos distintos de su Responsable de Flotilla; el mensaje dice el nombre y el teléfono del responsable registrado (CA-065). | 409 · Planeado |
 | `OrdenNoEncontrada`, `CotizacionNoEncontrada`, `ClienteNoEncontrado`, `VehiculoNoEncontrado`, `EmpleadoNoEncontrado`, `TrabajoNoEncontrado`, `SolicitudNoEncontrada` | El identificador no existe. | 404 |
 

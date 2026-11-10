@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from datetime import timedelta
+from typing import Any
 from unittest.mock import Mock
 
 from fastapi.testclient import TestClient
@@ -19,6 +20,7 @@ from tests.api.pasos import (
     alertas_de,
     autorizada,
     cotizada,
+    diagnosticada,
     en_diagnostico,
     en_reparacion,
     exigir,
@@ -217,3 +219,32 @@ def test_rn_28_la_lista_no_incluye_otros_puestos(cliente: TestClient) -> None:
     assert {tecnico["id_empleado"] for tecnico in tecnicos}.isdisjoint(
         {"EMP-001", "EMP-004", "EMP-005", "EMP-006"}
     )
+
+
+def _asignar(cliente: TestClient, numero: str, tecnico: str) -> Any:
+    return cliente.post(
+        f"/api/ordenes/{numero}/asignacion-diagnostico", json={"tecnico": tecnico}, headers=ASESOR
+    )
+
+
+def test_ca_054_sale_del_panel_del_anterior_y_aparece_en_el_nuevo(cliente: TestClient) -> None:
+    numero = en_diagnostico(cliente)
+
+    respuesta = exigir(_asignar(cliente, numero, ID_OTRO_TECNICO), 200)
+
+    assert respuesta["estado"] == "En Diagnóstico"
+    assert numero not in [orden["numero_orden"] for orden in panel_de(cliente, TECNICO)]
+    assert numero in [orden["numero_orden"] for orden in panel_de(cliente, OTRO_TECNICO)]
+    assert expediente_de(cliente, numero)["tecnico_de_diagnostico"] == ID_OTRO_TECNICO
+
+
+def test_ca_054_con_diagnostico_responde_409_y_no_cambia(cliente: TestClient) -> None:
+    numero = diagnosticada(cliente)
+
+    respuesta = exigir(_asignar(cliente, numero, ID_OTRO_TECNICO), 409)
+
+    assert respuesta["error"] == "CorreccionNoPermitida"
+    assert respuesta["detalle"] == (
+        f"El diagnóstico de la orden {numero} ya está registrado; ya no se puede cambiar el técnico."
+    )
+    assert expediente_de(cliente, numero)["tecnico_de_diagnostico"] == ID_TECNICO

@@ -634,7 +634,7 @@ ca("CA-054", "US-020", [
     (Y, "si el diagnóstico ya está registrado, no debe permitir el cambio e indicar que el diagnóstico ya está registrado"),
 ], F2, ["RN-28", "RN-22"], "OrdenDeServicio (asignar_tecnico_para_diagnostico), evento TecnicoDeDiagnosticoReasignado, error CorreccionNoPermitida",
    "ServicioDeDiagnostico.asignar_tecnico", "POST /api/ordenes/{numero}/asignacion-diagnostico · GET /api/tecnicos/me/panel", ASE,
-   cambio="H-PIA-23", nombre="Cambiar el técnico de diagnóstico", planeado=True)
+   cambio="H-PIA-23", nombre="Cambiar el técnico de diagnóstico")
 
 ca("CA-055", "US-027", [
     (D, "que el nombre, el teléfono o el correo de un cliente se capturaron mal"),

@@ -52,7 +52,7 @@ Contrato de la API que se implementa con FastAPI (ADR-008). Cuando la API esté 
 
 | Método | Ruta | Rol | Descripción | Éxito | Errores | Caso de uso | Criterios | Prioridad |
 |---|---|---|---|---|---|---|---|---|
-| POST | `/api/ordenes/{numero}/asignacion-diagnostico` | Asesor | Asignar técnico para el diagnóstico. *Planeado (H-PIA-23):* también lo cambia mientras no haya diagnóstico. | 200 | 401, 403, 404, 409, 422 | `ServicioDeDiagnostico.asignar_tecnico` | CA-035, CA-054 | P1 |
+| POST | `/api/ordenes/{numero}/asignacion-diagnostico` | Asesor | Asignar técnico para el diagnóstico, o cambiarlo mientras no haya diagnóstico (H-PIA-23). | 200 | 401, 403, 404, 409, 422 | `ServicioDeDiagnostico.asignar_tecnico` | CA-035, CA-054 | P1 |
 | POST | `/api/ordenes/{numero}/diagnostico` | Técnico | Registrar el diagnóstico (fallas y recomendaciones). | 201 | 401, 403, 404, 409, 422 | `ServicioDeDiagnostico.registrar_diagnostico` | CA-032, CA-033 | P1 |
 | POST | `/api/ordenes/{numero}/fallas-adicionales` | Técnico | Reportar una falla adicional durante la reparación. | 201 | 401, 403, 404, 409, 422 | `ServicioDeDiagnostico.reportar_falla_adicional` | CA-034 | P1 |
 | GET | `/api/tecnicos/me/panel` | Técnico | Órdenes y trabajos asignados, en orden de la fila. | 200 | 401, 403 | `ConsultarPanelDelTecnico` | CA-013, CA-035, CA-036, CA-054 | P1 |

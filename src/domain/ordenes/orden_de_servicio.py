@@ -11,6 +11,7 @@ from typing import NoReturn
 
 from domain.compartido.errores import (
     CancelacionNoPermitida,
+    CorreccionNoPermitida,
     DiagnosticoNoModificable,
     DiagnosticoRequerido,
     EntregaNoPermitida,
@@ -141,14 +142,35 @@ class OrdenDeServicio(RaizDeAgregado):
 
     # ------------------------------------------------------------------ diagnóstico
     def asignar_tecnico_para_diagnostico(self, tecnico: str, fecha: datetime) -> None:
+        """Asigna el técnico (CA-035) o lo cambia antes del diagnóstico (CA-054, RN-28)."""
+        if self.estado is _O.EN_DIAGNOSTICO:
+            self._cambiar_tecnico_de_diagnostico(tecnico, fecha)
+            return
         if not MAQUINA_DE_ORDEN.permite(self.estado, _O.EN_DIAGNOSTICO):
             raise TransicionDeEstadoNoPermitida(
-                f"Solo se asigna técnico de diagnóstico a una orden «{_O.RECIBIDA.value}»; "
+                "El técnico de diagnóstico solo se asigna o se cambia antes del diagnóstico "
+                f"(orden «{_O.RECIBIDA.value}» o «{_O.EN_DIAGNOSTICO.value}»); "
                 f"la orden {self.numero} está en «{self.estado.value}»."
             )
         self._cambiar_estado(_O.EN_DIAGNOSTICO, fecha)
         self.tecnico_de_diagnostico = tecnico
         self._registrar(ev.TecnicoAsignadoParaDiagnostico(fecha, str(self.numero), tecnico))
+
+    def _cambiar_tecnico_de_diagnostico(self, tecnico: str, fecha: datetime) -> None:
+        """No cambia el estado: la orden sale del panel del técnico anterior (RN-28)."""
+        if self.diagnostico is not None:
+            raise CorreccionNoPermitida(
+                f"El diagnóstico de la orden {self.numero} ya está registrado; "
+                "ya no se puede cambiar el técnico."
+            )
+        anterior = self.tecnico_de_diagnostico
+        if anterior == tecnico:
+            return
+        self.tecnico_de_diagnostico = tecnico
+        self.ultima_actualizacion = fecha
+        self._registrar(
+            ev.TecnicoDeDiagnosticoReasignado(fecha, str(self.numero), anterior or "", tecnico)
+        )
 
     def registrar_diagnostico(self, diagnostico: Diagnostico) -> None:
         if self.cotizada:

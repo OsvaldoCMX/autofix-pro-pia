@@ -9,6 +9,7 @@ import pytest
 
 from domain.compartido.errores import (
     CancelacionNoPermitida,
+    CorreccionNoPermitida,
     DiagnosticoNoModificable,
     DiagnosticoRequerido,
     EntregaNoPermitida,
@@ -1248,3 +1249,40 @@ def test_rn_22_recorre_el_flujo_completo_de_una_orden_particular() -> None:
 def test_valores_de_recepcion_son_inmutables() -> None:
     with pytest.raises(FrozenInstanceError):
         c.RECEPCION.kilometraje = 1  # type: ignore[misc]
+
+
+# ------------------------------------------------------------------ cambio de técnico (H-PIA-23)
+def test_ca_054_cambia_el_tecnico_sin_cambiar_el_estado() -> None:
+    orden = c.sin_eventos(c.en_diagnostico())
+
+    orden.asignar_tecnico_para_diagnostico(c.OTRO_TECNICO, DESPUES)
+
+    assert orden.estado is _O.EN_DIAGNOSTICO
+    assert orden.tecnico_de_diagnostico == c.OTRO_TECNICO
+    eventos = orden.extraer_eventos()
+    assert [type(evento) for evento in eventos] == [ev.TecnicoDeDiagnosticoReasignado]
+    assert (eventos[0].tecnico_anterior, eventos[0].tecnico) == (c.TECNICO, c.OTRO_TECNICO)
+
+
+def test_ca_054_con_diagnostico_ya_no_se_cambia() -> None:
+    orden = c.diagnosticada()
+
+    with pytest.raises(CorreccionNoPermitida, match="ya está registrado"):
+        orden.asignar_tecnico_para_diagnostico(c.OTRO_TECNICO, DESPUES)
+
+    assert orden.tecnico_de_diagnostico == c.TECNICO
+
+
+def test_rn_28_asignar_al_mismo_tecnico_no_registra_nada() -> None:
+    orden = c.sin_eventos(c.en_diagnostico())
+
+    orden.asignar_tecnico_para_diagnostico(c.TECNICO, DESPUES)
+
+    assert orden.extraer_eventos() == []
+
+
+def test_rn_28_despues_de_cotizar_el_mensaje_dice_cuando_si_se_puede() -> None:
+    orden = c.cotizada()
+
+    with pytest.raises(TransicionDeEstadoNoPermitida, match="antes del diagnóstico"):
+        orden.asignar_tecnico_para_diagnostico(c.OTRO_TECNICO, DESPUES)
