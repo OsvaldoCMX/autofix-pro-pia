@@ -2,28 +2,30 @@
 
 **Componentes de Lógica de Negocio · FIME UANL · Profesor: Miguel Ángel Gómez Marroquín**
 **Equipo 6:** Jesus Eduardo Moreno Osoria (2136063) · Osvaldo Salvador Cárdenas Mejorado (2141553)
-**Versión de la documentación:** 3.0 (04/11/2026)
+**Versión de la documentación:** 3.1 (09/11/2026, después de la revisión del profesor)
 
 Esta carpeta es la fuente única del análisis y la arquitectura del PIA. Todo está en Markdown para que se lea en GitHub y se pueda comparar entre versiones.
 
 | Carpeta / archivo | Contenido |
 |---|---|
-| [BRD.md](BRD.md) | Business Requirements Document v3.0 (15 necesidades, 10 restricciones de proceso, criterios de éxito). |
-| [user-stories.md](user-stories.md) | 25 User Stories y 46 criterios de aceptación en Gherkin, con trazabilidad necesidad → US → CA → BPMN. |
-| [gherkin/](gherkin/README.md) | Los mismos 46 criterios como escenarios Gherkin formales (`# language: es`) en 8 archivos `.feature`. |
+| [BRD.md](BRD.md) | Business Requirements Document v3.1 (16 necesidades, 12 restricciones de proceso, criterios de éxito). |
+| [user-stories.md](user-stories.md) | 27 User Stories y 66 criterios de aceptación en Gherkin, con trazabilidad necesidad → US → CA → BPMN. |
+| [gherkin/](gherkin/README.md) | Los mismos 66 criterios como escenarios Gherkin formales (`# language: es`) en 8 archivos `.feature`. |
 | [glosario.md](glosario.md) | Lenguaje ubicuo, los 25 estados del sistema y su nombre en el código. |
 | [bpmn/](bpmn/README.md) | BPMN v3 vigente (PDF) y la v2 como historial, con la lista de cambios. |
-| [architecture/](architecture/README.md) | Modelo de dominio, modelo de datos, decisiones técnicas, patrones, SOLID, 16 ADR y diagramas UML. |
-| [api/](api/README.md) | Contrato planeado de la API REST (43 rutas, roles, códigos y ejemplos). |
+| [architecture/](architecture/README.md) | Modelo de dominio, modelo de datos, decisiones técnicas, patrones, SOLID, 18 ADR y diagramas UML. |
+| [api/](api/README.md) | Contrato de la API REST (51 rutas, roles, códigos y ejemplos; 8 marcadas «Planeado»). |
 | [trazabilidad/](trazabilidad/matriz-trazabilidad.md) | Matriz BRD → regla → componente → prueba (Markdown y Excel). |
 | [datos-profesor/](datos-profesor/README.md) | Cómo se cargan los datos del profesor, diferencias D-01 a D-07, anomalías y oráculos de los 120 casos y 20 transiciones. |
-| [registro-de-cambios.md](registro-de-cambios.md) | Hallazgos H-PIA-01 a H-PIA-18 y conteos U3 → PIA. |
+| [registro-de-cambios.md](registro-de-cambios.md) | Hallazgos H-PIA-01 a H-PIA-29 y conteos U3 → PIA → v3.1. |
 | [interfaz-web.md](interfaz-web.md) | *(v3.1)* Pantallas de la página web por puesto: qué ve cada usuario, sus botones por estado, la ruta que llama y los criterios que cubre. |
 | [auditoria-errores-de-usuario.md](auditoria-errores-de-usuario.md) | *(v3.1)* Auditoría «¿y si me equivoco?» (AU-01 a AU-39) con las decisiones del equipo. |
-| [plan-de-implementacion.md](plan-de-implementacion.md) | Las 12 fases de la implementación (de la preparación del repositorio al README técnico), con lo que construye cada una, sus pruebas y su estado de avance. |
+| [plan-de-implementacion.md](plan-de-implementacion.md) | Las 21 fases (0 a 20): de la preparación del repositorio a la entrega del 06/11/2026 y, después de la revisión, la interfaz web y las correcciones, con lo que construye cada una, sus pruebas y su estado de avance. |
 
 ## Conteos clave
 
 Fuera de `docs/`: `database/` (esquema y datos iniciales para Supabase y Docker) y `scripts/` (generadores de la documentación y del SQL).
 
-15 necesidades · 25 User Stories · 46 criterios · 24 reglas de negocio · 8 Specifications · 4 máquinas de estados (25 estados) · 26 Domain Events · 12 servicios de aplicación · 11 consultas · 43 rutas de API · 16 ADR · 18 tablas.
+16 necesidades · 27 User Stories · 66 criterios (20 planeados) · 35 reglas de negocio (11 planeadas) · 8 Specifications · 4 máquinas de estados (25 estados) · 31 Domain Events (5 planeados) · 12 servicios de aplicación · 12 consultas (1 planeada: `ListarTecnicos`) · 51 rutas de API (8 planeadas) · 18 ADR · 18 tablas (19 cuando la Fase 14 agregue `correcciones_de_cotizacion`).
+
+Lo **planeado** está aprobado en la Fase 13 (revisión del 09/11/2026) y todavía no se construye; la Fase 14 quita la marca de cada cosa al construirla.

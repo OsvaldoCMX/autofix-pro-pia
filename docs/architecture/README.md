@@ -11,7 +11,7 @@ Arquitectura en capas con **Domain-Driven Design**: un Domain Model rico (Aggreg
 | [decisiones-tecnicas.md](decisiones-tecnicas.md) | Stack, estructura del repositorio (`src/domain`, `src/application`, `src/infrastructure`, `src/api`), variables de entorno, convenciones de la API, roles, datos de demostración, estrategia de pruebas y alcance P1/P2. |
 | [patrones.md](patrones.md) | Patrones aplicados, dónde y por qué; patrones descartados. |
 | [solid.md](solid.md) | Revisión SOLID de la U3 (S-01 a S-07) y hallazgos nuevos del PIA (S-08 a S-12). |
-| [adr/](adr/README.md) | 16 decisiones de arquitectura (ADR-001 a ADR-005 de la U3, actualizados; ADR-006 a ADR-016 del PIA). |
+| [adr/](adr/README.md) | 18 decisiones de arquitectura (ADR-001 a ADR-005 de la U3, actualizados; ADR-006 a ADR-016 del PIA; ADR-017 y ADR-018 de la revisión del 09/11/2026). |
 
 ## Diagramas (`diagramas/`: fuente PlantUML `.puml` + `.png` + `.svg`)
 

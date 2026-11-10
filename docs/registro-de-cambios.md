@@ -37,17 +37,17 @@ Antes de empezar la implementación del PIA se revisaron juntos el BRD, las User
 
 ## 3. Conteos finales
 
-| Elemento | U3 | PIA v3.0 |
-|---|---|---|
-| Necesidades | 14 | 15 |
-| User Stories | 24 | 25 |
-| Criterios de aceptación | 43 | 46 |
-| Estados (orden / cotización / trabajo / solicitud) | 24 (12/6/4/2) | 25 (13/6/4/2) |
-| Reglas de negocio trazadas | — | 24 (RN-01 a RN-24) |
-| Specifications | 0 (1 política) | 8 (E1–E8) |
-| ADR | 5 | 16 |
-| Domain Events | 15 | 26 |
-| Rutas de la API | — | 43 |
+| Elemento | U3 | PIA v3.0 | v3.1 (Fase 13) |
+|---|---|---|---|
+| Necesidades | 14 | 15 | 16 |
+| User Stories | 24 | 25 | 27 |
+| Criterios de aceptación | 43 | 46 | 66 (20 planeados) |
+| Estados (orden / cotización / trabajo / solicitud) | 24 (12/6/4/2) | 25 (13/6/4/2) | 25 (sin cambios; 1 transición nueva en la cotización) |
+| Reglas de negocio trazadas | — | 24 (RN-01 a RN-24) | 35 (11 planeadas) |
+| Specifications | 0 (1 política) | 8 (E1–E8) | 8 (E2 y E8 se precisan) |
+| ADR | 5 | 16 | 18 |
+| Domain Events | 15 | 26 | 31 (5 planeados) |
+| Rutas de la API | — | 43 | 51 (8 planeadas) |
 
 ## 4. Decisiones confirmadas por el equipo (04/11/2026)
 
@@ -75,3 +75,8 @@ En la revisión del 09/11/2026 el profesor evaluó el sistema **como un usuario 
 | H-PIA-27 | Con el nombre del cliente escrito con dos espacios, la decisión se rechaza aunque los nombres se vean iguales; en flotillas, el mensaje habla del conductor y no dice a nombre de quién registrar. | Revisión del 09/11/2026 · AU-15, AU-16 | E2 ignora mayúsculas y espacios repetidos o en los extremos; los acentos sí cuentan (CA-063). El mensaje de flotilla dice la empresa, el Responsable de Flotilla y el rol (CA-064). El texto de CA-029 no cambia, pero su prueba tendrá que revisar el mensaje nuevo. Sin reglas nuevas (RN-07). | `scripts/docs/`, User Stories, `04_autorizacion.feature`, `01_recepcion.feature`, matriz, modelo de dominio §4 |
 | H-PIA-28 | Mensajes y detalles que confunden: una empresa de flotilla repetida ignora sin avisar los datos nuevos del responsable; un importe negativo recibe el mensaje de formato; el número en la dirección se llama «número de registro»; el 403 habla de «rol» y de «área encargada»; la API exige `recomendaciones` aunque el dominio las acepta vacías. | Revisión del 09/11/2026 · AU-04 (a), AU-19, AU-38, AU-39, AU-27 | `EmpresaYaRegistrada` (409) con el nombre y el teléfono del responsable registrado (CA-065; `POST /api/clientes` agrega el 409, anotado como planeado hasta la Fase 14). Mensajes nuevos en `api/errores.py` para negativos, número de trabajo o de solicitud y función de otro puesto; `recomendaciones` opcional. AU-04 (b) (cambiar al responsable) no se hace. | `scripts/docs/`, User Stories, `01_recepcion.feature`, matriz, `api/README.md`, modelo de dominio §2.3 y §7, `decisiones-tecnicas.md` §4 |
 | H-PIA-29 | Unas placas mal capturadas no se corrigen nunca: el VIN queda ocupado y el cliente no puede consultar con sus placas reales. | Revisión del 09/11/2026 · AU-01, AU-36 | Corrección de placas como **P2**: solo con la orden «Recibida» o «En Diagnóstico», cambia el vehículo y sus órdenes a la vez (RN-35, CA-066, `PUT /api/ordenes/{numero}/placas`). Se construye al final de la Fase 14 solo si sobra tiempo; si no, responde 501 y no aparece en la página. | `scripts/docs/`, User Stories, `01_recepcion.feature`, matriz, `api/README.md`, modelo de dominio §2.1 y §2.4, `decisiones-tecnicas.md` §8 |
+
+**Lo que no cambia en la v3.1:** el objetivo, el alcance y el flujo principal del BPMN; los 25 estados y sus nombres; RN-01 a RN-24 (RN-05 sigue igual: solo protege el ajuste que pidió el Gerente); el texto de los 46 criterios de la v3.0 (CA-029 conserva su texto; su mensaje cambia con CA-064). Las propuestas que se resuelven **solo con la página** (AU-07, AU-14, AU-21 a AU-26, AU-29 a AU-33, AU-35 y AU-37) están en `interfaz-web.md` §6, y las que **no se hacen** son AU-28 (b) y AU-04 (b).
+
+**Cómo se marca lo planeado.** En `scripts/docs/datos.py` (`planeado=True` y `REGLAS_PLANEADAS`), en `scripts/docs/rutas.py` (`P1_PLANEADA`, `P2_PLANEADA` y las descripciones con «*Planeado (H-PIA-xx):*» de las rutas que ya existen) y en la tabla de errores del modelo de dominio («409 · Planeado»). `tests/test_trazabilidad.py`, `tests/api/test_contrato.py` y `tests/api/test_errores_http.py` no exigen prueba, ruta ni error a lo planeado, pero fallan si ya existe: así la Fase 14 tiene que quitar la marca al construir cada cosa.
+

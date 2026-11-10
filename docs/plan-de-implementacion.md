@@ -27,8 +27,8 @@ Orden en que se construye el sistema a partir de esta documentación. Cada fase 
 | 9 | Despliegue en Render con Supabase | Terminada | 06/11/2026 | `docs: agregar la URL de producción` |
 | 10 | P2: documentos PDF y fotos de daños | Omitida | 06/11/2026 | `docs: registrar la omisión de la Fase 10` |
 | 11 | README técnico, evidencias y cierre | Terminada | 06/11/2026 | `docs: README técnico, guion de demostración y evidencia de pruebas` |
-| 12 | Auditoría «¿y si me equivoco?» | Pendiente | — | — |
-| 13 | Documentar la interfaz web y las correcciones aprobadas | Pendiente | — | — |
+| 12 | Auditoría «¿y si me equivoco?» | Terminada | 09/11/2026 | `docs: decisiones del equipo en la auditoría` |
+| 13 | Documentar la interfaz web y las correcciones aprobadas | Terminada | 09/11/2026 | `docs: cerrar la Fase 13` |
 | 14 | Correcciones en el dominio y la API | Pendiente | — | — |
 | 15 | Base de la interfaz web | Pendiente | — | — |
 | 16 | Pantallas del Asesor | Pendiente | — | — |
@@ -257,9 +257,30 @@ La prioridad es **Alta** si el profesor lo puede encontrar en una demo de 10 min
 
 **Commits:** `docs: interfaz web y ADR-017` · `docs: corrección de cotizaciones (H-PIA-21, ADR-018)` · uno por cada otra corrección aprobada.
 
+**Resultado (09/11/2026).** Hallazgos H-PIA-21 a H-PIA-29 (`registro-de-cambios.md` §6), necesidad N-16, US-026 y US-027, CA-047 a CA-066, RN-25 a RN-35, ADR-017 y ADR-018, 8 rutas nuevas (51 en total) y `interfaz-web.md`. Todo lo nuevo lleva la marca **«Planeado»** (matriz, contrato de la API y tabla de errores del modelo de dominio) para que el CI siga en verde: las pruebas no le exigen prueba, ruta ni error, pero fallan si ya existe. Se hicieron los commits de los hallazgos antes que el de la interfaz para que `interfaz-web.md` pudiera citar todas las rutas.
+
 ## Fase 14 — Correcciones en el dominio y la API
 
 **Lee:** lo que se aprobó en la Fase 13.
+
+**Orden de prioridad (09/11/2026).** Si se acaba el tiempo, se recorta **desde abajo**; lo que se recorte se queda documentado como «Planeado».
+
+| # | Corrección | Criterios y reglas | Rutas |
+|---|---|---|---|
+| 1 | H-PIA-21: corrección de cotizaciones (AU-17) | CA-047 a CA-051 · RN-25, RN-26 | `POST /api/cotizaciones/{id}/correcciones` (y el historial en `GET /api/cotizaciones/{id}`) |
+| 2 | H-PIA-22: una sola orden abierta por vehículo (AU-06), con índice único parcial y prueba de integración: si la base rechaza un segundo registro simultáneo, la API responde el **mismo 409** `VehiculoConOrdenAbierta`, nunca un 500 | CA-052 · RN-27 | 409 en `POST /api/ordenes` |
+| 3 | H-PIA-23: lista de técnicos (AU-13) | CA-053 · RN-28 | `GET /api/tecnicos` |
+| 4 | H-PIA-23: cambio del técnico de diagnóstico (AU-12) | CA-054 · RN-28 | la misma `asignacion-diagnostico` |
+| 5 | H-PIA-24: correcciones de datos: cliente (AU-02), vehículo (AU-03), recepción (AU-05) y forma de pago (AU-34) | CA-055 a CA-058 · RN-29, RN-30 | 4 rutas `PUT` |
+| 6 | Cambios chicos, en este orden: H-PIA-25 (AU-08 a AU-11, AU-18), H-PIA-26 (AU-20, AU-28 a), H-PIA-27 (AU-15, AU-16), H-PIA-28 (AU-04 a, AU-19, AU-27, AU-38, AU-39) | CA-059 a CA-065 · RN-31 a RN-34 | 409 en `POST /api/clientes` |
+| 7 | H-PIA-29: corrección de placas, **P2**, solo si sobra tiempo (AU-01) | CA-066 · RN-35 | `PUT /api/ordenes/{numero}/placas` |
+
+`GET /api/sesion` también está planeada, pero se construye en la Fase 15.
+
+**Al construir cada corrección, quitar su marca «Planeado»:** `planeado=True` del criterio y la regla en `REGLAS_PLANEADAS` (`scripts/docs/datos.py`); `P1_PLANEADA` → `"P1"` en `scripts/docs/rutas.py`, y en las rutas que ya existían, pasar el 409 de la nota «*Planeado (H-PIA-xx):*» a la columna de errores; «409 · Planeado» → «409» en la tabla de errores de `architecture/modelo-de-dominio.md` §7. Después se regeneran los documentos. Las pruebas de trazabilidad, de contrato y de errores fallan mientras quede una marca sobre algo ya construido. Además:
+- Si la corrección de placas no se construye, su ruta se agrega como las demás P2 (responde 501), su prioridad pasa de `P2_PLANEADA` a `"P2"` y no aparece en la página.
+- CA-064 cambia el mensaje de flotilla que hoy revisa la prueba de CA-029: hay que actualizar esa prueba y explicarlo en el commit (no se debilita, cambia el texto esperado).
+- Las pruebas que registran dos órdenes del mismo vehículo sin cerrar la primera chocarán con RN-27; se ajusta su preparación (cerrar o cancelar la primera) y se explica en el commit.
 
 **Construye** la corrección de cotizaciones y las demás correcciones aprobadas, por capas como siempre:
 - Dominio: método en `src/domain/cotizaciones/cotizacion.py`, transiciones nuevas en `MAQUINA_DE_COTIZACION` (`src/domain/cotizaciones/estados.py`), evento `CotizacionCorregida` en `eventos.py` y el error que corresponda.
@@ -267,7 +288,7 @@ La prioridad es **Alta** si el profesor lo puede encontrar en una demo de 10 min
 - Infraestructura: tabla nueva del historial de correcciones en `scripts/db/esquema.py`, SQL y `architecture/modelo-de-datos.md` regenerados (`python scripts/db/esquema.py .` y `python scripts/db/generar_datos_iniciales.py datos/profesor database`), `tablas.py`, `mapeo.py`, repositorios en memoria y en base de datos.
 - API: ruta en `src/api/rutas/cotizaciones.py`, esquema en `src/api/esquemas/cotizaciones.py` y mensajes; `docs/api/openapi.json` con `api/exportar_openapi.py`.
 
-**Pruebas:** `test_ca_0XX_` y `test_rn_XX_` de cada criterio y regla nuevos en dominio, aplicación, integración y API; ampliar los rangos de `tests/test_trazabilidad.py` (hoy CA-001 a CA-046 y RN-01 a RN-24). Integración también contra PostgreSQL 16 local en Docker (`docker compose --profile tests run --rm tests`). **Nunca contra Supabase.** Al final, `scripts/docs/gen_evidencia.py` regenera `trazabilidad/evidencia-pruebas.md`.
+**Pruebas:** `test_ca_0XX_` y `test_rn_XX_` de cada criterio y regla nuevos en dominio, aplicación, integración y API (los rangos de `tests/test_trazabilidad.py` ya llegan a CA-066 y RN-35 desde la Fase 13; lo que cambia es que se quitan las marcas «Planeado»). Integración también contra PostgreSQL 16 local en Docker (`docker compose --profile tests run --rm tests`). **Nunca contra Supabase.** Al final, `scripts/docs/gen_evidencia.py` regenera `trazabilidad/evidencia-pruebas.md`.
 
 **Listo cuando:** todo en verde, cobertura ≥ 90 % y los criterios nuevos aparecen en la evidencia.
 

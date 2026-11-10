@@ -24,12 +24,14 @@ El PIA exige: DDD, Specification, State Machine, API REST con Swagger, pruebas u
 | Aggregates, Value Objects, Specifications E1–E8, máquinas de estados, eventos y errores | `docs/architecture/modelo-de-dominio.md` |
 | Stack, estructura, variables de entorno, convenciones de la API, roles y pruebas | `docs/architecture/decisiones-tecnicas.md` |
 | Tablas y columnas | `docs/architecture/modelo-de-datos.md` y `database/01_esquema.sql` |
-| Las 43 rutas (rol, códigos, caso de uso, criterios) | `docs/api/README.md` |
-| Criterios CA-001 a CA-046 | `docs/gherkin/*.feature` y `docs/user-stories.md` |
-| Reglas RN-01 a RN-24 y la matriz de trazabilidad | `docs/trazabilidad/matriz-trazabilidad.md` |
+| Las 51 rutas (rol, códigos, caso de uso, criterios; las nuevas llevan «Planeado» hasta construirse) | `docs/api/README.md` |
+| Criterios CA-001 a CA-066 | `docs/gherkin/*.feature` y `docs/user-stories.md` |
+| Reglas RN-01 a RN-35 y la matriz de trazabilidad | `docs/trazabilidad/matriz-trazabilidad.md` |
 | Nombres exactos del negocio y de los estados | `docs/glosario.md` (§2 y §3) |
 | Datos del profesor, diferencias y oráculos | `docs/datos-profesor/` y `datos/profesor/` |
-| Por qué de cada decisión | `docs/architecture/adr/` (ADR-001 a ADR-016) |
+| Por qué de cada decisión | `docs/architecture/adr/` (ADR-001 a ADR-018) |
+| Pantallas de la página web | `docs/interfaz-web.md` |
+| Errores de usuario y decisiones del equipo (AU-01 a AU-39) | `docs/auditoria-errores-de-usuario.md` |
 | Patrones y SOLID | `docs/architecture/patrones.md` y `docs/architecture/solid.md` |
 
 `_referencia/` (no se sube a GitHub) tiene el código de la Unidad 5 (`_referencia/u5/`) y el PDF de requisitos del PIA. Úsalo como **ejemplo de estilo y de soluciones ya probadas** (Value Objects, Unidad de Trabajo, mapeo, prueba de arquitectura, pruebas de contrato). Cuando la U5 y `docs/` no coincidan, **gana `docs/`** (la v3.0 corrigió varias reglas: H-PIA-01 a H-PIA-20 en `docs/registro-de-cambios.md`).
