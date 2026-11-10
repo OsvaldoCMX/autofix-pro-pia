@@ -142,6 +142,11 @@ class ErrorDeAcceso(Exception):
         "Revísela e intente de nuevo."
     )
 
+    def __init__(self, mensaje: str | None = None) -> None:
+        super().__init__()
+        if mensaje is not None:
+            self.mensaje = mensaje
+
 
 class TokenInvalido(ErrorDeAcceso):
     pass
@@ -152,6 +157,13 @@ class RolNoPermitido(ErrorDeAcceso):
     mensaje = (
         "Esta función es de otro puesto del taller. Pida a la persona encargada que la realice."
     )
+
+
+# Al iniciar sesión en la página con la clave de Sistema (ADR-017).
+CLAVE_DEL_SISTEMA = (
+    "Esta clave es del sistema automático, no de un empleado del taller. "
+    "Escriba su clave de acceso personal."
+)
 
 
 class FuncionNoImplementada(Exception):

@@ -18,7 +18,7 @@ Contrato de la API que se implementa con FastAPI (ADR-008). Cuando la API esté 
 
 | Método | Ruta | Rol | Descripción | Éxito | Errores | Caso de uso | Criterios | Prioridad |
 |---|---|---|---|---|---|---|---|---|
-| GET | `/api/sesion` | Cualquier empleado | Nombre y puesto del empleado de la clave de acceso (la usa la página al iniciar sesión, ADR-017). El token de Sistema responde 403: no es un empleado. | 200 | 401, 403 | `ConsultarSesion` | — | P1 · Planeado |
+| GET | `/api/sesion` | Cualquier empleado | Nombre y puesto del empleado de la clave de acceso (la usa la página al iniciar sesión, ADR-017). Responde `id_empleado`, `nombre`, `rol` (el valor del código) y `puesto` (el nombre del Glosario, por ejemplo «Asesor de Servicio»). El token de Sistema responde 403 con un mensaje propio: no es un empleado. | 200 | 401, 403 | `seguridad.requiere_empleado` | — | P1 |
 
 ### Sistema
 

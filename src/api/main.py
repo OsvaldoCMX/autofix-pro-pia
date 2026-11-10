@@ -24,10 +24,12 @@ from api.rutas import (
     retiro,
     revisiones,
     salud,
+    sesion,
 )
 
 ROUTERS = (
     salud.router,
+    sesion.router,
     revisiones.router,
     recepcion.router,
     cancelacion.router,

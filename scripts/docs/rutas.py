@@ -1,16 +1,14 @@
 """Contrato planeado de la API REST (prefijo /api). Se valida contra las rutas citadas en datos.CA."""
 import re
 
-from datos import CA, PLANEADO
-
-P1_PLANEADA, P2_PLANEADA = f"P1 · {PLANEADO}", f"P2 · {PLANEADO}"
+from datos import CA
 
 A, T, G, CO, CJ, P, S, TODOS = ("Asesor", "Técnico", "Gerente", "Compras", "Caja", "Público",
                                 "Sistema", "Cualquier empleado")
 
 # (método, ruta, rol, descripción, éxito, errores, caso de uso, CA, prioridad, área)
 RUTAS = [
-    ("GET", "/api/sesion", TODOS, "Nombre y puesto del empleado de la clave de acceso (la usa la página al iniciar sesión, ADR-017). El token de Sistema responde 403: no es un empleado.", "200", "401, 403", "ConsultarSesion", [], P1_PLANEADA, "Sesión"),
+    ("GET", "/api/sesion", TODOS, "Nombre y puesto del empleado de la clave de acceso (la usa la página al iniciar sesión, ADR-017). Responde `id_empleado`, `nombre`, `rol` (el valor del código) y `puesto` (el nombre del Glosario, por ejemplo «Asesor de Servicio»). El token de Sistema responde 403 con un mensaje propio: no es un empleado.", "200", "401, 403", "seguridad.requiere_empleado", [], "P1", "Sesión"),
     ("GET", "/health", P, "Salud del servicio (lo usa Render y Docker Compose).", "200", "—", "—", [], "P1", "Sistema"),
     # recepción
     ("GET", "/api/vehiculos/{placas}", A, "Buscar vehículo y cliente por placas.", "200", "401, 403, 404", "BuscarVehiculoPorPlacas", ["CA-003", "CA-004"], "P1", "Recepción"),

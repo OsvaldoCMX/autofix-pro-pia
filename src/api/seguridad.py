@@ -11,7 +11,7 @@ from typing import Annotated
 from fastapi import Depends, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-from api.errores import RolNoPermitido, TokenInvalido
+from api.errores import CLAVE_DEL_SISTEMA, RolNoPermitido, TokenInvalido
 from domain.empleados.empleado import Empleado, RolDeEmpleado
 
 _esquema_bearer = HTTPBearer(
@@ -53,22 +53,35 @@ def _token(credenciales: HTTPAuthorizationCredentials | None) -> str:
     return credenciales.credentials
 
 
+def _empleado(
+    request: Request, credenciales: HTTPAuthorizationCredentials | None, error_de_sistema: str | None
+) -> Empleado:
+    """401 si el token falta o no es válido; 403 si es el de Sistema, que no es un empleado."""
+    directorio = _directorio(request)
+    token = _token(credenciales)
+    empleado = directorio.empleado_del_token(token)
+    if empleado is None:
+        if directorio.es_del_sistema(token):
+            raise RolNoPermitido(error_de_sistema)
+        raise TokenInvalido()
+    return empleado
+
+
 def requiere_rol(*roles: RolDeEmpleado) -> Callable[..., Empleado]:
     """Entrega el empleado del token: 401 si falta o no es válido, 403 si su rol no puede pasar."""
 
     def dependencia(request: Request, credenciales: Credenciales) -> Empleado:
-        directorio = _directorio(request)
-        token = _token(credenciales)
-        empleado = directorio.empleado_del_token(token)
-        if empleado is None:
-            if directorio.es_del_sistema(token):
-                raise RolNoPermitido()
-            raise TokenInvalido()
+        empleado = _empleado(request, credenciales, None)
         if empleado.rol not in roles:
             raise RolNoPermitido()
         return empleado
 
     return dependencia
+
+
+def requiere_empleado(request: Request, credenciales: Credenciales) -> Empleado:
+    """Inicio de sesión de la página: con la clave de Sistema dice que no es de un empleado."""
+    return _empleado(request, credenciales, CLAVE_DEL_SISTEMA)
 
 
 def requiere_sistema(request: Request, credenciales: Credenciales) -> None:
@@ -87,6 +100,7 @@ Gerente = Annotated[Empleado, Depends(requiere_rol(RolDeEmpleado.GERENTE))]
 Compras = Annotated[Empleado, Depends(requiere_rol(RolDeEmpleado.COMPRAS))]
 Caja = Annotated[Empleado, Depends(requiere_rol(RolDeEmpleado.CAJA))]
 CualquierEmpleado = Annotated[Empleado, Depends(requiere_rol(*RolDeEmpleado))]
+EmpleadoDeLaSesion = Annotated[Empleado, Depends(requiere_empleado)]
 SOLO_ASESOR = Depends(requiere_rol(RolDeEmpleado.ASESOR))
 SOLO_TECNICO = Depends(requiere_rol(RolDeEmpleado.TECNICO))
 SOLO_GERENTE = Depends(requiere_rol(RolDeEmpleado.GERENTE))

@@ -27,6 +27,52 @@
         }
       }
     },
+    "/api/sesion": {
+      "get": {
+        "tags": [
+          "Sesión"
+        ],
+        "summary": "Nombre y puesto del empleado de la clave de acceso",
+        "operationId": "consultar_sesion_api_sesion_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SesionDelEmpleado"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Falta el token o no es válido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o trabajo de otro técnico.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "TokenDeEmpleado": []
+          }
+        ]
+      }
+    },
     "/api/revisiones/plazos": {
       "post": {
         "tags": [
@@ -6571,6 +6617,34 @@
           "Responsable de Flotilla"
         ],
         "title": "RolDeAutorizante"
+      },
+      "SesionDelEmpleado": {
+        "properties": {
+          "id_empleado": {
+            "type": "string",
+            "title": "Id Empleado"
+          },
+          "nombre": {
+            "type": "string",
+            "title": "Nombre"
+          },
+          "rol": {
+            "type": "string",
+            "title": "Rol"
+          },
+          "puesto": {
+            "type": "string",
+            "title": "Puesto"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id_empleado",
+          "nombre",
+          "rol",
+          "puesto"
+        ],
+        "title": "SesionDelEmpleado"
       },
       "SolicitudActualizada": {
         "properties": {
