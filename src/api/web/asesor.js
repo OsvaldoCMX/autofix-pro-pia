@@ -9,7 +9,7 @@ import {
   descripcionDelCliente,
   vistaDelExpediente,
 } from "./expediente.js";
-import { aCentavos, deCentavos, dinero, fecha, numero } from "./formato.js";
+import { aCentavos, deCentavos, dinero, fecha, fechaYHora, numero } from "./formato.js";
 import {
   areaDeTexto,
   avisarAlLlegar,
@@ -126,19 +126,21 @@ function mostrarBusqueda(pantalla) {
     if (!revisarObligatorios([[placas, "Escriba las placas."]])) {
       return;
     }
-    const texto = placas.value.trim();
+    await consultar(placas.value.trim());
+  };
+  const consultar = async (texto) => {
     try {
-      const vehiculo = await conBotonOcupado(botonBuscar, "Buscando…", () =>
-        pedir("GET", "/api/vehiculos/{placas}", { enRuta: { placas: texto } }),
-      );
-      resultado.replaceChildren(vehiculoEncontrado(pantalla, vehiculo));
+      const vehiculo = await conBotonOcupado(botonBuscar, "Buscando…", () => buscarVehiculo(texto));
+      const zona = crear("div");
+      const alCorregir = () => consultar(vehiculo.placas);
+      resultado.replaceChildren(vehiculoEncontrado(pantalla, vehiculo, { zona, alCorregir }), zona);
     } catch (error) {
       if (error instanceof ErrorDeLaApi && error.codigo === 404) {
         mostrarError(error.message);
         resultado.replaceChildren(vehiculoNoRegistrado(pantalla, texto));
         return;
       }
-      manejarError(error, buscar);
+      manejarError(error, () => consultar(texto));
     }
   };
   alEnviar(porPlacas, buscar);
@@ -167,7 +169,11 @@ function datosDelCliente(cliente) {
   ];
 }
 
-function vehiculoEncontrado(pantalla, vehiculo) {
+function buscarVehiculo(placas) {
+  return pedir("GET", "/api/vehiculos/{placas}", { enRuta: { placas } });
+}
+
+function vehiculoEncontrado(pantalla, vehiculo, { zona, alCorregir }) {
   const abierta = vehiculo.orden_abierta;
   const acciones = [];
   if (abierta) {
@@ -175,6 +181,10 @@ function vehiculoEncontrado(pantalla, vehiculo) {
   } else {
     acciones.push(boton("Registrar nueva orden", () => mostrarNuevaOrden(pantalla, { placas: vehiculo.placas, vehiculo })));
   }
+  acciones.push(
+    secundario("Corregir datos del cliente", () => abrirCorreccion(zona, corregirCliente(vehiculo, alCorregir, zona))),
+    secundario("Corregir datos del vehículo", () => abrirCorreccion(zona, corregirVehiculo(vehiculo, alCorregir, zona))),
+  );
   return crear(
     "section",
     { className: "tarjeta", "aria-label": "Vehículo encontrado" },
@@ -574,6 +584,7 @@ async function mostrarOrden(pantalla, numeroOrden) {
       acciones: accionesDeLaOrden(contexto),
       zona,
       deCotizacion: (cotizacion) => accionesDeCotizacion(contexto, cotizacion),
+      deSolicitud: (solicitud) => accionesDeSolicitud(contexto, solicitud),
     }),
     regresarABuscar(),
   );
@@ -605,13 +616,41 @@ function accionesDeLaOrden(contexto) {
   if (estado === "Pagada" || estado === "Por Cobrar (Crédito)") {
     acciones.push(boton("Entregar vehículo", (elemento) => entregar(contexto, elemento)));
   }
+  if (estado === "En Reparación") {
+    acciones.push(boton("Generar cotización adicional", () => mostrarEditor(contexto, "adicional")));
+  }
+  if (estado === "En Espera de Refacción" && !expediente.nota_fecha_salida) {
+    acciones.push(boton("Registrar salida del vehículo", (elemento) => registrarSalida(contexto, elemento)));
+  }
+  if (estado === "En Espera de Refacción" && expediente.nota_fecha_salida && !expediente.nota_firmada) {
+    acciones.push(boton("Confirmar firma de la Nota de Responsabilidad", (elemento) => confirmarFirma(contexto, elemento)));
+  }
+  if (estado === "Pausada por Retiro de Vehículo") {
+    acciones.push(boton("Reactivar orden", (elemento) => reactivar(contexto, elemento)));
+  }
   if (estado === "Cotizada" && expediente.rechazo_total) {
     acciones.push(boton("Entregar sin reparación", (elemento) => entregarSinReparacion(contexto, elemento)));
   }
-  if (estado === "Recibida" || estado === "En Diagnóstico") {
+  const enRecepcion = estado === "Recibida" || estado === "En Diagnóstico";
+  if (enRecepcion) {
+    acciones.push(secundario("Corregir datos de recepción", () => abrirCorreccion(contexto.zona, corregirRecepcion(contexto))));
+    acciones.push(secundario("Corregir placas", () => abrirCorreccion(contexto.zona, corregirPlacas(contexto))));
+  }
+  acciones.push(
+    secundario("Corregir datos del cliente", () => corregirDesdeLaOrden(contexto, corregirCliente)),
+    secundario("Corregir datos del vehículo", () => corregirDesdeLaOrden(contexto, corregirVehiculo)),
+  );
+  if (enRecepcion) {
     acciones.push(boton("Cancelar orden", (elemento) => cancelar(contexto, elemento), "boton boton-peligro"));
   }
   return acciones;
+}
+
+function accionesDeSolicitud(contexto, solicitud) {
+  if (solicitud.estado !== "Solicitada" || solicitud.fecha_aviso_al_cliente) {
+    return [];
+  }
+  return [secundario("Avisar al cliente del retraso", (elemento) => avisarRetraso(contexto, solicitud, elemento))];
 }
 
 function accionesDeCotizacion(contexto, cotizacion) {
@@ -619,6 +658,9 @@ function accionesDeCotizacion(contexto, cotizacion) {
   const delCliente = cotizacion.estado === PENDIENTE_DEL_CLIENTE;
   if (delCliente && !cotizacion.fecha_presentacion) {
     acciones.push(boton("Presentar cotización al cliente", (elemento) => presentar(contexto, cotizacion, elemento)));
+  }
+  if (delCliente && cotizacion.fecha_presentacion) {
+    acciones.push(secundario("Registrar recontacto", (elemento) => registrarRecontacto(contexto, cotizacion, elemento)));
   }
   if (delCliente) {
     acciones.push(boton("Registrar decisión del cliente", () => mostrarDecision(contexto, cotizacion)));
@@ -831,6 +873,223 @@ async function cancelar(contexto, elemento) {
   );
 }
 
+// Recontacto al cliente (CA-040): sin confirmación, solo el botón ocupado (AU-21).
+function registrarRecontacto(contexto, cotizacion, elemento) {
+  return enviar(
+    elemento,
+    () => pedir("POST", "/api/cotizaciones/{id}/recontactos", { enRuta: { id: cotizacion.id } }),
+    (recontacto) => {
+      mostrarExito(`Recontacto de la cotización ${recontacto.id_cotizacion} registrado el ${fechaYHora(recontacto.registrado_en)}.`);
+      contexto.recargar();
+    },
+  );
+}
+
+// Aviso al cliente del retraso de una refacción (CA-023; AU-22).
+async function avisarRetraso(contexto, solicitud, elemento) {
+  const confirmado = await confirmar({
+    titulo: `¿Registrar que avisó al cliente del retraso de «${solicitud.refaccion}» (orden ${contexto.numero})?`,
+    lineas: [`Cliente: ${descripcionDelCliente(contexto.expediente)}`],
+    verbo: "Registrar aviso",
+  });
+  if (!confirmado) {
+    return;
+  }
+  await enviar(
+    elemento,
+    () =>
+      pedir("POST", "/api/ordenes/{numero}/solicitudes-de-compra/{id}/aviso-al-cliente", {
+        enRuta: { numero: contexto.numero, id: solicitud.id },
+      }),
+    () => {
+      mostrarExito(`Aviso al cliente del retraso de «${solicitud.refaccion}» registrado.`);
+      contexto.recargar();
+    },
+  );
+}
+
+// Retiro anticipado con Nota de Responsabilidad (CA-024, CA-025; AU-23).
+async function registrarSalida(contexto, elemento) {
+  const confirmado = await confirmar({
+    titulo: "¿Registrar la salida del vehículo?",
+    lineas: [...identificacion(contexto.expediente), "El cliente se lleva el vehículo antes de terminar la reparación."],
+    verbo: "Registrar salida",
+  });
+  if (!confirmado) {
+    return;
+  }
+  await enviar(
+    elemento,
+    () => pedir("POST", "/api/ordenes/{numero}/retiro", { enRuta: { numero: contexto.numero } }),
+    () => {
+      mostrarExito("Salida registrada. Cuando el cliente firme la Nota de Responsabilidad, confirme la firma.");
+      contexto.recargar();
+    },
+  );
+}
+
+async function confirmarFirma(contexto, elemento) {
+  const confirmado = await confirmar({
+    titulo: "¿Confirmar la firma de la Nota de Responsabilidad?",
+    lineas: [
+      ...identificacion(contexto.expediente),
+      "El cliente firmó la Nota de Responsabilidad y se lleva el vehículo. La orden perderá su lugar en la fila.",
+    ],
+    verbo: "Confirmar firma",
+  });
+  if (!confirmado) {
+    return;
+  }
+  await enviar(
+    elemento,
+    () => pedir("POST", "/api/ordenes/{numero}/retiro/firma", { enRuta: { numero: contexto.numero } }),
+    (orden) => {
+      mostrarExito(`Firma confirmada. La orden ${orden.numero_orden} quedó «${orden.estado}».`);
+      contexto.recargar();
+    },
+  );
+}
+
+async function reactivar(contexto, elemento) {
+  const confirmado = await confirmar({
+    titulo: "¿Reactivar la orden?",
+    lineas: [...identificacion(contexto.expediente), "El vehículo regresó al taller. La orden quedará al final de la fila."],
+    verbo: "Reactivar orden",
+  });
+  if (!confirmado) {
+    return;
+  }
+  await enviar(
+    elemento,
+    () => pedir("POST", "/api/ordenes/{numero}/reactivacion", { enRuta: { numero: contexto.numero } }),
+    (orden) => {
+      mostrarExito(`Orden reactivada. La orden ${orden.numero_orden} quedó «${orden.estado}».`);
+      contexto.recargar();
+    },
+  );
+}
+
+// ---------------------------------------------------------------- A-06 Corregir datos
+
+function abrirCorreccion(zona, forma) {
+  limpiarAvisos();
+  zona.replaceChildren(forma);
+  forma.scrollIntoView({ block: "start" });
+  forma.querySelector("input:not([readonly]), select, textarea")?.focus();
+}
+
+const regresarDeLaCorreccion = (zona) => secundario("Regresar", () => zona.replaceChildren());
+
+/** Los datos actuales del cliente y del vehículo salen de la búsqueda por placas. */
+async function corregirDesdeLaOrden(contexto, crearFormulario) {
+  limpiarAvisos();
+  contexto.zona.replaceChildren(crear("p", { className: "tarjeta cargando" }, "Cargando…"));
+  let vehiculo;
+  try {
+    vehiculo = await buscarVehiculo(contexto.expediente.placas);
+  } catch (error) {
+    contexto.zona.replaceChildren();
+    manejarError(error, () => corregirDesdeLaOrden(contexto, crearFormulario));
+    return;
+  }
+  abrirCorreccion(contexto.zona, crearFormulario(vehiculo, contexto.recargar, contexto.zona));
+}
+
+/** Formulario de corrección con su botón «Guardar corrección»; `guardar` recibe el botón. */
+function formularioDeCorreccion(titulo, zona, contenido, guardar) {
+  const botonGuardar = crear("button", { type: "submit", className: "boton" }, "Guardar corrección");
+  const forma = formulario(titulo, ...contenido, crear("div", { className: "acciones" }, botonGuardar, regresarDeLaCorreccion(zona)));
+  alEnviar(forma, () => guardar(forma, botonGuardar));
+  return forma;
+}
+
+// Cliente (CA-055).
+function corregirCliente(vehiculo, alTerminar, zona) {
+  const { cliente } = vehiculo;
+  return formularioDeCorreccion("Corregir datos del cliente", zona, camposDeParticular(cliente), (forma, guardar) => {
+    const leido = leerClienteParticular(forma);
+    if (!leido) {
+      return;
+    }
+    const { nombre, telefono, correo } = leido.cuerpo.cliente;
+    return enviar(
+      guardar,
+      () => pedir("PUT", "/api/clientes/{id}", { enRuta: { id: cliente.id_cliente }, cuerpo: { nombre, telefono, correo } }),
+      (corregido) => {
+        mostrarExito(`Datos del cliente ${corregido.nombre} corregidos.`);
+        alTerminar();
+      },
+    );
+  });
+}
+
+// Vehículo (CA-056): las placas no se editan aquí.
+function corregirVehiculo(vehiculo, alTerminar, zona) {
+  const campos = [...bloqueDeVehiculo(vehiculo.placas, vehiculo).querySelectorAll(".campo")];
+  return formularioDeCorreccion("Corregir datos del vehículo", zona, campos, (forma, guardar) => {
+    const leido = leerVehiculo(forma);
+    if (!leido) {
+      return;
+    }
+    return enviar(
+      guardar,
+      () => pedir("PUT", "/api/vehiculos/{placas}", { enRuta: { placas: vehiculo.placas }, cuerpo: leido.vehiculo }),
+      (corregido) => {
+        mostrarExito(`Datos del vehículo ${corregido.placas} corregidos.`);
+        alTerminar();
+      },
+    );
+  });
+}
+
+// Recepción (CA-057).
+function corregirRecepcion(contexto) {
+  const campos = camposDeRecepcion("recepcion", contexto.expediente);
+  return formularioDeCorreccion("Corregir datos de recepción", contexto.zona, campos, (forma, guardar) => {
+    const recepcion = leerRecepcion(forma, "recepcion");
+    if (!recepcion) {
+      return;
+    }
+    return enviar(
+      guardar,
+      () => pedir("PUT", "/api/ordenes/{numero}/recepcion", { enRuta: { numero: contexto.numero }, cuerpo: recepcion }),
+      (corregida) => {
+        mostrarExito(`Datos de recepción de la orden ${corregida.numero_orden} corregidos.`);
+        contexto.recargar();
+      },
+    );
+  });
+}
+
+// Placas (CA-066): con las placas anteriores y las nuevas en letra grande (AU-01).
+function corregirPlacas(contexto) {
+  const anteriores = contexto.expediente.placas;
+  const campos = [campo("placas-nuevas", "Placas correctas", { maxLength: 20, autocomplete: "off" })];
+  return formularioDeCorreccion("Corregir placas", contexto.zona, campos, async (forma, guardar) => {
+    const entrada = forma.querySelector("#placas-nuevas");
+    if (!revisarObligatorios([[entrada, "Escriba las placas correctas."]])) {
+      return;
+    }
+    const nuevas = entrada.value.trim();
+    const confirmado = await confirmar({
+      titulo: `¿Corregir las placas de la orden ${contexto.numero}?`,
+      lineas: ["Placas anteriores:", { destacado: anteriores }, "Placas nuevas:", { destacado: nuevas.toUpperCase() }],
+      verbo: "Corregir placas",
+    });
+    if (!confirmado) {
+      return;
+    }
+    await enviar(
+      guardar,
+      () => pedir("PUT", "/api/ordenes/{numero}/placas", { enRuta: { numero: contexto.numero }, cuerpo: { placas: nuevas } }),
+      (corregidas) => {
+        mostrarExito(`Placas de la orden ${corregidas.numero_orden} corregidas: ${corregidas.placas}.`);
+        contexto.recargar();
+      },
+    );
+  });
+}
+
 // ---------------------------------------------------------------- A-04 Decisión del cliente
 
 /** Quién decide lo llena la página con los datos del cliente (AU-15, AU-16). */
@@ -923,6 +1182,7 @@ function mostrarDecision(contexto, cotizacion) {
 
 const TITULOS_DEL_EDITOR = {
   generar: { titulo: "Generar cotización", guardar: "Guardar cotización" },
+  adicional: { titulo: "Generar cotización adicional", guardar: "Guardar cotización adicional" },
   ajustar: { titulo: "Ajustar cotización", guardar: "Guardar cotización ajustada" },
   corregir: { titulo: "Corregir cotización", guardar: "Guardar corrección" },
 };
@@ -935,6 +1195,9 @@ function enviarCotizacion(modo, contexto, cotizacion, trabajos, motivo) {
   }
   if (modo === "corregir") {
     return pedir("POST", "/api/cotizaciones/{id}/correcciones", { enRuta, cuerpo: { trabajos, motivo } });
+  }
+  if (modo === "adicional") {
+    return pedir("POST", "/api/ordenes/{numero}/cotizaciones-adicionales", { enRuta, cuerpo: { trabajos } });
   }
   return pedir("POST", "/api/ordenes/{numero}/cotizaciones", { enRuta, cuerpo: { trabajos } });
 }
@@ -1120,6 +1383,7 @@ async function guardarCotizacion(contexto, modo, cotizacion, forma, guardar) {
   const numeroOrden = contexto.numero;
   const titulos = {
     generar: `¿Guardar la cotización de la orden ${numeroOrden}?`,
+    adicional: `¿Guardar la cotización adicional de la orden ${numeroOrden}?`,
     ajustar: `¿Guardar la cotización ${cotizacion?.id} ajustada?`,
     corregir: `¿Guardar la corrección de la cotización ${cotizacion?.id}?`,
   };
