@@ -11,14 +11,19 @@ import {
 } from "./expediente.js";
 import { aCentavos, deCentavos, dinero, fecha, fechaYHora, numero } from "./formato.js";
 import {
+  alEnviar,
   areaDeTexto,
   avisarAlLlegar,
+  boton,
   campo,
   casilla,
   conBotonOcupado,
   confirmar,
   crear,
   datos,
+  decodificar,
+  enviar,
+  formulario,
   limpiarAvisos,
   lista,
   manejarError,
@@ -27,6 +32,7 @@ import {
   mostrarError,
   mostrarExito,
   revisarObligatorios,
+  secundario,
 } from "./ui.js";
 
 // Direcciones de interfaz-web.md §3; el menú del encabezado muestra estas entradas.
@@ -52,48 +58,8 @@ export function mostrar(ruta, pantalla) {
   mostrarBusqueda(pantalla);
 }
 
-function decodificar(texto) {
-  try {
-    return decodeURIComponent(texto);
-  } catch {
-    return texto;
-  }
-}
-
 function irAOrden(numeroOrden) {
   window.location.hash = `#/asesor/orden/${encodeURIComponent(numeroOrden)}`;
-}
-
-function boton(texto, alTocar, clase = "boton") {
-  const elemento = crear("button", { type: "button", className: clase }, texto);
-  elemento.addEventListener("click", () => alTocar(elemento));
-  return elemento;
-}
-
-const secundario = (texto, alTocar) => boton(texto, alTocar, "boton boton-secundario");
-
-/** Envía la acción con el botón ocupado. Si sale bien, `alTerminar` recibe la respuesta. */
-async function enviar(botonOcupado, llamada, alTerminar) {
-  limpiarAvisos();
-  let respuesta;
-  try {
-    respuesta = await conBotonOcupado(botonOcupado, "Guardando…", llamada);
-  } catch (error) {
-    manejarError(error, () => enviar(botonOcupado, llamada, alTerminar));
-    return;
-  }
-  alTerminar(respuesta);
-}
-
-function formulario(titulo, ...contenido) {
-  return crear("form", { className: "tarjeta", noValidate: true }, crear("h2", {}, titulo), ...contenido);
-}
-
-function alEnviar(forma, accion) {
-  forma.addEventListener("submit", (evento) => {
-    evento.preventDefault();
-    accion();
-  });
 }
 
 const valorDe = (contenedor, selector) => contenedor.querySelector(selector).value.trim();

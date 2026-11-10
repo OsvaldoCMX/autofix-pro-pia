@@ -91,6 +91,48 @@ export async function conBotonOcupado(boton, textoOcupado, accion) {
   }
 }
 
+/** Botón que, al tocarlo, llama `alTocar(boton)`. */
+export function boton(texto, alTocar, clase = "boton") {
+  const elemento = crear("button", { type: "button", className: clase }, texto);
+  elemento.addEventListener("click", () => alTocar(elemento));
+  return elemento;
+}
+
+export const secundario = (texto, alTocar) => boton(texto, alTocar, "boton boton-secundario");
+
+/** Envía la acción con el botón ocupado. Si sale bien, `alTerminar` recibe la respuesta. */
+export async function enviar(botonOcupado, llamada, alTerminar) {
+  limpiarAvisos();
+  let respuesta;
+  try {
+    respuesta = await conBotonOcupado(botonOcupado, "Guardando…", llamada);
+  } catch (error) {
+    manejarError(error, () => enviar(botonOcupado, llamada, alTerminar));
+    return;
+  }
+  alTerminar(respuesta);
+}
+
+export function formulario(titulo, ...contenido) {
+  return crear("form", { className: "tarjeta", noValidate: true }, crear("h2", {}, titulo), ...contenido);
+}
+
+export function alEnviar(forma, accion) {
+  forma.addEventListener("submit", (evento) => {
+    evento.preventDefault();
+    accion();
+  });
+}
+
+/** Parte de la dirección escrita con `encodeURIComponent` (`OS%2D0001` → `OS-0001`). */
+export function decodificar(texto) {
+  try {
+    return decodeURIComponent(texto);
+  } catch {
+    return texto;
+  }
+}
+
 /** Una línea de la confirmación: texto, `{ destacado: "ABC123" }` (letra grande) o un elemento. */
 function lineaDeConfirmacion(linea) {
   if (linea instanceof Node) {
