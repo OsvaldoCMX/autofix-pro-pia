@@ -17,6 +17,7 @@ from tests.api.pasos import (
     datos_de_orden,
     decision,
     exigir,
+    expediente_de,
     recibida,
 )
 
@@ -308,3 +309,27 @@ def test_rn_27_si_la_base_rechaza_la_segunda_orden_responde_el_mismo_409(
     assert segunda["error"] == "VehiculoConOrdenAbierta"
     assert primera["numero_orden"] in segunda["detalle"]
     assert "Ábrala en lugar de registrar otra." in segunda["detalle"]
+
+
+# ------------------------------------------------------------------ correcciones (H-PIA-24)
+def test_ca_055_corrige_el_cliente_y_la_decision_usa_el_nombre_nuevo(cliente: TestClient) -> None:
+    numero, id_cotizacion = cotizada(cliente)
+    id_cliente = expediente_de(cliente, numero)["id_cliente"]
+    contacto = {"nombre": "Luis Peña Ruiz", "telefono": "81 1234 5678", "correo": "l@correo.test"}
+
+    corregido = exigir(cliente.put(f"/api/clientes/{id_cliente}", json=contacto, headers=ASESOR), 200)
+    autorizacion = {**decision([1, 2]), "nombre_del_autorizante": "Luis Peña Ruiz"}
+
+    assert corregido == {"id_cliente": id_cliente, "tipo": "Particular", **contacto}
+    exigir(
+        cliente.post(
+            f"/api/cotizaciones/{id_cotizacion}/decision", json=autorizacion, headers=ASESOR
+        ),
+        200,
+    )
+
+
+def test_ca_055_cliente_inexistente_responde_404(cliente: TestClient) -> None:
+    respuesta = cliente.put("/api/clientes/CLI-9999", json={"nombre": "Nadie"}, headers=ASESOR)
+
+    assert respuesta.status_code == 404

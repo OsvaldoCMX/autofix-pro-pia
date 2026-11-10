@@ -9,8 +9,10 @@ from api.dependencias import ContenedorDeLaApp
 from api.errores import FuncionNoImplementada
 from api.esquemas.comunes import errores
 from api.esquemas.recepcion import (
+    ClienteCorregido,
     ClienteEncontrado,
     ClienteRegistrado,
+    DatosDeContacto,
     ExpedienteDeOrden,
     NuevaOrden,
     NuevoCliente,
@@ -18,6 +20,7 @@ from api.esquemas.recepcion import (
     VehiculoEncontrado,
 )
 from api.seguridad import SOLO_ASESOR, Asesor, requiere_rol
+from application.comandos import CorregirCliente
 from application.consultas.consultas import (
     BuscarClientes,
     BuscarVehiculoPorPlacas,
@@ -75,6 +78,20 @@ def buscar_clientes(
 )
 def registrar_cliente(datos: NuevoCliente, contenedor: ContenedorDeLaApp) -> ResultadoDeCliente:
     return contenedor.recepcion().registrar_cliente(datos.a_comando())
+
+
+@router.put(
+    "/clientes/{id}",
+    response_model=ClienteCorregido,
+    summary="Corregir el nombre, el teléfono o el correo del cliente",
+    dependencies=[SOLO_ASESOR],
+    responses=errores(400, 401, 403, 404, 422),
+)
+def corregir_cliente(
+    id: str, datos: DatosDeContacto, contenedor: ContenedorDeLaApp
+) -> ResultadoDeCliente:
+    comando = CorregirCliente(id, datos.nombre, datos.telefono, datos.correo)
+    return contenedor.recepcion().corregir_cliente(comando)
 
 
 @router.post(

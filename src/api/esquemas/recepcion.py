@@ -37,6 +37,14 @@ class NuevoCliente(ModeloDeEntrada):
         return RegistrarCliente(**self.model_dump())
 
 
+class DatosDeContacto(ModeloDeEntrada):
+    """Corrección de los datos del cliente (CA-055)."""
+
+    nombre: TextoDeNombre
+    telefono: TextoDeTelefono | None = None
+    correo: TextoDeNombre | None = None
+
+
 class NuevoVehiculo(ModeloDeEntrada):
     vin: TextoDeVin
     marca: TextoDeMarca
@@ -77,6 +85,14 @@ class ClienteRegistrado(ModeloDeSalida):
     tipo: str
     empresa: str | None
     responsable_nombre: str | None
+
+
+class ClienteCorregido(ModeloDeSalida):
+    id_cliente: str
+    nombre: str
+    tipo: str
+    telefono: str | None
+    correo: str | None
 
 
 class OrdenRegistrada(ModeloDeSalida):

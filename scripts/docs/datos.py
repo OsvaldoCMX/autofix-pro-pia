@@ -642,7 +642,7 @@ ca("CA-055", "US-027", [
     (E, "el sistema debe guardar los datos corregidos sin cambiar las órdenes ni las cotizaciones del cliente"),
     (Y, "las decisiones que se registren después deben compararse con el nombre corregido"),
 ], F1, ["RN-29", "RN-07"], "Cliente (actualizar_contacto)", "ServicioDeRecepcion.corregir_cliente",
-   "PUT /api/clientes/{id}", ASE, cambio="H-PIA-24", nombre="Corregir los datos del cliente", planeado=True)
+   "PUT /api/clientes/{id}", ASE, cambio="H-PIA-24", nombre="Corregir los datos del cliente")
 
 ca("CA-056", "US-027", [
     (D, "que el VIN, la marca, el modelo o el año de un vehículo se capturaron mal"),
@@ -817,7 +817,7 @@ REGLAS = {
 }
 
 # Reglas aprobadas en la Fase 13 que todavía no se construyen (misma idea que `planeado` en los CA).
-REGLAS_PLANEADAS = {"RN-29", "RN-30", "RN-31", "RN-32", "RN-33", "RN-34", "RN-35"}
+REGLAS_PLANEADAS = {"RN-30", "RN-31", "RN-32", "RN-33", "RN-34", "RN-35"}
 
 # ----------------------------------------------------------------------------- pruebas previstas
 # Convención: toda prueba de aceptación se llama test_ca_0XX_<descripcion> para poder

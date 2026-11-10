@@ -3,7 +3,13 @@ from __future__ import annotations
 
 import pytest
 
-from application.comandos import CancelarOrden, DatosDeVehiculo, RegistrarCliente, RegistrarOrden
+from application.comandos import (
+    CancelarOrden,
+    CorregirCliente,
+    DatosDeVehiculo,
+    RegistrarCliente,
+    RegistrarOrden,
+)
 from domain.clientes.cliente import TipoCliente
 from domain.compartido.errores import ClienteNoEncontrado, ValorInvalido, VehiculoConOrdenAbierta
 from domain.ordenes.eventos import OrdenRecibida
@@ -239,3 +245,31 @@ def test_rn_27_con_la_orden_anterior_cancelada_si_se_abre_otra(taller: Taller) -
     segunda = taller.recepcion.registrar_orden(_comando(vehiculo=None, cliente=None))
 
     assert segunda.numero_orden == "OS-0002"
+
+
+# ------------------------------------------------------------------ correcciones (H-PIA-24)
+def test_ca_055_corrige_nombre_telefono_y_correo(taller: Taller) -> None:
+    orden = taller.recepcion.registrar_orden(_comando())
+
+    resultado = taller.recepcion.corregir_cliente(
+        CorregirCliente(orden.id_cliente, "Luis Peña Ruiz", "81 1234 5678", "luis.p@correo.test")
+    )
+
+    cliente = taller.datos.clientes[orden.id_cliente]
+    assert (resultado.nombre, resultado.telefono) == ("Luis Peña Ruiz", "81 1234 5678")
+    assert (cliente.nombre, cliente.correo) == ("Luis Peña Ruiz", "luis.p@correo.test")
+    assert taller.datos.ordenes[orden.numero_orden].id_cliente == orden.id_cliente
+
+
+def test_rn_29_cliente_con_nombre_vacio_no_se_corrige(taller: Taller) -> None:
+    orden = taller.recepcion.registrar_orden(_comando())
+
+    with pytest.raises(ValorInvalido):
+        taller.recepcion.corregir_cliente(CorregirCliente(orden.id_cliente, "   "))
+
+    assert taller.datos.clientes[orden.id_cliente].nombre == "Luis Peña"
+
+
+def test_ca_055_cliente_inexistente(taller: Taller) -> None:
+    with pytest.raises(ClienteNoEncontrado):
+        taller.recepcion.corregir_cliente(CorregirCliente("CLI-9999", "Nadie"))

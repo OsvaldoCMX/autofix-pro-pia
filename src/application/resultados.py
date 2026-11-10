@@ -15,6 +15,8 @@ class ResultadoDeCliente:
     tipo: str
     empresa: str | None
     responsable_nombre: str | None
+    telefono: str | None = None
+    correo: str | None = None
 
 
 @dataclass(frozen=True)

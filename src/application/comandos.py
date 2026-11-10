@@ -26,6 +26,16 @@ class RegistrarCliente:
 
 
 @dataclass(frozen=True)
+class CorregirCliente:
+    """Corrige el nombre, el teléfono o el correo mal capturados (CA-055, H-PIA-24)."""
+
+    id_cliente: str
+    nombre: str
+    telefono: str | None = None
+    correo: str | None = None
+
+
+@dataclass(frozen=True)
 class DatosDeVehiculo:
     vin: str
     marca: str

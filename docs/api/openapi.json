@@ -318,6 +318,103 @@
         }
       }
     },
+    "/api/clientes/{id}": {
+      "put": {
+        "tags": [
+          "Recepción"
+        ],
+        "summary": "Corregir el nombre, el teléfono o el correo del cliente",
+        "operationId": "corregir_cliente_api_clientes__id__put",
+        "security": [
+          {
+            "TokenDeEmpleado": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DatosDeContacto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClienteCorregido"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "JSON mal formado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Falta el token o no es válido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o trabajo de otro técnico.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Un dato es inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/ordenes": {
       "post": {
         "tags": [
@@ -3991,6 +4088,53 @@
         ],
         "title": "CargoRegistrado"
       },
+      "ClienteCorregido": {
+        "properties": {
+          "id_cliente": {
+            "type": "string",
+            "title": "Id Cliente"
+          },
+          "nombre": {
+            "type": "string",
+            "title": "Nombre"
+          },
+          "tipo": {
+            "type": "string",
+            "title": "Tipo"
+          },
+          "telefono": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Telefono"
+          },
+          "correo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Correo"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id_cliente",
+          "nombre",
+          "tipo",
+          "telefono",
+          "correo"
+        ],
+        "title": "ClienteCorregido"
+      },
       "ClienteEncontrado": {
         "properties": {
           "id_cliente": {
@@ -4430,6 +4574,46 @@
           "motivo"
         ],
         "title": "DatosDeCancelacion"
+      },
+      "DatosDeContacto": {
+        "properties": {
+          "nombre": {
+            "type": "string",
+            "maxLength": 120,
+            "title": "Nombre"
+          },
+          "telefono": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 20
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Telefono"
+          },
+          "correo": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 120
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Correo"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "nombre"
+        ],
+        "title": "DatosDeContacto",
+        "description": "Corrección de los datos del cliente (CA-055)."
       },
       "DatosDeCorreccion": {
         "properties": {

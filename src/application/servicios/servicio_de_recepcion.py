@@ -1,7 +1,15 @@
-"""Recepción del vehículo: clientes, vehículos y apertura de la orden (US-001 a US-003, US-016)."""
+"""Recepción del vehículo: clientes, vehículos, apertura de la orden y correcciones de datos.
+
+US-001 a US-003, US-016 y US-027 (H-PIA-24).
+"""
 from __future__ import annotations
 
-from application.comandos import DatosDeVehiculo, RegistrarCliente, RegistrarOrden
+from application.comandos import (
+    CorregirCliente,
+    DatosDeVehiculo,
+    RegistrarCliente,
+    RegistrarOrden,
+)
 from application.puertos import PublicadorDeEventos, Reloj
 from application.resultados import ResultadoDeCliente, ResultadoDeOrden
 from application.unidad_de_trabajo import UnidadDeTrabajo
@@ -25,6 +33,15 @@ class ServicioDeRecepcion:
     def registrar_cliente(self, comando: RegistrarCliente) -> ResultadoDeCliente:
         with self._uow as uow:
             cliente = _obtener_o_crear_cliente(uow, comando)
+            uow.confirmar()
+        return _resultado_de_cliente(cliente)
+
+    def corregir_cliente(self, comando: CorregirCliente) -> ResultadoDeCliente:
+        """RN-29: con las mismas validaciones del registro; no cambia órdenes ni cotizaciones."""
+        with self._uow as uow:
+            cliente = uow.clientes.obtener(comando.id_cliente)
+            cliente.actualizar_contacto(comando.nombre, comando.telefono, comando.correo)
+            uow.clientes.guardar(cliente)
             uow.confirmar()
         return _resultado_de_cliente(cliente)
 
@@ -157,4 +174,6 @@ def _resultado_de_cliente(cliente: Cliente) -> ResultadoDeCliente:
         cliente.tipo.value,
         cliente.empresa,
         cliente.responsable.nombre if cliente.responsable else None,
+        cliente.telefono,
+        cliente.correo,
     )
