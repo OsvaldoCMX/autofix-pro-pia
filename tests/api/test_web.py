@@ -32,11 +32,6 @@ def _texto(nombre: str) -> str:
     return (CARPETA_WEB / nombre).read_text(encoding="utf-8")
 
 
-def _claves_de_ejemplo() -> set[str]:
-    ejemplo = (RAIZ / ".env.example").read_text(encoding="utf-8")
-    return set(TOKENS.values()) | set(re.findall(r"^TOKEN_\w+=(\S+)", ejemplo, re.MULTILINE))
-
-
 def test_la_raiz_entrega_la_pagina(cliente: TestClient) -> None:
     respuesta = cliente.get("/")
 
@@ -98,7 +93,9 @@ def test_la_pagina_no_trae_claves_escritas(nombre: str) -> None:
     texto = _texto(nombre)
 
     assert "TOKEN_" not in texto
-    assert [clave for clave in _claves_de_ejemplo() if clave in texto] == []
+    assert [clave for clave in TOKENS.values() if clave in texto] == []
+    # La única clave que va después de «Bearer» es la que escribió el empleado: `${clave}`.
+    assert re.findall(r"Bearer\s+(?!\$\{)\S+", texto) == []
 
 
 @pytest.mark.parametrize("direccion", ["/web/no-existe.js", "/api/no-existe", "/no-existe"])
