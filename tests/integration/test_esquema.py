@@ -38,6 +38,7 @@ from infrastructure.base_de_datos.tablas import (
     fotos_de_danos,
     lineas_de_cotizacion,
     metadata,
+    ordenes,
     recontactos,
     refacciones_cotizadas,
     secuencias,
@@ -429,3 +430,21 @@ def test_rn_27_vehiculo_del_profesor_con_su_orden_abierta_no_abre_otra(
         taller.recepcion.registrar_orden(
             RegistrarOrden(ASESOR, "PIA-AUT-001", "Revisión", 1000, NivelDeCombustible.LLENO)
         )
+
+
+def test_datos_iniciales_abren_el_expediente_de_todas_las_ordenes(
+    base_con_datos_iniciales: Engine,
+) -> None:
+    """Condición del equipo (Fase 14): los datos del profesor se leen aunque no cumplan las
+    reglas de captura nuevas, porque esas reglas solo se aplican al capturar o corregir."""
+    lector = TallerEnBase(base_con_datos_iniciales).lector()
+    with base_con_datos_iniciales.connect() as conexion:
+        numeros = conexion.execute(select(ordenes.c.numero).order_by(ordenes.c.numero)).scalars()
+        folios = list(numeros)
+
+    expedientes = [lector.expediente(NumeroOrden(folio)) for folio in folios]
+
+    assert len(folios) == 60
+    assert all(expediente is not None for expediente in expedientes)
+    assert {expediente.vehiculo_marca for expediente in expedientes if expediente} == {"Ficticia"}
+    assert all(expediente and expediente.cliente_nombre for expediente in expedientes)

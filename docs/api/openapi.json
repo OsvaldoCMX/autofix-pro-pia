@@ -4955,7 +4955,7 @@
           },
           "trabajos": {
             "items": {
-              "$ref": "#/components/schemas/TrabajoDeOrden"
+              "$ref": "#/components/schemas/TrabajoDelExpediente"
             },
             "type": "array",
             "title": "Trabajos"
@@ -4973,6 +4973,94 @@
             },
             "type": "array",
             "title": "Fallas Adicionales"
+          },
+          "cliente_nombre": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cliente Nombre"
+          },
+          "cliente_tipo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cliente Tipo"
+          },
+          "empresa": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Empresa"
+          },
+          "responsable_nombre": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Responsable Nombre"
+          },
+          "vehiculo_marca": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vehiculo Marca"
+          },
+          "vehiculo_modelo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vehiculo Modelo"
+          },
+          "vehiculo_anio": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vehiculo Anio"
+          },
+          "tecnico_de_diagnostico_nombre": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tecnico De Diagnostico Nombre"
           }
         },
         "type": "object",
@@ -5004,7 +5092,15 @@
           "cotizaciones",
           "trabajos",
           "solicitudes",
-          "fallas_adicionales"
+          "fallas_adicionales",
+          "cliente_nombre",
+          "cliente_tipo",
+          "empresa",
+          "responsable_nombre",
+          "vehiculo_marca",
+          "vehiculo_modelo",
+          "vehiculo_anio",
+          "tecnico_de_diagnostico_nombre"
         ],
         "title": "ExpedienteDeOrden"
       },
@@ -5980,6 +6076,58 @@
           "tecnico"
         ],
         "title": "TrabajoDeOrden"
+      },
+      "TrabajoDelExpediente": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "descripcion": {
+            "type": "string",
+            "title": "Descripcion"
+          },
+          "importe": {
+            "type": "string",
+            "title": "Importe"
+          },
+          "estado": {
+            "type": "string",
+            "title": "Estado"
+          },
+          "tecnico": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tecnico"
+          },
+          "tecnico_nombre": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tecnico Nombre"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "descripcion",
+          "importe",
+          "estado",
+          "tecnico",
+          "tecnico_nombre"
+        ],
+        "title": "TrabajoDelExpediente"
       },
       "TrabajosAsignados": {
         "properties": {

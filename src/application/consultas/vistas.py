@@ -5,7 +5,8 @@ cada vista desde su Aggregate, para que todos los lectores calculen lo mismo.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
+from collections.abc import Mapping
+from dataclasses import dataclass, field, replace
 from datetime import date, datetime
 
 from domain.clientes.cliente import Cliente
@@ -50,6 +51,7 @@ class TrabajoVista:
     importe: str
     estado: str
     tecnico: str | None
+    tecnico_nombre: str | None = None
 
 
 @dataclass(frozen=True)
@@ -191,6 +193,33 @@ class ExpedienteDeOrdenVista:
     trabajos: tuple[TrabajoVista, ...]
     solicitudes: tuple[SolicitudVista, ...]
     fallas_adicionales: tuple[FallaAdicionalVista, ...]
+    # Lo que la página necesita de otros Aggregates (interfaz-web.md §7, Fase 14)
+    cliente_nombre: str | None = None
+    cliente_tipo: str | None = None
+    empresa: str | None = None
+    responsable_nombre: str | None = None
+    vehiculo_marca: str | None = None
+    vehiculo_modelo: str | None = None
+    vehiculo_anio: int | None = None
+    tecnico_de_diagnostico_nombre: str | None = None
+
+
+@dataclass(frozen=True)
+class DatosRelacionados:
+    """Datos del cliente, del vehículo y de los empleados que muestra el expediente.
+
+    Los lectores los arman desde la base o la memoria; nunca se validan con las reglas de
+    captura, porque solo se leen (condición del equipo, Fase 14).
+    """
+
+    cliente_nombre: str | None = None
+    cliente_tipo: str | None = None
+    empresa: str | None = None
+    responsable_nombre: str | None = None
+    vehiculo_marca: str | None = None
+    vehiculo_modelo: str | None = None
+    vehiculo_anio: int | None = None
+    nombres_de_empleados: Mapping[str, str] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -312,8 +341,12 @@ def _vista_de_correccion(correccion: CorreccionDeCotizacion) -> CorreccionVista:
 
 
 def vista_de_expediente(
-    orden: OrdenDeServicio, cotizaciones: list[Cotizacion]
+    orden: OrdenDeServicio,
+    cotizaciones: list[Cotizacion],
+    relacionados: DatosRelacionados | None = None,
 ) -> ExpedienteDeOrdenVista:
+    datos = relacionados or DatosRelacionados()
+    nombres = datos.nombres_de_empleados
     recepcion = orden.estado_de_recepcion
     diagnostico = orden.diagnostico
     pago = orden.pago
@@ -345,12 +378,23 @@ def vista_de_expediente(
         orden.fecha_entrega,
         orden.cancelacion.motivo if orden.cancelacion else None,
         tuple(vista_de_cotizacion(cotizacion) for cotizacion in cotizaciones),
-        tuple(vista_de_trabajo(trabajo) for trabajo in orden.trabajos),
+        tuple(
+            replace(vista_de_trabajo(trabajo), tecnico_nombre=nombres.get(trabajo.tecnico or ""))
+            for trabajo in orden.trabajos
+        ),
         tuple(vista_de_solicitud(orden, solicitud) for solicitud in orden.solicitudes),
         tuple(
             FallaAdicionalVista(falla.id, falla.descripcion, falla.tecnico, falla.reportada_en)
             for falla in orden.fallas_adicionales
         ),
+        datos.cliente_nombre,
+        datos.cliente_tipo,
+        datos.empresa,
+        datos.responsable_nombre,
+        datos.vehiculo_marca,
+        datos.vehiculo_modelo,
+        datos.vehiculo_anio,
+        nombres.get(orden.tecnico_de_diagnostico or ""),
     )
 
 

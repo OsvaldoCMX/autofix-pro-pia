@@ -190,15 +190,15 @@ En la consulta pública, debajo del estado se muestra una frase tomada del «Sig
 
 También ayudan, aunque la regla vive en el dominio: los campos de teléfono y correo, la lista desplegable de años y el máximo del kilometraje (AU-08 a AU-10), el `maxlength` de los textos (AU-11), el nombre y el rol del autorizante llenados por la página (AU-15, AU-16), la lista de técnicos con nombres (AU-12, AU-13) y que los identificadores de las direcciones los arme la página, no el usuario (AU-38).
 
-## 7. Datos que la página necesita y la API todavía no da
+## 7. Datos que la página necesitaba y la API no daba
 
 Según el plan (Fases 16 y 17), si una pantalla necesita un dato que la API no da, se agrega a la API con su prueba y se documenta en `scripts/docs/rutas.py`; la página no lo adivina ni lo calcula.
 
 | Dato | Lo necesita | Dónde se agregaría |
 |---|---|---|
-| Nombre y tipo del cliente (y su Responsable de Flotilla), marca, modelo y año del vehículo | A-03, A-04, K-01, K-02 (pago o crédito según el tipo) | Expediente `GET /api/ordenes/{numero}` (hoy solo trae `id_cliente` y `placas`). **Se agrega en la Fase 14** (punto 5 de su orden de prioridad). |
-| Historial de correcciones de la cotización | A-03, G-01 | `GET /api/cotizaciones/{id}` y el expediente (lo agrega la Fase 14 con H-PIA-21) |
-| Nombre del técnico asignado | A-03, G-02 | Hoy el expediente trae la clave (`EMP-002`). **Se agrega al expediente en la Fase 14** (punto 5), junto con los datos del cliente y del vehículo. |
+| Nombre y tipo del cliente (y su Responsable de Flotilla), marca, modelo y año del vehículo | A-03, A-04, K-01, K-02 (pago o crédito según el tipo) | Expediente `GET /api/ordenes/{numero}` Desde la Fase 14 trae `cliente_nombre`, `cliente_tipo`, `empresa`, `responsable_nombre` (sin su teléfono ni su correo, decisión del equipo), `vehiculo_marca`, `vehiculo_modelo` y `vehiculo_anio`. |
+| Historial de correcciones de la cotización | A-03, G-01 | Desde la Fase 14, la lista `correcciones` de `GET /api/cotizaciones/{id}` y de cada cotización del expediente (H-PIA-21) |
+| Nombre del técnico asignado | A-03, G-02 | Desde la Fase 14 el expediente trae `tecnico_de_diagnostico_nombre` y `tecnico_nombre` en cada trabajo, además de la clave. |
 | Nombre y puesto del empleado de la clave | P-03 | `GET /api/sesion` (Fase 15) |
 
 ## 8. Estructura de archivos (Fase 15)

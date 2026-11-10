@@ -117,6 +117,10 @@ class TrabajoDeOrden(ModeloDeSalida):
     tecnico: str | None
 
 
+class TrabajoDelExpediente(TrabajoDeOrden):
+    tecnico_nombre: str | None
+
+
 class SolicitudDeOrden(ModeloDeSalida):
     numero_orden: str
     id: int
@@ -162,6 +166,14 @@ class ExpedienteDeOrden(ModeloDeSalida):
     fecha_entrega: datetime | None
     cancelacion_motivo: str | None
     cotizaciones: list[CotizacionDetallada]
-    trabajos: list[TrabajoDeOrden]
+    trabajos: list[TrabajoDelExpediente]
     solicitudes: list[SolicitudDeOrden]
     fallas_adicionales: list[FallaDeOrden]
+    cliente_nombre: str | None
+    cliente_tipo: str | None
+    empresa: str | None
+    responsable_nombre: str | None
+    vehiculo_marca: str | None
+    vehiculo_modelo: str | None
+    vehiculo_anio: int | None
+    tecnico_de_diagnostico_nombre: str | None

@@ -8,13 +8,14 @@ from __future__ import annotations
 from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy import Engine, and_, func, or_, select
+from sqlalchemy import Connection, Engine, and_, func, or_, select
 
 from application.consultas.lector import LectorDeOrdenes
 from application.consultas.vistas import (
     ClienteVista,
     CotizacionPendienteVista,
     CotizacionVista,
+    DatosRelacionados,
     EstadoDeOrdenVista,
     ExpedienteDeOrdenVista,
     OrdenDelPanelVista,
@@ -40,6 +41,7 @@ from domain.ordenes.estados import (
     EstadoSolicitud,
     EstadoTrabajo,
 )
+from domain.ordenes.orden_de_servicio import OrdenDeServicio
 from infrastructure.base_de_datos import mapeo
 from infrastructure.base_de_datos.repositorios import cargar_cotizacion, cargar_orden
 from infrastructure.base_de_datos.tablas import (
@@ -182,7 +184,8 @@ class LectorDeOrdenesSqlAlchemy(LectorDeOrdenes):
                 .order_by(cotizaciones.c.version)
             ).scalars()
             cargadas = [cargar_cotizacion(conexion, id_cotizacion) for id_cotizacion in ids.all()]
-        return vista_de_expediente(orden, cargadas)
+            relacionados = _relacionados(conexion, orden)
+        return vista_de_expediente(orden, cargadas, relacionados)
 
     def ordenes(self, estado: EstadoOrden | None) -> list[OrdenResumenVista]:
         consulta = select(ordenes).order_by(ordenes.c.numero)
@@ -260,3 +263,32 @@ class LectorDeOrdenesSqlAlchemy(LectorDeOrdenes):
         )
         with self._motor.connect() as conexion:
             return list(conexion.execute(consulta).scalars())
+
+
+def _relacionados(conexion: Connection, orden: OrdenDeServicio) -> DatosRelacionados:
+    """Lee las columnas tal como están guardadas, sin pasar por las reglas de captura."""
+    cliente = conexion.execute(
+        select(
+            clientes.c.nombre,
+            clientes.c.tipo,
+            clientes.c.empresa,
+            clientes.c.responsable_nombre,
+        ).where(clientes.c.id == orden.id_cliente)
+    ).first()
+    vehiculo = conexion.execute(
+        select(vehiculos.c.marca, vehiculos.c.modelo, vehiculos.c.anio).where(
+            vehiculos.c.placas == str(orden.placas)
+        )
+    ).first()
+    filas = conexion.execute(select(empleados.c.id, empleados.c.nombre)).all()
+    nombres = {fila.id: fila.nombre for fila in filas}
+    return DatosRelacionados(
+        cliente.nombre if cliente else None,
+        cliente.tipo if cliente else None,
+        cliente.empresa if cliente else None,
+        cliente.responsable_nombre if cliente else None,
+        vehiculo.marca if vehiculo else None,
+        vehiculo.modelo if vehiculo else None,
+        vehiculo.anio if vehiculo else None,
+        nombres,
+    )

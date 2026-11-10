@@ -9,6 +9,7 @@ from application.consultas.vistas import (
     ClienteVista,
     CotizacionPendienteVista,
     CotizacionVista,
+    DatosRelacionados,
     EstadoDeOrdenVista,
     ExpedienteDeOrdenVista,
     OrdenDelPanelVista,
@@ -29,6 +30,7 @@ from domain.compartido.valores import NumeroOrden, Placas
 from domain.cotizaciones.estados import EstadoCotizacion
 from domain.empleados.empleado import RolDeEmpleado
 from domain.ordenes.estados import MAQUINA_DE_ORDEN, EstadoOrden
+from domain.ordenes.orden_de_servicio import OrdenDeServicio
 from infrastructure.memoria.almacen import AlmacenEnMemoria
 
 
@@ -99,7 +101,22 @@ class LectorEnMemoria(LectorDeOrdenes):
             (c for c in self._almacen.datos.cotizaciones.values() if c.numero_orden == numero),
             key=lambda cotizacion: cotizacion.version.numero,
         )
-        return vista_de_expediente(orden, cotizaciones)
+        return vista_de_expediente(orden, cotizaciones, self._relacionados(orden))
+
+    def _relacionados(self, orden: OrdenDeServicio) -> DatosRelacionados:
+        datos = self._almacen.datos
+        cliente = datos.clientes.get(orden.id_cliente)
+        vehiculo = datos.vehiculos.get(str(orden.placas))
+        return DatosRelacionados(
+            cliente.nombre if cliente else None,
+            cliente.tipo.value if cliente else None,
+            cliente.empresa if cliente else None,
+            cliente.responsable.nombre if cliente and cliente.responsable else None,
+            vehiculo.marca if vehiculo else None,
+            vehiculo.modelo if vehiculo else None,
+            vehiculo.anio if vehiculo else None,
+            {empleado.id_empleado: empleado.nombre for empleado in datos.empleados.values()},
+        )
 
     def ordenes(self, estado: EstadoOrden | None) -> list[OrdenResumenVista]:
         return [
