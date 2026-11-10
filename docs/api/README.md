@@ -28,7 +28,7 @@ Contrato de la API que se implementa con FastAPI (ADR-008). Cuando la API esté 
 | GET | `/api/vehiculos/{placas}` | Asesor | Buscar vehículo y cliente por placas. | 200 | 401, 403, 404 | `BuscarVehiculoPorPlacas` | CA-003, CA-004 | P1 |
 | GET | `/api/clientes?tipo=Flotilla&empresa=` | Asesor | Buscar la empresa de flotilla y su Responsable. | 200 | 401, 403 | `BuscarClientes` | CA-028 | P1 |
 | POST | `/api/clientes` | Asesor | Registrar cliente particular o de flotilla (con Responsable). | 201 | 400, 401, 403, 422 | `ServicioDeRecepcion.registrar_cliente` | CA-028 | P1 |
-| POST | `/api/ordenes` | Asesor | Registrar la orden: cliente, vehículo, motivo, kilometraje y combustible. Si las placas ya existen, reutiliza el registro y actualiza los datos enviados. | 201 | 400, 401, 403, 404, 422 | `ServicioDeRecepcion.registrar_orden` | CA-001, CA-002, CA-004 | P1 |
+| POST | `/api/ordenes` | Asesor | Registrar la orden: cliente, vehículo, motivo, kilometraje y combustible. Si las placas ya existen, reutiliza el registro y actualiza los datos enviados. *Planeado (H-PIA-22):* 409 si el vehículo ya tiene una orden abierta. | 201 | 400, 401, 403, 404, 422 | `ServicioDeRecepcion.registrar_orden` | CA-001, CA-002, CA-004, CA-052 | P1 |
 | POST | `/api/ordenes/{numero}/fotos` | Asesor | Adjuntar foto de daños (multipart). | 201 | 401, 403, 404, 422 | `ServicioDeRecepcion.adjuntar_foto` | CA-002 | P2 |
 | GET | `/api/ordenes/{numero}` | Asesor, Gerente, Técnico, Caja | Expediente completo de la orden (estado, cotizaciones, trabajos, solicitudes, pagos). | 200 | 401, 403, 404 | `ConsultarExpedienteDeOrden` | — | P1 |
 

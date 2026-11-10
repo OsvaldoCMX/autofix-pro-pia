@@ -16,7 +16,7 @@ Un solo *Bounded Context*, **Gestión del Taller**, dividido en módulos del paq
 | `clientes` | Aggregate Cliente y la especificación del autorizante válido. |
 | `vehiculos` | Aggregate Vehículo (búsqueda por placas). |
 | `empleados` | Aggregate Empleado y `RolDeEmpleado`. |
-| `servicios` | Domain Service `VerificadorDeAutorizante`. |
+| `servicios` | Domain Services `VerificadorDeAutorizante` y, en la v3.1, `VerificadorDeOrdenUnica` (RN-27). |
 
 Los Aggregates se relacionan **solo por identidad** (`numero_orden`, `id_cliente`, `placas`, `id_empleado`). Cuando un caso de uso modifica dos Aggregates (generar cotización + marcar la orden; registrar decisión + crear trabajos) los dos cambios se confirman en la misma Unidad de Trabajo (ADR-002).
 
@@ -33,7 +33,7 @@ Los Aggregates se relacionan **solo por identidad** (`numero_orden`, `id_cliente
 | Responsabilidades | Ciclo de vida completo del servicio: recepción, diagnóstico, cotizada, decisión, asignación y avance de trabajos, fallas adicionales, refacciones, retiro anticipado, pago o crédito, entrega y cancelación. |
 | Invariantes | Solo cambia de estado por la tabla de su máquina de estados (RN-22) · sin diagnóstico no hay cotización y después el diagnóstico no cambia (RN-02, RN-03) · solo se asignan e inician trabajos autorizados (RN-08) · refacciones solo de trabajos autorizados (RN-09) · «En Espera de Refacción» mientras exista una solicitud «Solicitada» (RN-10) · nadie trabaja la orden con el vehículo fuera del taller y cada trabajo lo inicia su técnico (RN-14) · «Lista para Entrega» cuando todos los trabajos autorizados están completados y no hay cotización adicional sin decisión (RN-15) · el pago cubre el total autorizado y las flotillas no pagan de contado; después ya no cambian los costos (RN-16) · el vencimiento del crédito es la entrega + 15 días naturales (RN-17) · se entrega solo con pago, crédito o rechazo total (RN-18) · se cancela solo sin cotización, con motivo (RN-19). |
 | Eventos | `OrdenRecibida`, `TecnicoAsignadoParaDiagnostico`, `DiagnosticoRegistrado`, `OrdenAutorizada`, `TrabajosAsignados`, `TrabajoIniciado`, `FallaAdicionalReportada`, `SolicitudDeCompraCreada`, `RefaccionDisponible`, `ClienteAvisadoDelRetraso`, `VehiculoRetirado`, `OrdenReactivada`, `OrdenListaParaEntrega`, `PagoRegistrado`, `CargoACreditoRegistrado`, `VehiculoEntregado`, `OrdenCancelada`. |
-| Repositorio | `RepositorioDeOrdenes`: `obtener(numero)`, `agregar(orden)`, `guardar(orden)`, `siguiente_numero()`. |
+| Repositorio | `RepositorioDeOrdenes`: `obtener(numero)`, `agregar(orden)`, `guardar(orden)`, `siguiente_numero()` y, en la v3.1, `abierta_del_vehiculo(placas)`. |
 
 ### 2.2 Cotización — raíz `Cotizacion`
 
@@ -54,6 +54,8 @@ Identidad `id_cliente`; `TipoCliente` (Particular/Flotilla); nombre, teléfono, 
 ### 2.4 Vehículo — raíz `Vehiculo`
 
 Identidad `Placas` (VO normalizado: sin espacios ni guiones, en mayúsculas) y `VIN`; marca, modelo, año e `id_cliente`. **Invariante:** placas y VIN obligatorios; el año está entre 1900 y 2100 (como el `CHECK` de la base). `actualizar_datos` cambia VIN, marca, modelo y año de un vehículo que regresa (CA-003). Repositorio: `RepositorioDeVehiculos` (`por_placas`, `agregar`, `guardar`). Sin eventos. En los datos del profesor no hay vehículos: se crea uno por operación con las placas derivadas de `referencia` (ADR-013).
+
+**Una sola orden abierta por vehículo (v3.1, RN-27, H-PIA-22).** Antes de registrar una orden, `VerificadorDeOrdenUnica` consulta `RepositorioDeOrdenes.abierta_del_vehiculo(placas)` (una orden que no está en «Cerrada», «Cerrada sin Reparación» ni «Cancelada») y, si existe, lanza `VehiculoConOrdenAbierta` con el folio y el estado de esa orden. Como respaldo ante dos registros simultáneos (doble clic), la base tiene un índice único parcial en `ordenes(placas)` para las órdenes abiertas; si la base rechaza el segundo registro, la API responde el **mismo 409 con el mismo mensaje**, nunca un error 500 (lo comprueba una prueba de integración de la Fase 14). Las 60 órdenes del profesor tienen un vehículo cada una, así que el índice no las afecta.
 
 ### 2.5 Empleado — raíz `Empleado`
 
@@ -219,7 +221,10 @@ Las alertas por tiempo (CA-023 y CA-040) no vienen de un evento sino de la revis
 | `PagoNoPermitido` | Monto distinto del total autorizado o pago de contado de una flotilla. | 409 |
 | `EntregaNoPermitida` | E3 no se cumple. | 409 |
 | `CancelacionNoPermitida` | E4 no se cumple. | 409 |
+| `VehiculoConOrdenAbierta` | *(v3.1)* El vehículo ya tiene una orden abierta (RN-27), también cuando la base rechaza un segundo registro simultáneo. | 409 · Planeado |
 | `OrdenNoEncontrada`, `CotizacionNoEncontrada`, `ClienteNoEncontrado`, `VehiculoNoEncontrado`, `EmpleadoNoEncontrado`, `TrabajoNoEncontrado`, `SolicitudNoEncontrada` | El identificador no existe. | 404 |
+
+*(v3.1)* Los errores con **«409 · Planeado»** en la columna HTTP están aprobados (Fase 13) pero todavía no existen en el código; `tests/api/test_errores_http.py` solo compara los demás, y la Fase 14 quita la marca al crear cada uno.
 
 Todos heredan de `ErrorDeDominio` y su mensaje está escrito para el usuario del taller (se devuelve tal cual en el campo `detalle` de la respuesta): dice qué pasó y qué puede hacer, sin términos internos («inhabilitado» es un término de este modelo; el usuario lee «servicios que el taller no ofrece por ahora»).
 

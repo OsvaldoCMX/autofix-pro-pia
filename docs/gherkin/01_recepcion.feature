@@ -20,6 +20,14 @@ Característica: Recepción y registro del vehículo
     Y debe asignarle el estado «Recibida»
     Y debe mostrar un mensaje de éxito
 
+  @US-001 @CA-052 @v3.1
+  Escenario: CA-052 No se abre una segunda orden del mismo vehículo
+    Dado que el vehículo con placas XYZ998 ya tiene una orden abierta (en un estado distinto de «Cerrada», «Cerrada sin Reparación» y «Cancelada»)
+    Cuando el asesor intenta registrar otra orden para ese vehículo, por ejemplo con un doble clic en «Registrar»
+    Entonces el sistema no debe abrir una segunda orden
+    Y debe mostrar el mensaje «El vehículo con placas XYZ998 ya tiene abierta la orden OS-0001 (estado «Recibida»). Ábrala en lugar de registrar otra.»
+    Y aunque las dos solicitudes lleguen al mismo tiempo, solo una orden debe quedar registrada y la otra debe recibir el mismo mensaje
+
   # ---------------------------------------------------------------- US-002 (Asesor de Servicio)
 
   @US-002 @CA-002

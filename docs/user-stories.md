@@ -14,7 +14,7 @@ Este documento contiene las User Stories derivadas del levantamiento de requerim
 
 Las historias siguen el formato *Como… quiero… para…* y cada criterio de aceptación está escrito en Gherkin (*Dado / Cuando / Entonces / Y*). Los mismos criterios, palabra por palabra, están en los archivos `docs/gherkin/*.feature` con las etiquetas `@US-xxx` y `@CA-xxx`, para que cada escenario se pueda relacionar con su prueba automatizada (convención `test_ca_0XX_…`). Los nombres de estados, roles y términos son los del [Glosario del Dominio](glosario.md).
 
-**Resumen:** 16 necesidades · 26 User Stories · 51 criterios de aceptación · 8 archivos `.feature`.
+**Resumen:** 16 necesidades · 26 User Stories · 52 criterios de aceptación · 8 archivos `.feature`.
 
 ## 1. Trazabilidad con el BRD
 
@@ -79,6 +79,7 @@ Los criterios marcados con **(v3.0)** se agregaron o se precisaron en el PIA y l
 | ID | Criterio de aceptación |
 |---|---|
 | **CA-001**<br>Registrar un vehículo nuevo y abrir su orden | **Dado** que un vehículo llega al taller y el asesor abre la pantalla «Nueva Orden»<br>**Cuando** el asesor ingresa los datos del cliente (nombre, teléfono y correo), los del vehículo (marca, modelo, año, placas y VIN) y el motivo de ingreso<br>**Entonces** el sistema debe guardar la información<br>**Y** debe generar un número de orden de servicio único<br>**Y** debe asignarle el estado «Recibida»<br>**Y** debe mostrar un mensaje de éxito |
+| **CA-052**<br>No se abre una segunda orden del mismo vehículo **(v3.1, H-PIA-22)** | **Dado** que el vehículo con placas XYZ998 ya tiene una orden abierta (en un estado distinto de «Cerrada», «Cerrada sin Reparación» y «Cancelada»)<br>**Cuando** el asesor intenta registrar otra orden para ese vehículo, por ejemplo con un doble clic en «Registrar»<br>**Entonces** el sistema no debe abrir una segunda orden<br>**Y** debe mostrar el mensaje «El vehículo con placas XYZ998 ya tiene abierta la orden OS-0001 (estado «Recibida»). Ábrala en lugar de registrar otra.»<br>**Y** aunque las dos solicitudes lleguen al mismo tiempo, solo una orden debe quedar registrada y la otra debe recibir el mismo mensaje |
 
 ### US-002
 
@@ -309,7 +310,7 @@ Los criterios marcados con **(v3.0)** se agregaron o se precisaron en el PIA y l
 
 | ID Necesidad | User Stories relacionadas | Criterios de aceptación | Proceso modelado en BPMN |
 |---|---|---|---|
-| N-01 | US-001, US-002, US-003 | CA-001, CA-002, CA-003, CA-004 | Fase 1: Recepción y registro |
+| N-01 | US-001, US-002, US-003 | CA-001, CA-002, CA-003, CA-004, CA-052 | Fase 1: Recepción y registro |
 | N-02 | US-004 | CA-005, CA-006 | Fase 2: Diagnóstico y cotización; Fase 3: Autorización |
 | N-03 | US-006 | CA-010, CA-011, CA-012 | Fase 3: Autorización |
 | N-04 | US-005 | CA-007, CA-008, CA-009 | Fase 2: Diagnóstico y cotización |

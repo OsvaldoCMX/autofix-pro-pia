@@ -26,7 +26,7 @@ NECESIDADES = [
 
 # necesidad -> (US, CA, proceso BPMN)
 TRAZA_NECESIDAD = {
-    "N-01": (["US-001", "US-002", "US-003"], ["CA-001", "CA-002", "CA-003", "CA-004"], "Fase 1: Recepción y registro"),
+    "N-01": (["US-001", "US-002", "US-003"], ["CA-001", "CA-002", "CA-003", "CA-004", "CA-052"], "Fase 1: Recepción y registro"),
     "N-02": (["US-004"], ["CA-005", "CA-006"], "Fase 2: Diagnóstico y cotización; Fase 3: Autorización"),
     "N-03": (["US-006"], ["CA-010", "CA-011", "CA-012"], "Fase 3: Autorización"),
     "N-04": (["US-005"], ["CA-007", "CA-008", "CA-009"], "Fase 2: Diagnóstico y cotización"),
@@ -608,6 +608,16 @@ ca("CA-051", "US-026", [
    "POST /api/revisiones/plazos · POST /api/cotizaciones/{id}/presentacion", f"{SIS} / {ASE}",
    cambio="H-PIA-21", nombre="El plazo de 48 horas después de una corrección", planeado=True)
 
+ca("CA-052", "US-001", [
+    (D, "que el vehículo con placas XYZ998 ya tiene una orden abierta (en un estado distinto de «Cerrada», «Cerrada sin Reparación» y «Cancelada»)"),
+    (C, "el asesor intenta registrar otra orden para ese vehículo, por ejemplo con un doble clic en «Registrar»"),
+    (E, "el sistema no debe abrir una segunda orden"),
+    (Y, "debe mostrar el mensaje «El vehículo con placas XYZ998 ya tiene abierta la orden OS-0001 (estado «Recibida»). Ábrala en lugar de registrar otra.»"),
+    (Y, "aunque las dos solicitudes lleguen al mismo tiempo, solo una orden debe quedar registrada y la otra debe recibir el mismo mensaje"),
+], F1, ["RN-27"], "VerificadorDeOrdenUnica, RepositorioDeOrdenes.abierta_del_vehiculo, índice único parcial de ordenes(placas), error VehiculoConOrdenAbierta",
+   "ServicioDeRecepcion.registrar_orden", "POST /api/ordenes (409)", ASE,
+   cambio="H-PIA-22", nombre="No se abre una segunda orden del mismo vehículo", planeado=True)
+
 # ----------------------------------------------------------------------------- áreas (archivos .feature)
 AREAS = [
     ("01_recepcion", "Recepción y registro del vehículo",
@@ -665,10 +675,11 @@ REGLAS = {
     # v3.1 (revisión del 09/11/2026)
     "RN-25": ("Solo el Asesor corrige una cotización, con motivo, y solo en «Pendiente de Aprobación Gerencial» o «Pendiente de Autorización del Cliente»; conserva su número y versión, y cada corrección queda en su historial (asesor, fecha y hora, motivo, total anterior y total nuevo). En «Requiere Ajuste» se usa el ajuste (RN-05); después de la decisión del cliente, la cotización adicional.", "Revisión del 09/11/2026 (H-PIA-21); BRD Restricción 11"),
     "RN-26": ("Al corregir se vuelve a evaluar E1 y la cotización se presenta otra vez: si es inicial y supera $15,000 MXN regresa al Gerente aunque ya la hubiera aprobado o ajustado, porque RN-05 solo protege el ajuste que pidió el Gerente y una corrección cambia el monto que él revisó; el plazo de 48 horas cuenta desde la nueva presentación.", "H-PIA-21; BRD Restricciones 2, 4 y 11; ADR-018"),
+    "RN-27": ("Un vehículo tiene a lo más una orden abierta (en un estado que no sea «Cerrada», «Cerrada sin Reparación» ni «Cancelada»); un segundo registro se rechaza con el mismo mensaje aunque llegue al mismo tiempo.", "Revisión del 09/11/2026 (H-PIA-22); BRD Restricción 12"),
 }
 
 # Reglas aprobadas en la Fase 13 que todavía no se construyen (misma idea que `planeado` en los CA).
-REGLAS_PLANEADAS = {"RN-25", "RN-26"}
+REGLAS_PLANEADAS = {"RN-25", "RN-26", "RN-27"}
 
 # ----------------------------------------------------------------------------- pruebas previstas
 # Convención: toda prueba de aceptación se llama test_ca_0XX_<descripcion> para poder

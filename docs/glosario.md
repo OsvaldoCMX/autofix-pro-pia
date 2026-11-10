@@ -67,6 +67,7 @@ Este glosario establece el **lenguaje ubicuo** del proyecto: los mismos término
 | Corrección de Cotización | *(v3.1)* Acción con la que el asesor arregla un importe o una descripción mal capturados en una cotización que espera la revisión del Gerente o la decisión del cliente. La cotización conserva su número y su versión, vuelve a quedar sin presentar y, si es inicial y supera $15,000 MXN, regresa al Gerente aunque él ya la hubiera aprobado. No sustituye al *ajuste* que pide el Gerente («Requiere Ajuste») ni a la *cotización adicional* (después de la decisión del cliente). |
 | Motivo de Corrección | *(v3.1)* Texto obligatorio que el asesor captura al corregir una cotización para explicar qué estaba mal capturado. |
 | Historial de Correcciones | *(v3.1)* Registro de cada corrección de una cotización: asesor, fecha y hora, motivo, total anterior y total nuevo. Es la evidencia de lo que cambió entre lo que revisó el Gerente o se presentó al cliente y lo que se presenta después. |
+| Orden Abierta | *(v3.1)* Orden que no está en un estado final («Cerrada», «Cerrada sin Reparación» o «Cancelada»). Un vehículo solo puede tener una orden abierta a la vez: para volver a atenderlo se usa la orden que ya tiene. |
 
 ## 2. Estados del sistema
 

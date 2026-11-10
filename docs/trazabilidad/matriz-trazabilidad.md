@@ -2,7 +2,7 @@
 
 Relaciona **BRD → regla de negocio → componente → prueba**, como pide el paquete del profesor, y cada criterio de aceptación con su User Story, necesidad, fase del BPMN, ruta de la API y rol. Se genera con los scripts de `scripts/docs/` desde la misma fuente que `user-stories.md` y los `.feature`, así que los textos y conteos coinciden.
 
-**Conteos:** 16 necesidades · 26 User Stories · 51 criterios · 26 reglas de negocio · 8 Specifications · 44 rutas de API.
+**Conteos:** 16 necesidades · 26 User Stories · 52 criterios · 27 reglas de negocio · 8 Specifications · 44 rutas de API.
 
 La columna **Prueba prevista** usa la convención `test_ca_0XX_…` / `test_rn_XX_…` (ver `architecture/decisiones-tecnicas.md` §7). Al terminar la implementación se reemplaza por el nombre real de la prueba y su resultado (✔/✘), y se agrega la evidencia de cobertura.
 
@@ -10,7 +10,7 @@ La columna **Prueba prevista** usa la convención `test_ca_0XX_…` / `test_rn_X
 
 | Necesidad | Descripción | Prioridad | User Stories | Criterios | BPMN |
 |---|---|---|---|---|---|
-| N-01 | Registrar digitalmente la recepción del vehículo incluyendo fotografías de daños visibles. | Alta | US-001, US-002, US-003 | CA-001, CA-002, CA-003, CA-004 | Fase 1: Recepción y registro |
+| N-01 | Registrar digitalmente la recepción del vehículo incluyendo fotografías de daños visibles. | Alta | US-001, US-002, US-003 | CA-001, CA-002, CA-003, CA-004, CA-052 | Fase 1: Recepción y registro |
 | N-02 | Generar cotizaciones formales almacenadas con número, fecha, versión y estado. | Alta | US-004 | CA-005, CA-006 | Fase 2: Diagnóstico y cotización; Fase 3: Autorización |
 | N-03 | Registrar la decisión del cliente (autorización total, parcial o rechazo) antes de iniciar trabajos. | Alta | US-006 | CA-010, CA-011, CA-012 | Fase 3: Autorización |
 | N-04 | Aplicar flujo de aprobación del Gerente para cotizaciones iniciales mayores a $15,000 MXN. | Alta | US-005 | CA-007, CA-008, CA-009 | Fase 2: Diagnóstico y cotización |
@@ -59,6 +59,7 @@ Cada regla viene del BRD (o de un hallazgo documentado) y tiene un componente re
 | RN-24 | La cotización adicional es la versión siguiente (v.2, v.3…) y no modifica la cotización original. | BRD §2 Excepciones | CA-016, CA-034 | `Cotizacion.generar` (`TipoCotizacion.ADICIONAL`, `VersionCotizacion`) | ADR-001 | tests/**/test_rn_24_* |
 | RN-25 | Solo el Asesor corrige una cotización, con motivo, y solo en «Pendiente de Aprobación Gerencial» o «Pendiente de Autorización del Cliente»; conserva su número y versión, y cada corrección queda en su historial (asesor, fecha y hora, motivo, total anterior y total nuevo). En «Requiere Ajuste» se usa el ajuste (RN-05); después de la decisión del cliente, la cotización adicional. | Revisión del 09/11/2026 (H-PIA-21); BRD Restricción 11 | CA-047, CA-049, CA-050 | `Cotizacion.corregir` + `CorreccionDeCotizacion` (historial) + `requiere_rol(ASESOR)` | ADR-018 | Planeado · tests/**/test_rn_25_* |
 | RN-26 | Al corregir se vuelve a evaluar E1 y la cotización se presenta otra vez: si es inicial y supera $15,000 MXN regresa al Gerente aunque ya la hubiera aprobado o ajustado, porque RN-05 solo protege el ajuste que pidió el Gerente y una corrección cambia el monto que él revisó; el plazo de 48 horas cuenta desde la nueva presentación. | H-PIA-21; BRD Restricciones 2, 4 y 11; ADR-018 | CA-047, CA-048, CA-049, CA-051 | `Cotizacion.corregir` + Specification E1 + `MAQUINA_DE_COTIZACION` + `Cotizacion.ultimo_contacto` (E8) | ADR-005, ADR-018 | Planeado · tests/**/test_rn_26_* |
+| RN-27 | Un vehículo tiene a lo más una orden abierta (en un estado que no sea «Cerrada», «Cerrada sin Reparación» ni «Cancelada»); un segundo registro se rechaza con el mismo mensaje aunque llegue al mismo tiempo. | Revisión del 09/11/2026 (H-PIA-22); BRD Restricción 12 | CA-052 | `VerificadorDeOrdenUnica` + `RepositorioDeOrdenes.abierta_del_vehiculo` + índice único parcial de `ordenes(placas)` | ADR-002, ADR-009 | Planeado · tests/**/test_rn_27_* |
 
 ## 3. Specifications
 
@@ -130,8 +131,9 @@ Operadores cubiertos: **AND** (E1, E2, E3, E5, E6, E7, E8), **OR** (E2, E3, E4, 
 | CA-049 | Corregir una cotización que espera al Gerente | US-026 | N-16 | Fase 2 y Fase 3: corrección de la cotización | RN-25, RN-26, RN-04 | Cotizacion (corregir), spec RequiereAprobacionGerencial, MAQUINA_DE_COTIZACION, evento CotizacionCorregida | ServicioDeCotizacion.corregir | POST /api/cotizaciones/{id}/correcciones | Asesor | tests/api/test_cotizacion.py::test_ca_049_* | P1 · Planeado | H-PIA-21 |
 | CA-050 | No se corrige sin motivo ni una cotización por ajustar o ya decidida | US-026 | N-16 | Fase 2 y Fase 3: corrección de la cotización | RN-25, RN-05 | Cotizacion (corregir), error OperacionDeCotizacionNoPermitida, ValorInvalido (motivo) | ServicioDeCotizacion.corregir | POST /api/cotizaciones/{id}/correcciones (409, 422) | Asesor | tests/api/test_cotizacion.py::test_ca_050_* | P1 · Planeado | H-PIA-21 |
 | CA-051 | El plazo de 48 horas después de una corrección | US-026 | N-16 | Fase 2 y Fase 3: corrección de la cotización | RN-26, RN-12 | Cotizacion (fecha_presentacion, ultimo_contacto), spec RequiereRecontacto, ServicioDeRevisionDePlazos | ServicioDeRevisionDePlazos.revisar · ServicioDeCotizacion.presentar | POST /api/revisiones/plazos · POST /api/cotizaciones/{id}/presentacion | Sistema (token de sistema) / Asesor | tests/api/test_cotizacion.py::test_ca_051_* | P1 · Planeado | H-PIA-21 |
+| CA-052 | No se abre una segunda orden del mismo vehículo | US-001 | N-01 | Fase 1: Recepción y registro | RN-27 | VerificadorDeOrdenUnica, RepositorioDeOrdenes.abierta_del_vehiculo, índice único parcial de ordenes(placas), error VehiculoConOrdenAbierta | ServicioDeRecepcion.registrar_orden | POST /api/ordenes (409) | Asesor | tests/api/test_recepcion.py::test_ca_052_* | P1 · Planeado | H-PIA-22 |
 
 **Prioridad:** 42 criterios son P1 completos; la parte P2 (PDF y fotos) se omitió por decisión del equipo y sus rutas responden 501 (ver `architecture/decisiones-tecnicas.md` §8). CA-027 no está implementado; CA-002, CA-005 y CA-024 están implementados, salvo sus fotos o su PDF.
 
-**Planeado:** criterio o regla aprobados en la Fase 13 (revisión del 09/11/2026) que todavía no se construyen; la Fase 14 quita la marca al construir cada uno y lo que se recorte queda documentado como planeado. Hoy: 5 criterios (CA-047 a CA-051) y 2 reglas.
+**Planeado:** criterio o regla aprobados en la Fase 13 (revisión del 09/11/2026) que todavía no se construyen; la Fase 14 quita la marca al construir cada uno y lo que se recorte queda documentado como planeado. Hoy: 6 criterios (CA-047 a CA-052) y 3 reglas.
 

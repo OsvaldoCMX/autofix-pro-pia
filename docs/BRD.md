@@ -158,6 +158,7 @@ El sistema no contempla la contabilidad general del taller, la gestión de nómi
 9. El vehículo solo se entrega después de registrar el pago (cliente particular) o el cargo a crédito (cliente de flotilla). Si el cliente rechaza toda la cotización, el vehículo se entrega sin reparación y sin cobro.
 10. *(v3.0)* Una orden solo puede cancelarse mientras no tenga cotización («Recibida» o «En Diagnóstico»); la cancelación no genera cobro.
 11. *(v3.1)* El asesor puede corregir una cotización mal capturada solo antes de la decisión del cliente y con un motivo; queda registro de cada corrección, la cotización se presenta otra vez y, si es inicial y supera $15,000 MXN, regresa al Gerente.
+12. *(v3.1)* Un vehículo no puede tener dos órdenes abiertas al mismo tiempo.
 
 ### Restricciones técnicas
 
