@@ -1,6 +1,6 @@
-# Modelo de dominio — AutoFix Pro (PIA v3.0)
+# Modelo de dominio — AutoFix Pro (PIA v3.1)
 
-Este documento es la referencia del dominio para la implementación del PIA: Aggregates, Value Objects, Specifications, máquinas de estados, Domain Events y errores. Continúa el mapa de dominio de la Unidad 3 (ADR-001 y ADR-002) y agrega lo que pide el PIA (Specification, máquinas de estados de todos los objetos con estado y Domain Events con reacciones). Las reglas de negocio `RN-xx` están en la [matriz de trazabilidad](../trazabilidad/matriz-trazabilidad.md#2-reglas-de-negocio).
+Este documento es la referencia del dominio para la implementación del PIA: Aggregates, Value Objects, Specifications, máquinas de estados, Domain Events y errores. Continúa el mapa de dominio de la Unidad 3 (ADR-001 y ADR-002) y agrega lo que pide el PIA (Specification, máquinas de estados de todos los objetos con estado y Domain Events con reacciones). La v3.1 agrega las correcciones aprobadas después de la revisión del 09/11/2026 (H-PIA-21 en adelante, `auditoria-errores-de-usuario.md`); mientras la Fase 14 no las construya, la matriz de trazabilidad las marca como «Planeado». Las reglas de negocio `RN-xx` están en la [matriz de trazabilidad](../trazabilidad/matriz-trazabilidad.md#2-reglas-de-negocio).
 
 Diagramas: [mapa de dominio](diagramas/mapa-dominio.png) · [clases por capa](diagramas/clases-dominio.png) · [estados de la orden](diagramas/estados-orden.png) · [estados de cotización, trabajo y solicitud](diagramas/estados-cotizacion-trabajo-solicitud.png).
 
@@ -40,11 +40,11 @@ Los Aggregates se relacionan **solo por identidad** (`numero_orden`, `id_cliente
 | Campo | Contenido |
 |---|---|
 | Identidad | `id` de la cotización; pertenece a una orden por `numero_orden`. |
-| Entidades internas | `LineaDeCotizacion` (número, descripción, mano de obra, refacciones, decisión). |
+| Entidades internas | `LineaDeCotizacion` (número, descripción, mano de obra, refacciones, decisión) y `CorreccionDeCotizacion` (v3.1: asesor, fecha y hora, motivo, total anterior y nuevo, estado anterior y nuevo, fechas de presentación y de aprobación gerencial que tenía; tabla `correcciones_de_cotizacion`). |
 | Value Objects | `TipoCotizacion` (Inicial/Adicional), `VersionCotizacion` (v.1, v.2…), `RefaccionCotizada`, `DecisionDelCliente`, `TrabajoDecidido`, `Autorizante`, `Recontacto`. |
-| Responsabilidades | Calcular el total, decidir si requiere aprobación gerencial (por medio de la Specification), controlar revisión, ajuste, presentación y recontactos, y registrar la decisión del cliente. |
-| Invariantes | Al menos un trabajo; total = suma de las líneas (RN-23) · la inicial es v.1 y las adicionales v.2 en adelante y no modifican la original (RN-24) · si requiere aprobación no se presenta (RN-04, RN-06) · el rechazo del Gerente exige observaciones y la ajustada no regresa a revisión (RN-05) · la decisión se registra una sola vez y sobre líneas existentes (RN-22). Guarda `fecha_aprobacion_gerencial` (CA-008, H-PIA-08). |
-| Eventos | `CotizacionGenerada`, `AprobacionGerencialRequerida`, `CotizacionAprobadaPorGerente`, `CotizacionRechazadaPorGerente`, `CotizacionAjustada`, `CotizacionPresentada`, `RecontactoRegistrado`, `CotizacionAutorizada`, `CotizacionRechazadaPorCliente`. |
+| Responsabilidades | Calcular el total, decidir si requiere aprobación gerencial (por medio de la Specification), controlar revisión, ajuste, corrección, presentación y recontactos, y registrar la decisión del cliente. |
+| Invariantes | Al menos un trabajo; total = suma de las líneas (RN-23) · la inicial es v.1 y las adicionales v.2 en adelante y no modifican la original (RN-24) · si requiere aprobación no se presenta (RN-04, RN-06) · el rechazo del Gerente exige observaciones y la ajustada no regresa a revisión (RN-05) · la decisión se registra una sola vez y sobre líneas existentes (RN-22) · la corrige solo el Asesor, con motivo, antes de la decisión y fuera de «Requiere Ajuste»; conserva número y versión y deja historial (RN-25) · después de corregir se vuelve a evaluar E1 y se presenta otra vez (RN-26). Guarda `fecha_aprobacion_gerencial` (CA-008, H-PIA-08). |
+| Eventos | `CotizacionGenerada`, `AprobacionGerencialRequerida`, `CotizacionAprobadaPorGerente`, `CotizacionRechazadaPorGerente`, `CotizacionAjustada`, `CotizacionCorregida` (v3.1), `CotizacionPresentada`, `RecontactoRegistrado`, `CotizacionAutorizada`, `CotizacionRechazadaPorCliente`. |
 | Repositorio | `RepositorioDeCotizaciones`: `obtener(id)`, `agregar`, `guardar`, `de_la_orden(numero)`, `siguiente_version(numero)`, `siguiente_id()` (folio COT-0001). |
 
 ### 2.3 Cliente — raíz `Cliente`
@@ -84,16 +84,18 @@ Base: `Especificacion[T]` con `es_satisfecha_por(candidato) -> bool` y los combi
 
 | # | Specification | Composición | Candidato | Dónde se usa | RN / CA |
 |---|---|---|---|---|---|
-| E1 | `RequiereAprobacionGerencial` | `EsCotizacionInicial() & TotalMayorAlUmbral($15,000)` | `Cotizacion` | `Cotizacion.generar` decide el estado inicial | RN-04 · CA-005, CA-007, CA-016 |
+| E1 | `RequiereAprobacionGerencial` | `EsCotizacionInicial() & TotalMayorAlUmbral($15,000)` | `Cotizacion` | `Cotizacion.generar` decide el estado inicial; `Cotizacion.corregir` la vuelve a evaluar (v3.1) | RN-04, RN-26 · CA-005, CA-007, CA-016, CA-048, CA-049 |
 | E2 | `AutorizanteValido` | `(EsClienteParticular() & AutorizaElCliente()) \| (EsClienteDeFlotilla() & AutorizaSuResponsableDeFlotilla())` | `(Cliente, Autorizante)` | `VerificadorDeAutorizante` antes de registrar la decisión | RN-07 · CA-010, CA-029 |
 | E3 | `PuedeEntregarse` | `EstaPagada() \| EstaPorCobrarACredito() \| (EstaCotizada() & TieneRechazoTotal())` | `OrdenDeServicio` | `entregar` y `entregar_sin_reparacion` | RN-18 · CA-041, CA-042, CA-043 |
 | E4 | `PuedeCancelarse` | `EstaRecibida() \| EstaEnDiagnostico()` | `OrdenDeServicio` | `cancelar` | RN-19 · CA-044, CA-045 |
 | E5 | `PuedeIniciarTrabajo` | `TrabajoPendiente() & AsignadoAlTecnico(id) & ~OrdenPausadaPorRetiro()` | `(OrdenDeServicio, Trabajo)` | `iniciar_trabajo` | RN-14 · CA-014, CA-046 |
 | E6 | `PuedeSolicitarRefaccion` | `TrabajoAutorizado() & (OrdenAutorizada() \| OrdenEnReparacion() \| OrdenEnEsperaDeRefaccion())` | `(OrdenDeServicio, Trabajo)` | `crear_solicitud_de_compra` | RN-09 · CA-019, CA-020 |
 | E7 | `RequiereAlertaDeRefaccion` | `SolicitudPendiente() & MasDeDiasHabiles(3) & ~ClienteYaAvisado()` | `SolicitudDeCompra` + fecha de revisión | `ServicioDeRevisionDePlazos` | RN-11 · CA-023 |
-| E8 | `RequiereRecontacto` | `PendienteDeAutorizacion() & FuePresentada() & MasDeHorasDesdeElUltimoContacto(48)` | `Cotizacion` + fecha de revisión | `ServicioDeRevisionDePlazos` | RN-12 · CA-040 |
+| E8 | `RequiereRecontacto` | `PendienteDeAutorizacion() & FuePresentada() & MasDeHorasDesdeElUltimoContacto(48)` | `Cotizacion` + fecha de revisión | `ServicioDeRevisionDePlazos` | RN-12, RN-26 · CA-040, CA-051 |
 
 En E2, `AutorizaElCliente` y `AutorizaSuResponsableDeFlotilla` comprueban el rol y el nombre del autorizante, sin distinguir mayúsculas, contra el cliente o su Responsable de Flotilla.
+
+En E8, el «último contacto» es la fecha de presentación o el recontacto más reciente **posterior** a ella. Al corregir una cotización la presentación vuelve a quedar vacía (`FuePresentada` no se cumple hasta presentarla otra vez) y los recontactos anteriores se conservan como historial, pero ya no cuentan (v3.1, CA-051).
 
 En E6, la pieza `TrabajoAutorizado` solo acepta trabajos abiertos («Pendiente» o «En Progreso»): un trabajo «Completado» ya no necesita piezas y la solicitud se rechaza con `SolicitudNoPermitida`. Así, mientras haya una solicitud pendiente siempre queda un trabajo abierto y la orden no se atasca después de que llega la refacción.
 
@@ -155,12 +157,18 @@ Notas de comportamiento (precisiones v3.0):
 | Pendiente de Aprobación Gerencial | Pendiente de Autorización del Cliente | `aprobar_por_gerente` | — | `CotizacionAprobadaPorGerente` | CA-008 |
 | Pendiente de Aprobación Gerencial | Requiere Ajuste | `rechazar_por_gerente` | observaciones no vacías | `CotizacionRechazadaPorGerente` | CA-009 |
 | Requiere Ajuste | Pendiente de Autorización del Cliente | `ajustar` | al menos un trabajo | `CotizacionAjustada` | CA-009 |
+| Pendiente de Aprobación Gerencial | (mismo estado) | `corregir` *(v3.1)* | motivo; E1 se sigue cumpliendo | `CotizacionCorregida` | CA-049 |
+| Pendiente de Aprobación Gerencial | Pendiente de Autorización del Cliente | `corregir` *(v3.1)* | motivo; E1 ya no se cumple | `CotizacionCorregida` | CA-049 |
+| Pendiente de Autorización del Cliente | Pendiente de Aprobación Gerencial | `corregir` *(v3.1, transición nueva)* | motivo; E1 se cumple | `CotizacionCorregida`, `AprobacionGerencialRequerida` | CA-048 |
+| Pendiente de Autorización del Cliente | (mismo estado) | `corregir` *(v3.1)* | motivo; E1 no se cumple | `CotizacionCorregida` | CA-047 |
 | Pendiente de Autorización del Cliente | (mismo estado) | `marcar_presentada`, `registrar_recontacto` | — | `CotizacionPresentada`, `RecontactoRegistrado` | CA-006, CA-040 |
 | Pendiente de Autorización del Cliente | Autorizada | `registrar_decision` (todas las líneas) | E2 | `CotizacionAutorizada` | CA-010 |
 | Pendiente de Autorización del Cliente | Autorizada Parcialmente | `registrar_decision` (algunas líneas) | E2 | `CotizacionAutorizada(parcial)` | CA-010 |
 | Pendiente de Autorización del Cliente | Rechazada | `registrar_decision` (ninguna línea) | E2 | `CotizacionRechazadaPorCliente` | CA-012, CA-018 |
 
 Estados finales: Autorizada, Autorizada Parcialmente y Rechazada. Aprobar dos veces, presentar una cotización que espera al Gerente o registrar una segunda decisión lanza `OperacionDeCotizacionNoPermitida` (409). Lo mismo ocurre al presentar dos veces (reiniciaría las 48 horas; para eso está el recontacto) o al registrar un recontacto de una cotización que no se ha presentado.
+
+**Corrección (v3.1, H-PIA-21, ADR-018).** `corregir(lineas, motivo, asesor, fecha)` solo se acepta en «Pendiente de Aprobación Gerencial» y «Pendiente de Autorización del Cliente»; en «Requiere Ajuste» responde `OperacionDeCotizacionNoPermitida` pidiendo la cotización ajustada (RN-05 no cambia) y en los estados finales, indicando que el trabajo nuevo va en una cotización adicional. Un motivo vacío es `ValorInvalido` (422). Al corregir: se reemplazan las líneas (al menos un trabajo), se guarda la `CorreccionDeCotizacion`, `fecha_presentacion` vuelve a vacío y se evalúa E1. Si la cotización regresa a «Pendiente de Aprobación Gerencial», `fecha_aprobacion_gerencial` se borra (la anterior queda en el historial); si se queda con el cliente, se conserva. Las observaciones del Gerente se conservan. Una cotización ajustada que se corrige y sigue arriba de $15,000 regresa al Gerente: RN-05 solo protege el ajuste que él pidió y la corrección cambia el monto que revisó (RN-26). Las adicionales nunca cumplen E1, así que siempre se quedan con el cliente.
 
 ### 5.3 Trabajo (4 estados) y Solicitud de Compra (2 estados)
 
@@ -184,7 +192,7 @@ Los eventos se registran dentro del Aggregate, la Unidad de Trabajo los recolect
 | `OrdenRecibida` | Orden | — (bitácora) | CA-001 |
 | `TecnicoAsignadoParaDiagnostico` | Orden | aparece en el panel del técnico (modelo de lectura) | CA-035 |
 | `DiagnosticoRegistrado` | Orden | alerta al asesor: «lista para cotizar» | CA-032 |
-| `AprobacionGerencialRequerida` | Cotización | alerta al Gerente | CA-007 |
+| `AprobacionGerencialRequerida` | Cotización (al generar o al corregir) | alerta al Gerente | CA-007, CA-048 |
 | `CotizacionAprobadaPorGerente` | Cotización | alerta al asesor: «ya puede presentarse» | CA-008 |
 | `CotizacionRechazadaPorGerente` | Cotización | alerta al asesor con las observaciones | CA-009 |
 | `CotizacionAutorizada` (adicional) | Cotización | alerta a cada técnico con trabajos asignados en la orden | CA-017 |
@@ -192,7 +200,7 @@ Los eventos se registran dentro del Aggregate, la Unidad de Trabajo los recolect
 | `RefaccionDisponible` | Orden | alertas al técnico y al asesor | CA-022 |
 | `OrdenListaParaEntrega` | Orden | alerta al asesor | CA-015 |
 | `OrdenCancelada` | Orden | se quita del panel del técnico | CA-044 |
-| `CotizacionGenerada`, `CotizacionPresentada`, `RecontactoRegistrado`, `OrdenAutorizada`, `TrabajosAsignados`, `TrabajoIniciado`, `SolicitudDeCompraCreada`, `ClienteAvisadoDelRetraso`, `VehiculoRetirado`, `OrdenReactivada`, `PagoRegistrado`, `CargoACreditoRegistrado`, `VehiculoEntregado`, `CotizacionAjustada`, `CotizacionRechazadaPorCliente` | Orden / Cotización | bitácora de eventos (evidencia de la trazabilidad y de las pruebas de transición) | varios |
+| `CotizacionGenerada`, `CotizacionPresentada`, `RecontactoRegistrado`, `OrdenAutorizada`, `TrabajosAsignados`, `TrabajoIniciado`, `SolicitudDeCompraCreada`, `ClienteAvisadoDelRetraso`, `VehiculoRetirado`, `OrdenReactivada`, `PagoRegistrado`, `CargoACreditoRegistrado`, `VehiculoEntregado`, `CotizacionAjustada`, `CotizacionCorregida`, `CotizacionRechazadaPorCliente` | Orden / Cotización | bitácora de eventos (evidencia de la trazabilidad y de las pruebas de transición) | varios |
 
 Las alertas por tiempo (CA-023 y CA-040) no vienen de un evento sino de la revisión periódica de plazos (E7 y E8, ADR-015).
 
@@ -202,7 +210,7 @@ Las alertas por tiempo (CA-023 y CA-040) no vienen de un evento sino de la revis
 |---|---|---|
 | `ValorInvalido`, `CotizacionSinTrabajos` | Un dato en sí es inválido (vacío, negativo, cantidad ≤ 0, servicio inhabilitado en los datos de entrada). | 422 |
 | `TransicionDeEstadoNoPermitida` | La máquina de estados no permite el cambio. | 409 |
-| `OperacionDeCotizacionNoPermitida` | La cotización no está en el estado que exige la acción. | 409 |
+| `OperacionDeCotizacionNoPermitida` | La cotización no está en el estado que exige la acción (también al corregir en «Requiere Ajuste» o después de la decisión, v3.1). | 409 |
 | `DiagnosticoRequerido`, `DiagnosticoNoModificable` | RN-02 y RN-03. | 409 |
 | `AutorizanteNoValido` | E2 no se cumple. | 409 |
 | `TrabajoNoAutorizado`, `SolicitudNoPermitida` | E6 no se cumple, o se intenta asignar trabajos de una orden sin trabajos autorizados (rechazo total, CA-012). | 409 |

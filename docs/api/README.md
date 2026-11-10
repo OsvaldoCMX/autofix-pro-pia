@@ -12,14 +12,14 @@ Contrato de la API que se implementa con FastAPI (ADR-008). Cuando la API esté 
 - Importes como texto con dos decimales (`"1500.00"`); fechas ISO 8601 con zona horaria.
 - **Planeado** en la columna Prioridad: la ruta está aprobada (Fase 13, revisión del 09/11/2026) y todavía no existe en la API; la Fase 14 quita la marca al construirla (`tests/api/test_contrato.py` comprueba que una ruta planeada aún no exista).
 
-## Rutas (43)
+## Rutas (44)
 
 ### Sistema
 
 | Método | Ruta | Rol | Descripción | Éxito | Errores | Caso de uso | Criterios | Prioridad |
 |---|---|---|---|---|---|---|---|---|
 | GET | `/health` | Público | Salud del servicio (lo usa Render y Docker Compose). | 200 | — | — | — | P1 |
-| POST | `/api/revisiones/plazos` | Sistema | Revisión de plazos de 3 días hábiles y 48 h (la llama un workflow programado). | 200 | 401, 403 | `ServicioDeRevisionDePlazos.revisar` | CA-023, CA-040 | P1 |
+| POST | `/api/revisiones/plazos` | Sistema | Revisión de plazos de 3 días hábiles y 48 h (la llama un workflow programado). | 200 | 401, 403 | `ServicioDeRevisionDePlazos.revisar` | CA-023, CA-040, CA-051 | P1 |
 
 ### Recepción
 
@@ -55,9 +55,10 @@ Contrato de la API que se implementa con FastAPI (ADR-008). Cuando la API esté 
 | POST | `/api/ordenes/{numero}/cotizaciones-adicionales` | Asesor | Generar una cotización adicional (v.2, v.3…). | 201 | 401, 403, 404, 409, 422 | `ServicioDeCotizacion.generar_adicional` | CA-016 | P1 |
 | GET | `/api/cotizaciones/{id}` | Asesor, Gerente | Detalle de la cotización con su desglose y estado. | 200 | 401, 403, 404 | `ConsultarCotizacion` | CA-005 | P1 |
 | GET | `/api/cotizaciones/{id}/pdf` | Asesor | PDF de la cotización. | 200 | 401, 403, 404 | `ServicioDeCotizacion.generar_pdf` | CA-005 | P2 |
-| POST | `/api/cotizaciones/{id}/presentacion` | Asesor | Marcar como presentada (inicia las 48 h). | 200 | 401, 403, 404, 409 | `ServicioDeCotizacion.presentar` | CA-006, CA-007 | P1 |
+| POST | `/api/cotizaciones/{id}/presentacion` | Asesor | Marcar como presentada (inicia las 48 h). | 200 | 401, 403, 404, 409 | `ServicioDeCotizacion.presentar` | CA-006, CA-007, CA-051 | P1 |
 | POST | `/api/cotizaciones/{id}/revision-gerencial` | Gerente | Aprobar o rechazar (con observaciones) una cotización mayor a $15,000. | 200 | 401, 403, 404, 409, 422 | `ServicioDeAprobacionGerencial.revisar` | CA-008, CA-009 | P1 |
 | PUT | `/api/cotizaciones/{id}/lineas` | Asesor | Guardar la cotización ajustada según el Gerente. | 200 | 401, 403, 404, 409, 422 | `ServicioDeCotizacion.ajustar` | CA-009 | P1 |
+| POST | `/api/cotizaciones/{id}/correcciones` | Asesor | Corregir una cotización que espera al Gerente o al cliente (motivo obligatorio; guarda el historial y vuelve a evaluar la regla de $15,000). | 201 | 401, 403, 404, 409, 422 | `ServicioDeCotizacion.corregir` | CA-047, CA-048, CA-049, CA-050 | P1 · Planeado |
 | POST | `/api/cotizaciones/{id}/recontactos` | Asesor | Registrar el recontacto al cliente (48 h). | 201 | 401, 403, 404, 409 | `ServicioDeCotizacion.registrar_recontacto` | CA-040 | P1 |
 | GET | `/api/gerencia/cotizaciones-por-aprobar` | Gerente | Cotizaciones en «Pendiente de Aprobación Gerencial». | 200 | 401, 403 | `ListarCotizacionesPendientesDeAprobacion` | CA-007 | P1 |
 
@@ -115,7 +116,7 @@ Contrato de la API que se implementa con FastAPI (ADR-008). Cuando la API esté 
 | GET | `/api/gerencia/ordenes` | Gerente | Listado de órdenes abiertas y cerradas (filtro opcional `estado`). | 200 | 401, 403 | `ListarOrdenes` | CA-030 | P1 |
 | GET | `/api/gerencia/ingresos-del-dia` | Gerente | Total de pagos de contado de hoy (zona America/Monterrey). | 200 | 401, 403 | `ConsultarIngresosDelDia` | CA-031 | P1 |
 | GET | `/api/consulta-de-estado?orden=&placas=` | Público | Consulta pública del cliente (sin token). | 200 | 404, 422 | `ConsultarEstadoDeOrden` | CA-037, CA-038 | P1 |
-| GET | `/api/alertas` | Cualquier empleado | Alertas internas del empleado que hace la petición (el token de Sistema responde 403: no es un empleado). | 200 | 401, 403 | `ListarAlertas` | CA-007, CA-008, CA-009, CA-015, CA-017, CA-022, CA-023, CA-032, CA-034, CA-040 | P1 |
+| GET | `/api/alertas` | Cualquier empleado | Alertas internas del empleado que hace la petición (el token de Sistema responde 403: no es un empleado). | 200 | 401, 403 | `ListarAlertas` | CA-007, CA-008, CA-009, CA-015, CA-017, CA-022, CA-023, CA-032, CA-034, CA-040, CA-048 | P1 |
 
 ## Ejemplos
 

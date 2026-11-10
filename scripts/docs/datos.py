@@ -21,6 +21,7 @@ NECESIDADES = [
     ("N-13", "Permitir al cliente consultar el estado de su vehículo sin llamar al taller.", "Media"),
     ("N-14", "(Implícita) Dar seguimiento a las cotizaciones que lleven más de 48 horas sin respuesta.", "Media"),
     ("N-15", "(Implícita, v3.0) Cancelar la orden cuando el cliente desiste antes de que se genere la cotización.", "Media"),
+    ("N-16", "(Implícita, v3.1) Corregir los datos mal capturados dejando constancia y evitar registros repetidos (revisión del 09/11/2026).", "Alta"),
 ]
 
 # necesidad -> (US, CA, proceso BPMN)
@@ -42,6 +43,8 @@ TRAZA_NECESIDAD = {
     "N-13": (["US-021"], ["CA-037", "CA-038"], "Consulta transversal (no es una tarea del flujo)"),
     "N-14": (["US-023"], ["CA-040"], "Fase 3: Autorización (temporizador de 48 h)"),
     "N-15": (["US-025"], ["CA-044", "CA-045"], "Diagrama 2 (Casos especiales): Cliente desiste antes de la cotización"),
+    "N-16": (["US-026"], ["CA-047", "CA-048", "CA-049", "CA-050", "CA-051"],
+             "Fase 2 y Fase 3: corrección de la cotización (v3.1)"),
 }
 
 # ----------------------------------------------------------------------------- user stories
@@ -71,6 +74,7 @@ US = {
     "US-023": ("Asesor de Servicio", "Como Asesor de Servicio, quiero recibir una alerta cuando una cotización presentada lleve más de 48 horas sin respuesta, para volver a contactar al cliente o al Responsable de Flotilla."),
     "US-024": ("Asesor de Servicio", "Como Asesor de Servicio, quiero registrar la entrega del vehículo al cliente, para cerrar la orden de servicio y dejar constancia de cuándo salió el vehículo del taller."),
     "US-025": ("Asesor de Servicio", "Como Asesor de Servicio, quiero cancelar una orden cuando el cliente desiste del servicio antes de que se genere la cotización, para cerrar el expediente sin cobro y dejar registrado el motivo."),
+    "US-026": ("Asesor de Servicio", "Como Asesor de Servicio, quiero corregir una cotización con un importe o una descripción mal capturados mientras espera la revisión del Gerente o la decisión del cliente, indicando el motivo, para presentar un documento correcto sin perder el historial de lo que cambió."),
 }
 
 # ----------------------------------------------------------------------------- criterios
@@ -541,6 +545,69 @@ ca("CA-046", "US-008", [
    "ServicioDeReparacion.iniciar_trabajo", "POST /api/ordenes/{numero}/trabajos/{id}/inicio (409)", TEC,
    cambio="H-PIA-06", nombre="No se trabaja un vehículo retirado del taller")
 
+# ----------------------------------------------------------------------------- v3.1 (revisión del 09/11/2026)
+# Criterios aprobados en la Fase 13 a partir de docs/auditoria-errores-de-usuario.md.
+F23 = "Fase 2 y Fase 3: corrección de la cotización"
+
+ca("CA-047", "US-026", [
+    (D, "que una cotización está en «Pendiente de Autorización del Cliente» con un importe o una descripción mal capturados"),
+    (C, "el asesor la corrige capturando los trabajos correctos y el motivo de la corrección"),
+    (E, "el sistema debe guardar los trabajos corregidos conservando el número y la versión de la cotización"),
+    (Y, "debe guardar en el historial de correcciones al asesor, la fecha y hora, el motivo, el total anterior y el total nuevo"),
+    (Y, "si la cotización no requiere aprobación gerencial, debe dejarla en «Pendiente de Autorización del Cliente» como no presentada, para que el asesor la presente otra vez"),
+], F23, ["RN-25", "RN-26", "RN-23"],
+   "Cotizacion (corregir), CorreccionDeCotizacion, spec RequiereAprobacionGerencial, evento CotizacionCorregida",
+   "ServicioDeCotizacion.corregir", "POST /api/cotizaciones/{id}/correcciones", ASE,
+   cambio="H-PIA-21", nombre="Corregir una cotización que espera la decisión del cliente", planeado=True)
+
+ca("CA-048", "US-026", [
+    (D, "que una cotización inicial está en «Pendiente de Autorización del Cliente», aunque el Gerente ya la haya aprobado o se haya ajustado según sus observaciones"),
+    (C, "el asesor la corrige y el total nuevo es mayor a $15,000 MXN"),
+    (E, "el sistema debe cambiarla a «Pendiente de Aprobación Gerencial»"),
+    (Y, "debe borrar la fecha de aprobación gerencial, que queda guardada en el historial de la corrección"),
+    (Y, "debe enviar una alerta al panel del Gerente"),
+    (Y, "debe impedir que se presente al cliente hasta que el Gerente la apruebe"),
+], F23, ["RN-26", "RN-04", "RN-06", "RN-22"],
+   "Cotizacion (corregir), spec RequiereAprobacionGerencial, MAQUINA_DE_COTIZACION, eventos CotizacionCorregida y AprobacionGerencialRequerida → AlertaInterna",
+   "ServicioDeCotizacion.corregir", "POST /api/cotizaciones/{id}/correcciones · GET /api/alertas", f"{ASE} / {GER}",
+   cambio="H-PIA-21", nombre="La corrección sube la cotización inicial arriba de $15,000 MXN", planeado=True)
+
+ca("CA-049", "US-026", [
+    (D, "que una cotización está en «Pendiente de Aprobación Gerencial»"),
+    (C, "el asesor la corrige capturando el motivo"),
+    (E, "si el total nuevo sigue siendo mayor a $15,000 MXN, la cotización debe quedarse en «Pendiente de Aprobación Gerencial» con los trabajos corregidos"),
+    (Y, "si el total nuevo es menor o igual a $15,000 MXN, debe cambiarla a «Pendiente de Autorización del Cliente» como no presentada"),
+    (Y, "en los dos casos debe guardar la corrección en el historial"),
+], F23, ["RN-25", "RN-26", "RN-04"],
+   "Cotizacion (corregir), spec RequiereAprobacionGerencial, MAQUINA_DE_COTIZACION, evento CotizacionCorregida",
+   "ServicioDeCotizacion.corregir", "POST /api/cotizaciones/{id}/correcciones", ASE,
+   cambio="H-PIA-21", nombre="Corregir una cotización que espera al Gerente", planeado=True)
+
+ca("CA-050", "US-026", [
+    (D, "que el asesor intenta corregir una cotización"),
+    (C, "la cotización está en «Requiere Ajuste», «Autorizada», «Autorizada Parcialmente» o «Rechazada», o el asesor no captura el motivo"),
+    (E, "el sistema no debe permitirlo"),
+    (Y, "si falta el motivo, debe pedir que lo capture"),
+    (Y, "si está en «Requiere Ajuste», debe indicar que se guarde la cotización ajustada según las observaciones del Gerente"),
+    (Y, "si ya tiene la decisión del cliente, debe indicar que ya no se corrige y que los trabajos nuevos se cotizan con una cotización adicional"),
+], F23, ["RN-25", "RN-05"],
+   "Cotizacion (corregir), error OperacionDeCotizacionNoPermitida, ValorInvalido (motivo)",
+   "ServicioDeCotizacion.corregir", "POST /api/cotizaciones/{id}/correcciones (409, 422)", ASE,
+   cambio="H-PIA-21", nombre="No se corrige sin motivo ni una cotización por ajustar o ya decidida", planeado=True)
+
+ca("CA-051", "US-026", [
+    (D, "que una cotización presentada, con recontactos registrados, se corrigió y quedó en «Pendiente de Autorización del Cliente»"),
+    (C, "el sistema ejecuta su revisión de plazos antes de que el asesor la presente otra vez"),
+    (E, "no debe generar la alerta de 48 horas"),
+    (Y, "debe conservar los recontactos anteriores como historial"),
+    (C, "el asesor la presenta otra vez"),
+    (E, "el plazo de 48 horas debe contar solo desde la nueva presentación y los recontactos posteriores a ella"),
+], F23, ["RN-26", "RN-12"],
+   "Cotizacion (fecha_presentacion, ultimo_contacto), spec RequiereRecontacto, ServicioDeRevisionDePlazos",
+   "ServicioDeRevisionDePlazos.revisar · ServicioDeCotizacion.presentar",
+   "POST /api/revisiones/plazos · POST /api/cotizaciones/{id}/presentacion", f"{SIS} / {ASE}",
+   cambio="H-PIA-21", nombre="El plazo de 48 horas después de una corrección", planeado=True)
+
 # ----------------------------------------------------------------------------- áreas (archivos .feature)
 AREAS = [
     ("01_recepcion", "Recepción y registro del vehículo",
@@ -551,7 +618,7 @@ AREAS = [
      ["US-020", "US-019", "US-007"]),
     ("03_cotizacion", "Cotización y aprobación gerencial",
      "Generar cotizaciones formales, aprobar las de alto monto y dar seguimiento a las que no tienen respuesta.",
-     ["US-004", "US-005", "US-023"]),
+     ["US-004", "US-005", "US-023", "US-026"]),
     ("04_autorizacion", "Autorización del cliente y cotizaciones adicionales",
      "Registrar con evidencia la decisión del cliente o del Responsable de Flotilla.",
      ["US-006", "US-009"]),
@@ -595,10 +662,13 @@ REGLAS = {
     "RN-22": ("Los estados solo cambian por las transiciones permitidas de su máquina de estados; un cambio inválido se rechaza.", "Glosario §2; ADR-007"),
     "RN-23": ("Importes en MXN nunca negativos y calculados con Decimal; cantidades mayores a cero; una cotización tiene al menos un trabajo.", "BRD §5; datos del profesor"),
     "RN-24": ("La cotización adicional es la versión siguiente (v.2, v.3…) y no modifica la cotización original.", "BRD §2 Excepciones"),
+    # v3.1 (revisión del 09/11/2026)
+    "RN-25": ("Solo el Asesor corrige una cotización, con motivo, y solo en «Pendiente de Aprobación Gerencial» o «Pendiente de Autorización del Cliente»; conserva su número y versión, y cada corrección queda en su historial (asesor, fecha y hora, motivo, total anterior y total nuevo). En «Requiere Ajuste» se usa el ajuste (RN-05); después de la decisión del cliente, la cotización adicional.", "Revisión del 09/11/2026 (H-PIA-21); BRD Restricción 11"),
+    "RN-26": ("Al corregir se vuelve a evaluar E1 y la cotización se presenta otra vez: si es inicial y supera $15,000 MXN regresa al Gerente aunque ya la hubiera aprobado o ajustado, porque RN-05 solo protege el ajuste que pidió el Gerente y una corrección cambia el monto que él revisó; el plazo de 48 horas cuenta desde la nueva presentación.", "H-PIA-21; BRD Restricciones 2, 4 y 11; ADR-018"),
 }
 
 # Reglas aprobadas en la Fase 13 que todavía no se construyen (misma idea que `planeado` en los CA).
-REGLAS_PLANEADAS = set()
+REGLAS_PLANEADAS = {"RN-25", "RN-26"}
 
 # ----------------------------------------------------------------------------- pruebas previstas
 # Convención: toda prueba de aceptación se llama test_ca_0XX_<descripcion> para poder

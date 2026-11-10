@@ -1,7 +1,7 @@
 # Glosario del Dominio — AutoFix Pro
 
 **Materia:** Componentes de Lógica de Negocio · FIME UANL · **Equipo 6**
-**Versión:** 3.0 (PIA, 04/11/2026). Cambios respecto a la v2.0: se agregaron *Cancelación de la Orden*, *Motivo de Cancelación* y el estado *Orden · Cancelada* (H-PIA-01); se alineó la fecha de vencimiento del crédito con la entrega (H-PIA-02); se precisó *Rechazo Parcial* y *Diagnóstico* (H-PIA-04, H-PIA-05).
+**Versión:** 3.1 (revisión del 09/11/2026). Cambios de la v3.1: *Corrección de Cotización*, *Motivo de Corrección* e *Historial de Correcciones* (H-PIA-21), y los términos de las demás correcciones aprobadas (`registro-de-cambios.md` §6). Cambios de la v3.0 respecto a la v2.0: se agregaron *Cancelación de la Orden*, *Motivo de Cancelación* y el estado *Orden · Cancelada* (H-PIA-01); se alineó la fecha de vencimiento del crédito con la entrega (H-PIA-02); se precisó *Rechazo Parcial* y *Diagnóstico* (H-PIA-04, H-PIA-05).
 
 Este glosario establece el **lenguaje ubicuo** del proyecto: los mismos términos se usan en el BRD, las User Stories, los escenarios Gherkin, el BPMN, los diagramas UML y el código. Los términos se identificaron a partir del caso AutoFix Pro, la entrevista con el stakeholder y las necesidades del BRD.
 
@@ -64,6 +64,9 @@ Este glosario establece el **lenguaje ubicuo** del proyecto: los mismos término
 | Política de Aprobación Gerencial | Regla que determina si una cotización debe pasar por el Gerente de Taller antes de presentarse. Actualmente aplica a la cotización inicial mayor a $15,000 MXN. |
 | Cancelación de la Orden | *(v3.0)* Acción con la que el asesor cierra una orden porque el cliente desiste del servicio **antes de que se genere la cotización** (orden «Recibida» o «En Diagnóstico»). Requiere un motivo, no genera cobro y saca la orden de la fila de trabajo. Si la orden ya tiene cotización, no se cancela: se registra el rechazo total y el vehículo se entrega sin reparación. |
 | Motivo de Cancelación | *(v3.0)* Texto obligatorio que el asesor captura al cancelar una orden para explicar por qué el cliente desistió. |
+| Corrección de Cotización | *(v3.1)* Acción con la que el asesor arregla un importe o una descripción mal capturados en una cotización que espera la revisión del Gerente o la decisión del cliente. La cotización conserva su número y su versión, vuelve a quedar sin presentar y, si es inicial y supera $15,000 MXN, regresa al Gerente aunque él ya la hubiera aprobado. No sustituye al *ajuste* que pide el Gerente («Requiere Ajuste») ni a la *cotización adicional* (después de la decisión del cliente). |
+| Motivo de Corrección | *(v3.1)* Texto obligatorio que el asesor captura al corregir una cotización para explicar qué estaba mal capturado. |
+| Historial de Correcciones | *(v3.1)* Registro de cada corrección de una cotización: asesor, fecha y hora, motivo, total anterior y total nuevo. Es la evidencia de lo que cambió entre lo que revisó el Gerente o se presentó al cliente y lo que se presenta después. |
 
 ## 2. Estados del sistema
 
@@ -84,9 +87,9 @@ Para que todos los documentos usen exactamente los mismos nombres, esta tabla li
 | Orden · Cerrada | El asesor registró la entrega del vehículo (solo es posible desde «Pagada» o «Por Cobrar (Crédito)»). | `EstadoOrden.CERRADA` |
 | Orden · Cerrada sin Reparación | El cliente rechazó toda la cotización y el vehículo se entregó sin reparación y sin cobro. | `EstadoOrden.CERRADA_SIN_REPARACION` |
 | Orden · Cancelada | *(v3.0)* El cliente desistió antes de que se generara la cotización; el asesor registró el motivo, la orden se cerró sin cobro y salió de la fila de trabajo. | `EstadoOrden.CANCELADA` |
-| Cotización · Pendiente de Aprobación Gerencial | Cotización inicial mayor a $15,000 MXN en espera de la revisión del Gerente. Todavía no puede presentarse al cliente. | `EstadoCotizacion.PENDIENTE_DE_APROBACION_GERENCIAL` |
+| Cotización · Pendiente de Aprobación Gerencial | Cotización inicial mayor a $15,000 MXN en espera de la revisión del Gerente (al generarse o, *v3.1*, después de una corrección). Todavía no puede presentarse al cliente. | `EstadoCotizacion.PENDIENTE_DE_APROBACION_GERENCIAL` |
 | Cotización · Requiere Ajuste | El Gerente la rechazó con observaciones; el asesor debe ajustarla. Una vez ajustada, pasa a «Pendiente de Autorización del Cliente». | `EstadoCotizacion.REQUIERE_AJUSTE` |
-| Cotización · Pendiente de Autorización del Cliente | Lista para presentarse, o ya presentada, en espera de la decisión del cliente (plazo de 48 horas desde su presentación). | `EstadoCotizacion.PENDIENTE_DE_AUTORIZACION_DEL_CLIENTE` |
+| Cotización · Pendiente de Autorización del Cliente | Lista para presentarse, o ya presentada, en espera de la decisión del cliente (plazo de 48 horas desde su presentación). *(v3.1)* Si el asesor la corrige, vuelve a quedar sin presentar. | `EstadoCotizacion.PENDIENTE_DE_AUTORIZACION_DEL_CLIENTE` |
 | Cotización · Autorizada | El cliente aceptó todos los trabajos. | `EstadoCotizacion.AUTORIZADA` |
 | Cotización · Autorizada Parcialmente | El cliente aceptó solo algunos trabajos. | `EstadoCotizacion.AUTORIZADA_PARCIALMENTE` |
 | Cotización · Rechazada | El cliente no aceptó ningún trabajo. | `EstadoCotizacion.RECHAZADA` |
@@ -122,6 +125,7 @@ Los nombres de clases, métodos y eventos se escriben en español y con los mism
 | Pago / Cargo a Crédito | `Pago` / `CargoACredito` | Value Objects |
 | Cancelación de la Orden / Motivo | `Cancelacion` | Value Object |
 | Política de Aprobación Gerencial | `RequiereAprobacionGerencial` | Specification |
+| Corrección de Cotización / Historial de Correcciones | `Cotizacion.corregir` / `CorreccionDeCotizacion` | Método del Aggregate / Entidad interna |
 | Autorizante válido (particular o responsable de flotilla) | `AutorizanteValido` | Specification |
 | Plazo de días hábiles | `CalendarioHabil` | Domain Service |
 | Kilometraje, nivel de combustible y fotos de daños | `EstadoDeRecepcion` | Value Object |

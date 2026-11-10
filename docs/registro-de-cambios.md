@@ -1,4 +1,4 @@
-# Registro de cambios y hallazgos del PIA (v3.0)
+# Registro de cambios y hallazgos del PIA (v3.0 y v3.1)
 
 Antes de empezar la implementación del PIA se revisaron juntos el BRD, las User Stories, el Glosario y el BPMN (U2), la arquitectura (U3), el código y las pruebas (U5), los requisitos del PIA y el paquete de datos del profesor. Esta tabla registra cada hallazgo, la decisión del equipo y los archivos que cambiaron. Ningún hallazgo cambia el objetivo del sistema ni el flujo principal del BPMN.
 
@@ -59,3 +59,11 @@ Antes de empezar la implementación del PIA se revisaron juntos el BRD, las User
 ## 5. Decisiones durante la implementación
 
 1. **06/11/2026:** se omite la Fase 10 (P2: PDF y fotos de daños) por falta de tiempo antes de la entrega. Las 4 rutas P2 siguen respondiendo 501: CA-027 queda sin implementar y CA-002, CA-005 y CA-024 quedan sin sus fotos o su PDF.
+
+## 6. Revisión del 09/11/2026 (v3.1)
+
+En la revisión del 09/11/2026 el profesor evaluó el sistema **como un usuario del taller**: buscó datos mal capturados que no se pueden corregir, acciones repetidas y mensajes que no entiende alguien que no sabe de computadoras. La Fase 12 hizo la auditoría (`auditoria-errores-de-usuario.md`, AU-01 a AU-39) y el equipo decidió qué se hace. Esta tabla registra los hallazgos que pasaron a `docs/` en la Fase 13. Los criterios, reglas y rutas nuevos llevan la marca **«Planeado»** en la matriz y en el contrato de la API hasta que la Fase 14 los construya.
+
+| ID | Hallazgo | Origen | Decisión del equipo | Archivos afectados |
+|---|---|---|---|---|
+| H-PIA-21 | Una cotización con un importe o una descripción mal capturados no se puede corregir: `ajustar` solo funciona en «Requiere Ajuste», un estado al que solo la lleva el Gerente. | Revisión del 09/11/2026 · AU-17 | Nuevo método `Cotizacion.corregir` (solo el Asesor, con motivo, en «Pendiente de Aprobación Gerencial» y «Pendiente de Autorización del Cliente»), historial `correcciones_de_cotizacion`, nueva transición «Pendiente de Autorización del Cliente» → «Pendiente de Aprobación Gerencial», nueva presentación y plazo de 48 h desde ella; `fecha_aprobacion_gerencial` se borra si regresa al Gerente. Una cotización ajustada que se corrige y sigue arriba de $15,000 regresa al Gerente (RN-05 solo protege el ajuste que él pidió). N-16, US-026, CA-047 a CA-051, RN-25, RN-26, ADR-018, ruta `POST /api/cotizaciones/{id}/correcciones`. | `scripts/docs/` (datos, rutas, ADR), User Stories, `03_cotizacion.feature`, matriz, `api/README.md`, ADR-018, BRD (N-16, restricción 11), Glosario, modelo de dominio §2.2, §4, §5.2, §6 y §7, `bpmn/README.md` |

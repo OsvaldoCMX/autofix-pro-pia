@@ -50,18 +50,20 @@ RN_COMPONENTE = {
     "RN-22": ("`MaquinaDeEstados` (Orden, Cotización, Trabajo, Solicitud)", "ADR-007"),
     "RN-23": ("Value Objects `Dinero`, `RefaccionCotizada`; validación Pydantic (422); restricciones `CHECK` de la base", "ADR-008, ADR-013"),
     "RN-24": ("`Cotizacion.generar` (`TipoCotizacion.ADICIONAL`, `VersionCotizacion`)", "ADR-001"),
+    "RN-25": ("`Cotizacion.corregir` + `CorreccionDeCotizacion` (historial) + `requiere_rol(ASESOR)`", "ADR-018"),
+    "RN-26": ("`Cotizacion.corregir` + Specification E1 + `MAQUINA_DE_COTIZACION` + `Cotizacion.ultimo_contacto` (E8)", "ADR-005, ADR-018"),
 }
 assert set(RN_COMPONENTE) == set(REGLAS)
 
 ESPECS = [
-    ("E1", "RequiereAprobacionGerencial", "EsCotizacionInicial AND TotalMayorAlUmbral($15,000)", "AND", "RN-04", "CA-005, CA-007, CA-016"),
+    ("E1", "RequiereAprobacionGerencial", "EsCotizacionInicial AND TotalMayorAlUmbral($15,000)", "AND", "RN-04", "CA-005, CA-007, CA-016, CA-048, CA-049"),
     ("E2", "AutorizanteValido", "(EsClienteParticular AND AutorizaElCliente) OR (EsClienteDeFlotilla AND AutorizaSuResponsableDeFlotilla)", "AND, OR", "RN-07", "CA-010, CA-029"),
     ("E3", "PuedeEntregarse", "EstaPagada OR EstaPorCobrarACredito OR (EstaCotizada AND TieneRechazoTotal)", "OR, AND", "RN-18", "CA-041, CA-042, CA-043"),
     ("E4", "PuedeCancelarse", "EstaRecibida OR EstaEnDiagnostico", "OR", "RN-19", "CA-044, CA-045"),
     ("E5", "PuedeIniciarTrabajo", "TrabajoPendiente AND AsignadoAlTecnico AND NOT OrdenPausadaPorRetiro", "AND, NOT", "RN-14", "CA-014, CA-046"),
     ("E6", "PuedeSolicitarRefaccion", "TrabajoAutorizado AND (OrdenAutorizada OR OrdenEnReparacion OR OrdenEnEsperaDeRefaccion)", "AND, OR", "RN-09", "CA-019, CA-020"),
     ("E7", "RequiereAlertaDeRefaccion", "SolicitudPendiente AND MasDeDiasHabiles(3) AND NOT ClienteYaAvisado", "AND, NOT", "RN-11", "CA-023"),
-    ("E8", "RequiereRecontacto", "PendienteDeAutorizacion AND FuePresentada AND MasDeHorasDesdeElUltimoContacto(48)", "AND", "RN-12", "CA-040"),
+    ("E8", "RequiereRecontacto", "PendienteDeAutorizacion AND FuePresentada AND MasDeHorasDesdeElUltimoContacto(48)", "AND", "RN-12", "CA-040, CA-051"),
 ]
 
 

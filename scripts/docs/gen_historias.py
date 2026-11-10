@@ -19,6 +19,8 @@ CAMBIOS_CA = {
 # criterios cuyo TEXTO cambió en v3.0 (los demás hallazgos afectan el modelo, no la redacción)
 TEXTO_CAMBIADO = {"CA-015", "CA-018", "CA-022", "CA-023", "CA-025", "CA-027", "CA-039", "CA-040", "CA-041",
                   "CA-044", "CA-045", "CA-046"}
+# criterios de la revisión del 09/11/2026 (v3.1): hallazgos H-PIA-21 en adelante
+NUEVOS_V31 = {c["id"] for c in CA.values() if c["cambio"] and int(c["cambio"].split("-")[-1]) >= 21}
 
 
 def cas_de(us):
@@ -36,11 +38,12 @@ def bloque_md(c):
 md = []
 md.append("# User Stories y Criterios de Aceptación — AutoFix Pro\n")
 md.append("**Materia:** Componentes de Lógica de Negocio · FIME UANL · **Equipo 6**  ")
-md.append("**Versión:** 3.0 (PIA, 04/11/2026)\n")
+md.append("**Versión:** 3.1 (revisión del 09/11/2026)\n")
 md.append("| Versión | Fecha | Cambios |\n|---|---|---|")
 md.append("| 1.0 | 03/09/2026 | Unidad 2: 18 User Stories y sus criterios. |")
 md.append("| 2.0 | 10/2026 | Unidad 3: hallazgos H-U2-01 a H-U2-03 (se agregaron US-019 a US-024); 24 User Stories y 43 criterios. |")
-md.append("| 3.0 | 04/11/2026 | PIA: US-025 (cancelación), CA-044 a CA-046, crédito desde la entrega y precisiones en CA-015, CA-018, CA-022, CA-023, CA-025, CA-027, CA-039, CA-040 y CA-041. Los criterios ahora también están en Gherkin formal (`gherkin/*.feature`). Detalle en `registro-de-cambios.md`. |\n")
+md.append("| 3.0 | 04/11/2026 | PIA: US-025 (cancelación), CA-044 a CA-046, crédito desde la entrega y precisiones en CA-015, CA-018, CA-022, CA-023, CA-025, CA-027, CA-039, CA-040 y CA-041. Los criterios ahora también están en Gherkin formal (`gherkin/*.feature`). Detalle en `registro-de-cambios.md`. |")
+md.append("| 3.1 | 09/11/2026 | Revisión del profesor como usuario del taller: correcciones de datos mal capturados y prevención de registros repetidos (H-PIA-21 en adelante, necesidad N-16, desde US-026 y CA-047). Los criterios marcados **(v3.1)** son nuevos; los que tienen la marca «Planeado» en la matriz de trazabilidad todavía no se construyen. |\n")
 md.append(
     "Este documento contiene las User Stories derivadas del levantamiento de requerimientos del sistema "
     "de gestión de taller AutoFix Pro. Cada historia representa una funcionalidad que el sistema debe "
@@ -66,8 +69,8 @@ for uid, (rol, texto) in US.items():
     md.append(f"| {uid} | {rol} | {texto} | `{area_de(uid)}.feature` |")
 
 md.append("\n## 3. Criterios de aceptación en Gherkin\n")
-md.append("Los criterios marcados con **(v3.0)** se agregaron o se precisaron en el PIA; el hallazgo que lo "
-          "justifica se indica entre paréntesis.\n")
+md.append("Los criterios marcados con **(v3.0)** se agregaron o se precisaron en el PIA y los marcados con "
+          "**(v3.1)** salen de la revisión del 09/11/2026; el hallazgo que lo justifica se indica entre paréntesis.\n")
 for uid, (_rol, texto) in US.items():
     md.append(f"### {uid}\n")
     md.append(f"> {texto}\n")
@@ -76,6 +79,8 @@ for uid, (_rol, texto) in US.items():
         marca = ""
         if c["id"] in TEXTO_CAMBIADO:
             marca = f" **(v3.0, {c['cambio']})**"
+        elif c["id"] in NUEVOS_V31:
+            marca = f" **(v3.1, {c['cambio']})**"
         md.append(f"| **{c['id']}**<br>{c['nombre']}{marca} | {bloque_md(c)} |")
     md.append("")
 
@@ -120,6 +125,8 @@ for clave, titulo, desc, lista in AREAS:
             etiquetas = f"@{uid} @{c['id']}"
             if c["id"] in TEXTO_CAMBIADO:
                 etiquetas += " @v3"
+            elif c["id"] in NUEVOS_V31:
+                etiquetas += " @v3.1"
             f.append(f"  {etiquetas}")
             f.append(f"  Escenario: {c['id']} {c['nombre']}")
             for kw, texto in c["pasos"]:
@@ -129,7 +136,8 @@ for clave, titulo, desc, lista in AREAS:
     (GH / f"{clave}.feature").write_text("\n".join(f) + "\n", encoding="utf-8")
     indice.append(f"| `{clave}.feature` | {titulo} | {', '.join(lista)} | {n_esc} |")
 indice.append(f"| **Total** | {len(AREAS)} características | {len(US)} | **{total}** |")
-indice.append("\nLa etiqueta `@v3` marca los escenarios que se agregaron o precisaron en el PIA.")
+indice.append("\nLa etiqueta `@v3` marca los escenarios que se agregaron o precisaron en el PIA y `@v3.1`, los de "
+              "la revisión del 09/11/2026 (H-PIA-21 en adelante).")
 (GH / "README.md").write_text("\n".join(indice) + "\n", encoding="utf-8")
 assert total == n_ca
 print("ok", n_us, n_ca, total)

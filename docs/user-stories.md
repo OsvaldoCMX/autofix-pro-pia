@@ -1,19 +1,20 @@
 # User Stories y Criterios de Aceptación — AutoFix Pro
 
 **Materia:** Componentes de Lógica de Negocio · FIME UANL · **Equipo 6**  
-**Versión:** 3.0 (PIA, 04/11/2026)
+**Versión:** 3.1 (revisión del 09/11/2026)
 
 | Versión | Fecha | Cambios |
 |---|---|---|
 | 1.0 | 03/09/2026 | Unidad 2: 18 User Stories y sus criterios. |
 | 2.0 | 10/2026 | Unidad 3: hallazgos H-U2-01 a H-U2-03 (se agregaron US-019 a US-024); 24 User Stories y 43 criterios. |
 | 3.0 | 04/11/2026 | PIA: US-025 (cancelación), CA-044 a CA-046, crédito desde la entrega y precisiones en CA-015, CA-018, CA-022, CA-023, CA-025, CA-027, CA-039, CA-040 y CA-041. Los criterios ahora también están en Gherkin formal (`gherkin/*.feature`). Detalle en `registro-de-cambios.md`. |
+| 3.1 | 09/11/2026 | Revisión del profesor como usuario del taller: correcciones de datos mal capturados y prevención de registros repetidos (H-PIA-21 en adelante, necesidad N-16, desde US-026 y CA-047). Los criterios marcados **(v3.1)** son nuevos; los que tienen la marca «Planeado» en la matriz de trazabilidad todavía no se construyen. |
 
 Este documento contiene las User Stories derivadas del levantamiento de requerimientos del sistema de gestión de taller AutoFix Pro. Cada historia representa una funcionalidad que el sistema debe proporcionar a un rol específico para resolver los problemas de la operación actual (AS-IS), como la falta de evidencia en las autorizaciones o la falta de visibilidad del estado de las reparaciones.
 
 Las historias siguen el formato *Como… quiero… para…* y cada criterio de aceptación está escrito en Gherkin (*Dado / Cuando / Entonces / Y*). Los mismos criterios, palabra por palabra, están en los archivos `docs/gherkin/*.feature` con las etiquetas `@US-xxx` y `@CA-xxx`, para que cada escenario se pueda relacionar con su prueba automatizada (convención `test_ca_0XX_…`). Los nombres de estados, roles y términos son los del [Glosario del Dominio](glosario.md).
 
-**Resumen:** 15 necesidades · 25 User Stories · 46 criterios de aceptación · 8 archivos `.feature`.
+**Resumen:** 16 necesidades · 26 User Stories · 51 criterios de aceptación · 8 archivos `.feature`.
 
 ## 1. Trazabilidad con el BRD
 
@@ -34,6 +35,7 @@ Las historias siguen el formato *Como… quiero… para…* y cada criterio de a
 | N-13 | Permitir al cliente consultar el estado de su vehículo sin llamar al taller. | US-021 |
 | N-14 | (Implícita) Dar seguimiento a las cotizaciones que lleven más de 48 horas sin respuesta. | US-023 |
 | N-15 | (Implícita, v3.0) Cancelar la orden cuando el cliente desiste antes de que se genere la cotización. | US-025 |
+| N-16 | (Implícita, v3.1) Corregir los datos mal capturados dejando constancia y evitar registros repetidos (revisión del 09/11/2026). | US-026 |
 
 ## 2. Listado de User Stories
 
@@ -64,10 +66,11 @@ Las historias siguen el formato *Como… quiero… para…* y cada criterio de a
 | US-023 | Asesor de Servicio | Como Asesor de Servicio, quiero recibir una alerta cuando una cotización presentada lleve más de 48 horas sin respuesta, para volver a contactar al cliente o al Responsable de Flotilla. | `03_cotizacion.feature` |
 | US-024 | Asesor de Servicio | Como Asesor de Servicio, quiero registrar la entrega del vehículo al cliente, para cerrar la orden de servicio y dejar constancia de cuándo salió el vehículo del taller. | `06_caja_y_entrega.feature` |
 | US-025 | Asesor de Servicio | Como Asesor de Servicio, quiero cancelar una orden cuando el cliente desiste del servicio antes de que se genere la cotización, para cerrar el expediente sin cobro y dejar registrado el motivo. | `08_cancelacion.feature` |
+| US-026 | Asesor de Servicio | Como Asesor de Servicio, quiero corregir una cotización con un importe o una descripción mal capturados mientras espera la revisión del Gerente o la decisión del cliente, indicando el motivo, para presentar un documento correcto sin perder el historial de lo que cambió. | `03_cotizacion.feature` |
 
 ## 3. Criterios de aceptación en Gherkin
 
-Los criterios marcados con **(v3.0)** se agregaron o se precisaron en el PIA; el hallazgo que lo justifica se indica entre paréntesis.
+Los criterios marcados con **(v3.0)** se agregaron o se precisaron en el PIA y los marcados con **(v3.1)** salen de la revisión del 09/11/2026; el hallazgo que lo justifica se indica entre paréntesis.
 
 ### US-001
 
@@ -290,6 +293,18 @@ Los criterios marcados con **(v3.0)** se agregaron o se precisaron en el PIA; el
 | **CA-044**<br>Cancelar la orden antes de la cotización **(v3.0, H-PIA-01)** | **Dado** que una orden está en «Recibida» o «En Diagnóstico»<br>**Y** el cliente decide no continuar con el servicio<br>**Cuando** el asesor registra la cancelación indicando el motivo<br>**Entonces** el sistema debe cambiar la orden a «Cancelada»<br>**Y** debe guardar la fecha, la hora y el motivo<br>**Y** debe quitarla del panel del técnico asignado, si tenía uno<br>**Y** no debe generar ningún cobro |
 | **CA-045**<br>No se cancela una orden que ya tiene cotización **(v3.0, H-PIA-01)** | **Dado** que una orden ya tiene una cotización generada («Cotizada» o un estado posterior)<br>**Cuando** el asesor intenta cancelarla<br>**Entonces** el sistema no debe permitirlo<br>**Y** debe indicar que la orden no se puede cancelar<br>**Y** si la orden está «Cotizada» y el cliente aún no decide, debe indicar que, si no desea la reparación, se registra el rechazo total de la cotización |
 
+### US-026
+
+> Como Asesor de Servicio, quiero corregir una cotización con un importe o una descripción mal capturados mientras espera la revisión del Gerente o la decisión del cliente, indicando el motivo, para presentar un documento correcto sin perder el historial de lo que cambió.
+
+| ID | Criterio de aceptación |
+|---|---|
+| **CA-047**<br>Corregir una cotización que espera la decisión del cliente **(v3.1, H-PIA-21)** | **Dado** que una cotización está en «Pendiente de Autorización del Cliente» con un importe o una descripción mal capturados<br>**Cuando** el asesor la corrige capturando los trabajos correctos y el motivo de la corrección<br>**Entonces** el sistema debe guardar los trabajos corregidos conservando el número y la versión de la cotización<br>**Y** debe guardar en el historial de correcciones al asesor, la fecha y hora, el motivo, el total anterior y el total nuevo<br>**Y** si la cotización no requiere aprobación gerencial, debe dejarla en «Pendiente de Autorización del Cliente» como no presentada, para que el asesor la presente otra vez |
+| **CA-048**<br>La corrección sube la cotización inicial arriba de $15,000 MXN **(v3.1, H-PIA-21)** | **Dado** que una cotización inicial está en «Pendiente de Autorización del Cliente», aunque el Gerente ya la haya aprobado o se haya ajustado según sus observaciones<br>**Cuando** el asesor la corrige y el total nuevo es mayor a $15,000 MXN<br>**Entonces** el sistema debe cambiarla a «Pendiente de Aprobación Gerencial»<br>**Y** debe borrar la fecha de aprobación gerencial, que queda guardada en el historial de la corrección<br>**Y** debe enviar una alerta al panel del Gerente<br>**Y** debe impedir que se presente al cliente hasta que el Gerente la apruebe |
+| **CA-049**<br>Corregir una cotización que espera al Gerente **(v3.1, H-PIA-21)** | **Dado** que una cotización está en «Pendiente de Aprobación Gerencial»<br>**Cuando** el asesor la corrige capturando el motivo<br>**Entonces** si el total nuevo sigue siendo mayor a $15,000 MXN, la cotización debe quedarse en «Pendiente de Aprobación Gerencial» con los trabajos corregidos<br>**Y** si el total nuevo es menor o igual a $15,000 MXN, debe cambiarla a «Pendiente de Autorización del Cliente» como no presentada<br>**Y** en los dos casos debe guardar la corrección en el historial |
+| **CA-050**<br>No se corrige sin motivo ni una cotización por ajustar o ya decidida **(v3.1, H-PIA-21)** | **Dado** que el asesor intenta corregir una cotización<br>**Cuando** la cotización está en «Requiere Ajuste», «Autorizada», «Autorizada Parcialmente» o «Rechazada», o el asesor no captura el motivo<br>**Entonces** el sistema no debe permitirlo<br>**Y** si falta el motivo, debe pedir que lo capture<br>**Y** si está en «Requiere Ajuste», debe indicar que se guarde la cotización ajustada según las observaciones del Gerente<br>**Y** si ya tiene la decisión del cliente, debe indicar que ya no se corrige y que los trabajos nuevos se cotizan con una cotización adicional |
+| **CA-051**<br>El plazo de 48 horas después de una corrección **(v3.1, H-PIA-21)** | **Dado** que una cotización presentada, con recontactos registrados, se corrigió y quedó en «Pendiente de Autorización del Cliente»<br>**Cuando** el sistema ejecuta su revisión de plazos antes de que el asesor la presente otra vez<br>**Entonces** no debe generar la alerta de 48 horas<br>**Y** debe conservar los recontactos anteriores como historial<br>**Cuando** el asesor la presenta otra vez<br>**Entonces** el plazo de 48 horas debe contar solo desde la nueva presentación y los recontactos posteriores a ella |
+
 ## 4. Validación y trazabilidad
 
 | ID Necesidad | User Stories relacionadas | Criterios de aceptación | Proceso modelado en BPMN |
@@ -309,6 +324,7 @@ Los criterios marcados con **(v3.0)** se agregaron o se precisaron en el PIA; el
 | N-13 | US-021 | CA-037, CA-038 | Consulta transversal (no es una tarea del flujo) |
 | N-14 | US-023 | CA-040 | Fase 3: Autorización (temporizador de 48 h) |
 | N-15 | US-025 | CA-044, CA-045 | Diagrama 2 (Casos especiales): Cliente desiste antes de la cotización |
+| N-16 | US-026 | CA-047, CA-048, CA-049, CA-050, CA-051 | Fase 2 y Fase 3: corrección de la cotización (v3.1) |
 
 La trazabilidad completa de cada criterio hasta la regla de negocio, el componente, la ruta de la API y la prueba está en [trazabilidad/matriz-trazabilidad.md](trazabilidad/matriz-trazabilidad.md).
 
