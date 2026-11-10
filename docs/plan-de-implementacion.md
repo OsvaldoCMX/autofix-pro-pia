@@ -27,6 +27,15 @@ Orden en que se construye el sistema a partir de esta documentación. Cada fase 
 | 9 | Despliegue en Render con Supabase | Terminada | 06/11/2026 | `docs: agregar la URL de producción` |
 | 10 | P2: documentos PDF y fotos de daños | Omitida | 06/11/2026 | `docs: registrar la omisión de la Fase 10` |
 | 11 | README técnico, evidencias y cierre | Terminada | 06/11/2026 | `docs: README técnico, guion de demostración y evidencia de pruebas` |
+| 12 | Auditoría «¿y si me equivoco?» | Pendiente | — | — |
+| 13 | Documentar la interfaz web y las correcciones aprobadas | Pendiente | — | — |
+| 14 | Correcciones en el dominio y la API | Pendiente | — | — |
+| 15 | Base de la interfaz web | Pendiente | — | — |
+| 16 | Pantallas del Asesor | Pendiente | — | — |
+| 17 | Pantallas de Técnico, Gerente, Compras y Caja | Pendiente | — | — |
+| 18 | Revisión como usuario del taller | Pendiente | — | — |
+| 19 | Despliegue de la interfaz en Render y datos limpios en Supabase | Pendiente | — | — |
+| 20 | README, guion de demostración y reporte | Pendiente | — | — |
 
 ---
 
@@ -174,3 +183,145 @@ Las restricciones `CHECK` propias de PostgreSQL (por ejemplo, expresiones regula
 **Listo cuando:** alguien que clona el repositorio puede correrlo siguiendo solo el README.
 
 **Commit:** `docs: README técnico, guion de demostración y evidencia de pruebas`.
+
+---
+
+# Fases 12 a 20 — Interfaz web y correcciones después de la revisión del 09/11/2026
+
+La versión entregada el 06/11/2026 quedó en la etiqueta `entrega-2026-11-06` y no se toca. En la revisión del 09/11/2026 vimos que el profesor evalúa usando el sistema como un usuario del taller: busca errores de captura que no se pueden corregir y mensajes que no entiende alguien que no sabe de computadoras. Estas fases agregan una página web para el personal del taller y para el cliente, encima de la API, y corrigen esos huecos. Se trabajan en la rama `interfaz-web`; se juntan con `main` en la Fase 19.
+
+**Reglas adicionales para estas fases**
+
+- La página vive en `src/api/web/` y la sirve el mismo FastAPI (HTML, CSS y JavaScript con módulos ES; sin Node, sin npm y sin compilación). Solo habla con la API.
+- Todo texto que ve un usuario va en español sencillo, sin códigos HTTP, JSON, nombres de clases ni inglés. La página muestra el `detalle` de los errores tal cual; si un mensaje no se entiende, se corrige en el dominio o en `src/api/errores.py`.
+- Las validaciones de la página solo ayudan al usuario; las reglas viven en el dominio.
+- `user-stories.md`, `gherkin/*.feature`, `trazabilidad/matriz-trazabilidad.md`, `api/README.md` y los ADR **se generan** con los scripts de `scripts/docs/` (`datos.py`, `rutas.py`, `gen_adr.py`): se edita el script y se regenera, nunca el Markdown a mano. Lo mismo con el esquema (`scripts/db/esquema.py`).
+- **Docker local con datos:** Docker Desktop no monta `database/` desde la USB (`I:`); para verificar la página con las 60 órdenes se usa una copia del repositorio en un disco fijo (`C:`), como advierte el README. El perfil `tests` sí funciona desde la USB.
+
+## Fase 12 — Auditoría «¿y si me equivoco?»
+
+**Objetivo:** encontrar, antes que el profesor, los pasos donde un usuario se equivoca y el sistema no lo deja corregir, o donde el mensaje no se entiende. **Esta fase no escribe código.**
+
+**Lee:** `user-stories.md`, `gherkin/*.feature`, `glosario.md`, `api/README.md`, `architecture/modelo-de-dominio.md` y el código de `src/domain`, `src/api/esquemas` y `src/api/errores.py`.
+
+**Construye** `docs/auditoria-errores-de-usuario.md` con una tabla por actor (Asesor, Técnico, Gerente, Compras, Caja, Cliente). Por cada paso del proceso:
+
+| Paso | Error posible del usuario | Qué hace hoy el sistema (con archivo y línea) | ¿Se puede corregir? | ¿El mensaje se entiende? | Propuesta | Prioridad |
+|---|---|---|---|---|---|---|
+
+Revisa como mínimo:
+- **Datos mal capturados:** nombre, teléfono o correo del cliente; placas, VIN, año, kilometraje, nivel de combustible; técnico equivocado al asignar el diagnóstico o los trabajos; diagnóstico con un error; cotización con un importe o una descripción mal; trabajos marcados por error en la decisión del cliente; refacción solicitada por error; forma de pago equivocada; llegada de refacción registrada por error.
+- **Datos absurdos:** negativos, ceros, textos vacíos o solo espacios, textos larguísimos, años imposibles, importes con más de 2 decimales, letras donde van números, placas con caracteres raros.
+- **Acciones repetidas o fuera de orden:** doble clic en guardar, registrar dos veces lo mismo, saltarse pasos, usar la función de otro puesto.
+- **Cada mensaje de error que puede salir:** ¿lo entiende alguien que no sabe de computadoras? ¿dice qué pasó y qué hacer?
+
+La prioridad es **Alta** si el profesor lo puede encontrar en una demo de 10 minutos, **Media** si es raro y **Baja** si es cosmético. La corrección de cotizaciones ya está decidida por el equipo (09/11/2026); se anota como **H-PIA-21** (el último hallazgo de `registro-de-cambios.md` es H-PIA-20).
+
+**Listo cuando:** el equipo revisó la tabla y marcó qué propuestas se hacen. **Se detiene la fase y se espera la decisión del equipo** antes de la Fase 13.
+
+**Commit:** `docs: auditoría de errores de usuario`.
+
+## Fase 13 — Documentar la interfaz web y las correcciones aprobadas
+
+**Objetivo:** que `docs/` diga exactamente qué se va a construir, antes de programar. **Esta fase no escribe código de la aplicación** (sí edita los generadores de `scripts/docs/`).
+
+**Lee:** `auditoria-errores-de-usuario.md` con las decisiones del equipo, `scripts/docs/README.md`, `architecture/modelo-de-dominio.md` §5.2 (máquina de la cotización), RN-04 y RN-05, CA-005 a CA-009, ADR-005, ADR-007 y ADR-012.
+
+**Construye:**
+- `docs/interfaz-web.md`:
+  - Principios: usuario no técnico, botones con verbos claros («Registrar llegada del vehículo»), estados con los nombres del Glosario, montos como `$1,500.00`, fechas `dd/mm/aaaa hh:mm` en America/Monterrey, confirmación antes de acciones que no se deshacen (cancelar, registrar decisión del cliente, pago, cargo a crédito, entrega), botón de guardar deshabilitado mientras se envía (evita el doble clic).
+  - Mensajes: de éxito (el `mensaje` de la API o uno corto), de error (el `detalle` tal cual), sin conexión o con Render despertando («El sistema está iniciando, espere unos segundos e intente de nuevo») y sesión vencida (regresa al inicio de sesión con un aviso).
+  - Pantallas por puesto. Por cada una: qué ve el usuario, qué botones tiene, en qué estados aparece cada botón, qué ruta de la API llama y qué criterios cubre. Mínimo:
+    - **Inicio:** «Consulta tu vehículo» (cliente, sin clave) y «Entrar como personal del taller».
+    - **Inicio de sesión:** solo pide la clave de acceso y saluda con nombre y puesto.
+    - **Asesor:** buscar por placas, registrar cliente y orden, expediente de la orden, asignar técnico, generar, corregir y presentar cotización, registrar recontacto, decisión del cliente, asignar trabajos, cotización adicional, aviso de retraso de refacción, retiro anticipado (salida, firma y reactivación), entrega, entrega sin reparación, cancelación, alertas.
+    - **Técnico:** su fila de trabajo, registrar diagnóstico, iniciar y terminar trabajos, solicitar refacción, reportar falla adicional, alertas.
+    - **Gerente:** cotizaciones por aprobar (aprobar, o rechazar con observaciones), listado de órdenes con filtro por estado, ingresos del día, alertas.
+    - **Compras:** solicitudes pendientes con días hábiles y registrar llegada.
+    - **Caja:** buscar la orden, registrar pago de contado o cargo a crédito según el tipo de cliente.
+    - El token de Sistema (revisión de plazos) no tiene pantalla. Las funciones P2 (PDF y fotos, Fase 10 omitida) no aparecen en la página.
+- Ruta nueva `GET /api/sesion` (en `scripts/docs/rutas.py`, que regenera `api/README.md`): con una clave válida devuelve nombre y puesto del empleado; sin clave o con una clave inválida responde 401 con mensaje claro.
+- La corrección de cotizaciones y los cambios aprobados en la Fase 12, con la numeración que sigue a la existente: User Stories desde **US-026**, criterios desde **CA-047**, reglas desde **RN-25**, hallazgos desde **H-PIA-21**, **ADR-017** (interfaz web) y **ADR-018** (corrección de cotizaciones). Se editan:
+  - Generadores: `scripts/docs/datos.py` (US, CA, RN, Gherkin y matriz), `scripts/docs/rutas.py` (rutas nuevas) y `scripts/docs/gen_adr.py` (ADR-017, ADR-018 y el índice `architecture/adr/README.md`); después se corren `gen_historias.py`, `gen_trazabilidad.py` y `gen_adr.py`.
+  - A mano: `BRD.md`, `glosario.md`, `architecture/modelo-de-dominio.md` (estados, transiciones, eventos y errores), `architecture/decisiones-tecnicas.md` (§2, carpeta `src/api/web/`) y `registro-de-cambios.md`.
+  - `CLAUDE.md`: los rangos de la tabla «Dónde está cada cosa» (número de rutas, CA, RN y ADR).
+  - Si el BPMN cambia, solo se anota en `bpmn/README.md` qué cambiaría; no se edita el PDF de Lucidchart.
+- **Decisiones del equipo sobre la corrección de cotizaciones (09/11/2026)**, que estos documentos deben recoger:
+  - La hace solo el Asesor, con motivo obligatorio, y aplica solo en «Pendiente de Aprobación Gerencial» y «Pendiente de Autorización del Cliente». En «Requiere Ajuste» se sigue usando `ajustar` (CA-009) y **RN-05 no cambia**. En «Autorizada», «Autorizada Parcialmente» y «Rechazada» no se corrige: para trabajo nuevo existe la cotización adicional (N-06).
+  - Se guardan asesor, fecha y hora, motivo, total anterior y total nuevo; la cotización conserva su número y su versión.
+  - Después de corregir se vuelve a evaluar E1. Transición nueva: «Pendiente de Autorización del Cliente» → «Pendiente de Aprobación Gerencial». Corregir una cotización en «Pendiente de Aprobación Gerencial» que sigue arriba de $15,000 no es una transición: se queda en ese estado y solo cambian sus líneas.
+  - Al corregir, `fecha_presentacion` vuelve a vacío y el asesor la puede presentar otra vez. Los recontactos anteriores se conservan como historial, pero el plazo de 48 horas (E8) solo cuenta desde la nueva presentación y los recontactos posteriores a ella. El detalle se define en esta fase.
+  - Por decidir en esta fase: qué pasa con `fecha_aprobacion_gerencial` (CA-008) cuando la cotización regresa a revisión (propuesta: se borra y el historial de la corrección guarda el dato anterior).
+
+**Listo cuando:** los scripts de `scripts/docs/` corren sin errores de conteo y el equipo aprueba `docs/interfaz-web.md` y los criterios nuevos.
+
+**Commits:** `docs: interfaz web y ADR-017` · `docs: corrección de cotizaciones (H-PIA-21, ADR-018)` · uno por cada otra corrección aprobada.
+
+## Fase 14 — Correcciones en el dominio y la API
+
+**Lee:** lo que se aprobó en la Fase 13.
+
+**Construye** la corrección de cotizaciones y las demás correcciones aprobadas, por capas como siempre:
+- Dominio: método en `src/domain/cotizaciones/cotizacion.py`, transiciones nuevas en `MAQUINA_DE_COTIZACION` (`src/domain/cotizaciones/estados.py`), evento `CotizacionCorregida` en `eventos.py` y el error que corresponda.
+- Aplicación: método en `ServicioDeCotizacion` y su comando en `src/application/comandos.py`; manejador de alertas si la Fase 13 lo pide.
+- Infraestructura: tabla nueva del historial de correcciones en `scripts/db/esquema.py`, SQL y `architecture/modelo-de-datos.md` regenerados (`python scripts/db/esquema.py .` y `python scripts/db/generar_datos_iniciales.py datos/profesor database`), `tablas.py`, `mapeo.py`, repositorios en memoria y en base de datos.
+- API: ruta en `src/api/rutas/cotizaciones.py`, esquema en `src/api/esquemas/cotizaciones.py` y mensajes; `docs/api/openapi.json` con `api/exportar_openapi.py`.
+
+**Pruebas:** `test_ca_0XX_` y `test_rn_XX_` de cada criterio y regla nuevos en dominio, aplicación, integración y API; ampliar los rangos de `tests/test_trazabilidad.py` (hoy CA-001 a CA-046 y RN-01 a RN-24). Integración también contra PostgreSQL 16 local en Docker (`docker compose --profile tests run --rm tests`). **Nunca contra Supabase.** Al final, `scripts/docs/gen_evidencia.py` regenera `trazabilidad/evidencia-pruebas.md`.
+
+**Listo cuando:** todo en verde, cobertura ≥ 90 % y los criterios nuevos aparecen en la evidencia.
+
+**Commits:** uno por corrección (`feat(cotizacion): corregir una cotización antes de la decisión del cliente`, …).
+
+## Fase 15 — Base de la interfaz web
+
+**Construye:**
+- En `src/api/main.py`: servir la página de `src/api/web/` en `/` sin romper `/docs`, `/openapi.json`, `/health` ni `/api/*`. Navegación con `#` en la URL (por ejemplo `#/asesor/orden/OS-0001`) para que recargar la página no dé 404.
+- `GET /api/sesion` (de la Fase 13) en `src/api/rutas/sesion.py` y `src/api/esquemas/sesion.py`, usando `src/api/seguridad.py`.
+- `src/api/web/`: `index.html`, `estilos.css` y módulos JS: `api.js` (todas las llamadas, el token y el manejo de errores en un solo lugar), `sesion.js`, `formato.js` (dinero y fechas; el dinero se maneja como texto o centavos, nunca con sumas de `float`), `ui.js` (mensajes, confirmaciones, botones ocupados) y un archivo por puesto (`asesor.js`, `tecnico.js`, `gerente.js`, `compras.js`, `caja.js`, `cliente.js`).
+- Pantalla de inicio, consulta pública del cliente (CA-037, CA-038), inicio de sesión, menú según el puesto y cerrar sesión.
+- Diseño limpio y legible en laptop y tablet: letras grandes, botones grandes, colores por estado de la orden y nada de texto técnico.
+
+**Pruebas (`tests/api`):** `/` responde HTML; los archivos estáticos se sirven; `/docs`, `/openapi.json` y `/health` siguen respondiendo; `GET /api/sesion` con cada rol, sin clave y con clave inválida; `tests/test_arquitectura.py` sigue pasando.
+
+**Listo cuando:** en Docker local se puede consultar una orden como cliente y entrar con la clave de cada puesto.
+
+**Commits:** `feat(web): servir la interfaz y la consulta pública` · `feat(api): ruta de sesión` · `feat(web): inicio de sesión y menú por puesto`.
+
+## Fase 16 — Pantallas del Asesor
+
+**Construye** las pantallas del Asesor de `docs/interfaz-web.md`, con sus confirmaciones y mensajes. En la cotización, la página puede mostrar un total preliminar mientras se captura, pero el total oficial y la regla de $15,000 (E1) los decide la API.
+
+**Pruebas:** si una pantalla necesita algo que la API no da (por ejemplo, un dato en el expediente), se agrega a la API con su prueba y se documenta en `scripts/docs/rutas.py`; no se resuelve con trucos en la página. La revisión visual va en la lista de la Fase 18.
+
+**Listo cuando:** en Docker local se completan, solo desde la página, los escenarios 1, 3, 4 y 5 del guion de demostración del `README.md` en la parte del Asesor.
+
+**Commits:** uno por grupo de pantallas (`feat(web): recepción y expediente`, `feat(web): cotizaciones y decisión del cliente`, …).
+
+## Fase 17 — Pantallas de Técnico, Gerente, Compras y Caja
+
+**Construye** las pantallas de esos cuatro puestos de `docs/interfaz-web.md` y la campana de alertas para todos.
+
+**Listo cuando:** los 6 escenarios del guion del `README.md` se completan de punta a punta solo desde la página, cambiando de puesto con cerrar sesión.
+
+**Commits:** `feat(web): pantallas del técnico` · `feat(web): pantallas del gerente` · `feat(web): compras y caja` · `feat(web): alertas`.
+
+## Fase 18 — Revisión como usuario del taller
+
+**Construye** `docs/evidencias/revision-interfaz.md`, una lista de verificación que el equipo ejecuta a mano en Docker local:
+- Los 6 escenarios del guion desde la página.
+- Cada fila de prioridad Alta de `auditoria-errores-de-usuario.md`: intentar el error y anotar qué mensaje sale.
+- Datos absurdos en cada formulario (negativos, vacíos, espacios, textos largos, doble clic).
+- Cerrar sesión, clave inválida, recargar la página, apagar la API (mensaje de «sistema iniciando»).
+
+Lo que falle se corrige en esta fase: la página, o el mensaje en el dominio o en `src/api/errores.py`. Después se vuelven a correr todas las pruebas.
+
+**Commits:** `fix(web): …` por cada corrección · `docs: lista de revisión de la interfaz`.
+
+## Fase 19 — Despliegue de la interfaz en Render y datos limpios en Supabase
+
+*(Se detalla con el equipo cuando termine la Fase 18.)* Juntar `interfaz-web` con `main` cuando el CI esté en verde, revisar el Auto-Deploy de Render, volver a ejecutar `01_esquema.sql`, `02_datos_iniciales.sql` y `03_verificacion.sql` de `database/`, en ese orden, en el SQL Editor de Supabase (la Fase 14 cambia el esquema; `01` borra las tablas, así que se ejecuta a mano) y probar la página en producción.
+
+## Fase 20 — README, guion de demostración y reporte
+
+*(Se detalla con el equipo.)* README con la página como forma principal de uso y Swagger para la parte técnica, guion de demostración desde la página, evidencias nuevas en `docs/evidencias/` y anexo del reporte con lo que cambió después de la revisión del 09/11/2026.
