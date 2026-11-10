@@ -32,7 +32,7 @@ TRAZA_NECESIDAD = {
     "N-04": (["US-005"], ["CA-007", "CA-008", "CA-009"], "Fase 2: Diagnóstico y cotización"),
     "N-05": (["US-012"], ["CA-023"], "Fase 4: Gestión de refacciones"),
     "N-06": (["US-009", "US-019"], ["CA-016", "CA-017", "CA-018", "CA-034", "CA-061"], "Fase 5: Reparación y ampliación"),
-    "N-07": (["US-016", "US-022"], ["CA-028", "CA-029", "CA-039", "CA-041", "CA-064"], "Fase 1, Fase 3 y Fase 6: Cierre, pago y entrega"),
+    "N-07": (["US-016", "US-022"], ["CA-028", "CA-029", "CA-039", "CA-041", "CA-064", "CA-065"], "Fase 1, Fase 3 y Fase 6: Cierre, pago y entrega"),
     "N-08": (["US-017", "US-018"], ["CA-030", "CA-031"], "Consulta transversal (no es una tarea del flujo)"),
     "N-09": (["US-007", "US-008", "US-019", "US-020"], ["CA-013", "CA-014", "CA-015", "CA-032", "CA-033", "CA-035", "CA-036", "CA-046", "CA-053", "CA-054"], "Fase 1, Fase 2 y Fase 5"),
     "N-10": (["US-010", "US-011"], ["CA-019", "CA-020", "CA-021", "CA-022", "CA-062"], "Fase 4: Gestión de refacciones"),
@@ -727,6 +727,16 @@ ca("CA-064", "US-016", [
 ], F3, ["RN-07"], "VerificadorDeAutorizante, error AutorizanteNoValido",
    "ServicioDeAutorizacion.registrar_decision", "POST /api/cotizaciones/{id}/decision (409)", ASE,
    cambio="H-PIA-27", nombre="Flotilla: el mensaje dice a nombre de quién y con qué rol", planeado=True)
+
+ca("CA-065", "US-016", [
+    (D, "que la empresa «Transportes Norte» ya está registrada con su Responsable de Flotilla «Ana Torres»"),
+    (C, "el asesor registra la misma empresa con datos distintos del responsable"),
+    (E, "el sistema no debe crear otra empresa ni cambiar en silencio al responsable registrado"),
+    (Y, "debe indicar que la empresa ya está registrada, con el nombre y el teléfono de su Responsable de Flotilla, para que use ese registro"),
+    (Y, "si los datos del responsable son los mismos, debe devolver la empresa registrada, como hasta ahora"),
+], F1, ["RN-07"], "Cliente (TipoCliente.FLOTILLA), ResponsableDeFlotilla, error EmpresaYaRegistrada",
+   "ServicioDeRecepcion.registrar_cliente", "POST /api/clientes (409)", ASE,
+   cambio="H-PIA-28", nombre="La empresa de flotilla ya está registrada", planeado=True)
 
 # ----------------------------------------------------------------------------- áreas (archivos .feature)
 AREAS = [

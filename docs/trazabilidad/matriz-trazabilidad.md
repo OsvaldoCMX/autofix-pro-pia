@@ -2,7 +2,7 @@
 
 Relaciona **BRD → regla de negocio → componente → prueba**, como pide el paquete del profesor, y cada criterio de aceptación con su User Story, necesidad, fase del BPMN, ruta de la API y rol. Se genera con los scripts de `scripts/docs/` desde la misma fuente que `user-stories.md` y los `.feature`, así que los textos y conteos coinciden.
 
-**Conteos:** 16 necesidades · 27 User Stories · 64 criterios · 34 reglas de negocio · 8 Specifications · 49 rutas de API.
+**Conteos:** 16 necesidades · 27 User Stories · 65 criterios · 34 reglas de negocio · 8 Specifications · 49 rutas de API.
 
 La columna **Prueba prevista** usa la convención `test_ca_0XX_…` / `test_rn_XX_…` (ver `architecture/decisiones-tecnicas.md` §7). Al terminar la implementación se reemplaza por el nombre real de la prueba y su resultado (✔/✘), y se agrega la evidencia de cobertura.
 
@@ -16,7 +16,7 @@ La columna **Prueba prevista** usa la convención `test_ca_0XX_…` / `test_rn_X
 | N-04 | Aplicar flujo de aprobación del Gerente para cotizaciones iniciales mayores a $15,000 MXN. | Alta | US-005 | CA-007, CA-008, CA-009 | Fase 2: Diagnóstico y cotización |
 | N-05 | Alertar automáticamente al asesor cuando una refacción tarde más de 3 días hábiles, para que notifique al cliente. | Media | US-012 | CA-023 | Fase 4: Gestión de refacciones |
 | N-06 | Generar cotizaciones adicionales para fallas descubiertas sin modificar la cotización original. | Alta | US-009, US-019 | CA-016, CA-017, CA-018, CA-034, CA-061 | Fase 5: Reparación y ampliación |
-| N-07 | Gestionar el proceso diferenciado para clientes de flotilla empresarial (autorización del responsable y crédito a 15 días desde la entrega). | Media | US-016, US-022 | CA-028, CA-029, CA-039, CA-041, CA-064 | Fase 1, Fase 3 y Fase 6: Cierre, pago y entrega |
+| N-07 | Gestionar el proceso diferenciado para clientes de flotilla empresarial (autorización del responsable y crédito a 15 días desde la entrega). | Media | US-016, US-022 | CA-028, CA-029, CA-039, CA-041, CA-064, CA-065 | Fase 1, Fase 3 y Fase 6: Cierre, pago y entrega |
 | N-08 | Permitir al Gerente visualizar un listado de órdenes abiertas/cerradas y el total de ingresos del día. | Media | US-017, US-018 | CA-030, CA-031 | Consulta transversal (no es una tarea del flujo) |
 | N-09 | (Implícita) Asignar técnicos y permitirles registrar el diagnóstico, ver sus trabajos y actualizar su estado. | Alta | US-007, US-008, US-019, US-020 | CA-013, CA-014, CA-015, CA-032, CA-033, CA-035, CA-036, CA-046, CA-053, CA-054 | Fase 1, Fase 2 y Fase 5 |
 | N-10 | (Implícita) Controlar la solicitud y la llegada de refacciones con el área de Compras. | Alta | US-010, US-011 | CA-019, CA-020, CA-021, CA-022, CA-062 | Fase 4: Gestión de refacciones |
@@ -39,7 +39,7 @@ Cada regla viene del BRD (o de un hallazgo documentado) y tiene un componente re
 | RN-04 | La cotización inicial mayor a $15,000 MXN requiere aprobación del Gerente; las adicionales nunca. | BRD Restricción 4 | CA-005, CA-007, CA-008, CA-016, CA-048, CA-049 | Specification E1 `RequiereAprobacionGerencial` | ADR-005, ADR-006 | tests/**/test_rn_04_* |
 | RN-05 | El rechazo del Gerente exige observaciones; la versión ajustada no regresa a revisión. | BRD §2 Reglas implícitas | CA-009, CA-050 | `Cotizacion.rechazar_por_gerente` / `ajustar` | ADR-007 | tests/**/test_rn_05_* |
 | RN-06 | Una cotización que espera aprobación gerencial no puede presentarse al cliente. | BRD Restricción 4; CE-05 | CA-006, CA-007, CA-048 | `MAQUINA_DE_COTIZACION` (presentar solo desde «Pendiente de Autorización del Cliente») | ADR-007 | tests/**/test_rn_06_* |
-| RN-07 | La decisión se registra a nombre del autorizante válido: el cliente particular o el Responsable de Flotilla, nunca el conductor. | BRD Restricción 5 | CA-010, CA-017, CA-028, CA-029, CA-055, CA-063, CA-064 | Specification E2 `AutorizanteValido` + `VerificadorDeAutorizante` | ADR-006 | tests/**/test_rn_07_* |
+| RN-07 | La decisión se registra a nombre del autorizante válido: el cliente particular o el Responsable de Flotilla, nunca el conductor. | BRD Restricción 5 | CA-010, CA-017, CA-028, CA-029, CA-055, CA-063, CA-064, CA-065 | Specification E2 `AutorizanteValido` + `VerificadorDeAutorizante` | ADR-006 | tests/**/test_rn_07_* |
 | RN-08 | Solo los trabajos autorizados se asignan y se ejecutan; los demás quedan «No Autorizado». | BRD §2 Excepciones; CE-01 | CA-010, CA-011, CA-012, CA-017, CA-018, CA-036 | `OrdenDeServicio.aplicar_decision` / `asignar_trabajos`, `Trabajo` | ADR-007 | tests/**/test_rn_08_* |
 | RN-09 | Compras solo gestiona refacciones de trabajos que el cliente ya autorizó. | BRD Restricción 8 | CA-019, CA-020, CA-062 | Specification E6 `PuedeSolicitarRefaccion` | ADR-006 | tests/**/test_rn_09_* |
 | RN-10 | La orden está «En Espera de Refacción» mientras exista una solicitud «Solicitada» y regresa a su estado al llegar todas. | BRD §1; CA-019, CA-022 | CA-019, CA-022 | `MAQUINA_DE_ORDEN` + `registrar_llegada_de_refaccion` | ADR-007 | tests/**/test_rn_10_* |
@@ -151,8 +151,9 @@ Operadores cubiertos: **AND** (E1, E2, E3, E5, E6, E7, E8), **OR** (E2, E3, E4, 
 | CA-062 | No se repite la solicitud de una refacción pendiente | US-010 | N-10 | Fase 4: Gestión de refacciones | RN-34, RN-09 | OrdenDeServicio (crear_solicitud_de_compra), SolicitudDeCompra, error SolicitudNoPermitida | ServicioDeRefacciones.solicitar | POST /api/ordenes/{numero}/solicitudes-de-compra (409) | Técnico | tests/api/test_reparacion_y_refacciones.py::test_ca_062_* | P1 · Planeado | H-PIA-26 |
 | CA-063 | El nombre del autorizante con espacios de más | US-006 | N-03 | Fase 3: Autorización | RN-07 | spec AutorizanteValido (AutorizaElCliente, AutorizaSuResponsableDeFlotilla) | ServicioDeAutorizacion.registrar_decision | POST /api/cotizaciones/{id}/decision | Asesor | tests/api/test_autorizacion.py::test_ca_063_* | P1 · Planeado | H-PIA-27 |
 | CA-064 | Flotilla: el mensaje dice a nombre de quién y con qué rol | US-016 | N-07 | Fase 3: Autorización | RN-07 | VerificadorDeAutorizante, error AutorizanteNoValido | ServicioDeAutorizacion.registrar_decision | POST /api/cotizaciones/{id}/decision (409) | Asesor | tests/api/test_recepcion.py::test_ca_064_* | P1 · Planeado | H-PIA-27 |
+| CA-065 | La empresa de flotilla ya está registrada | US-016 | N-07 | Fase 1: Recepción y registro | RN-07 | Cliente (TipoCliente.FLOTILLA), ResponsableDeFlotilla, error EmpresaYaRegistrada | ServicioDeRecepcion.registrar_cliente | POST /api/clientes (409) | Asesor | tests/api/test_recepcion.py::test_ca_065_* | P1 · Planeado | H-PIA-28 |
 
 **Prioridad:** 42 criterios son P1 completos; la parte P2 (PDF y fotos) se omitió por decisión del equipo y sus rutas responden 501 (ver `architecture/decisiones-tecnicas.md` §8). CA-027 no está implementado; CA-002, CA-005 y CA-024 están implementados, salvo sus fotos o su PDF.
 
-**Planeado:** criterio o regla aprobados en la Fase 13 (revisión del 09/11/2026) que todavía no se construyen; la Fase 14 quita la marca al construir cada uno y lo que se recorte queda documentado como planeado. Hoy: 18 criterios (CA-047 a CA-064) y 10 reglas.
+**Planeado:** criterio o regla aprobados en la Fase 13 (revisión del 09/11/2026) que todavía no se construyen; la Fase 14 quita la marca al construir cada uno y lo que se recorte queda documentado como planeado. Hoy: 19 criterios (CA-047 a CA-065) y 10 reglas.
 

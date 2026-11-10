@@ -85,6 +85,14 @@ Característica: Recepción y registro del vehículo
     Entonces el sistema no debe registrarla
     Y debe indicar la empresa, el nombre del Responsable de Flotilla y el rol con el que se registra: «Para la flotilla de Transportes Norte, registre la decisión a nombre de su Responsable de Flotilla, Ana Torres, con el rol «Responsable de Flotilla».»
 
+  @US-016 @CA-065 @v3.1
+  Escenario: CA-065 La empresa de flotilla ya está registrada
+    Dado que la empresa «Transportes Norte» ya está registrada con su Responsable de Flotilla «Ana Torres»
+    Cuando el asesor registra la misma empresa con datos distintos del responsable
+    Entonces el sistema no debe crear otra empresa ni cambiar en silencio al responsable registrado
+    Y debe indicar que la empresa ya está registrada, con el nombre y el teléfono de su Responsable de Flotilla, para que use ese registro
+    Y si los datos del responsable son los mismos, debe devolver la empresa registrada, como hasta ahora
+
   # ---------------------------------------------------------------- US-027 (Asesor de Servicio)
 
   @US-027 @CA-055 @v3.1

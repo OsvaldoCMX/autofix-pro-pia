@@ -49,7 +49,7 @@ Los Aggregates se relacionan **solo por identidad** (`numero_orden`, `id_cliente
 
 ### 2.3 Cliente — raíz `Cliente`
 
-Identidad `id_cliente`; `TipoCliente` (Particular/Flotilla); nombre, teléfono, correo; si es flotilla, `empresa` y `ResponsableDeFlotilla` (VO: nombre, teléfono, correo). **Invariante:** un cliente de flotilla siempre tiene empresa y Responsable de Flotilla (CA-028). `actualizar_contacto` cambia nombre, teléfono y correo de un cliente recurrente (CA-003) y, en la v3.1, también corrige los datos mal capturados (`PUT /api/clientes/{id}`, CA-055, RN-29). Repositorio: `RepositorioDeClientes` (`obtener`, `agregar`, `guardar`, `buscar_flotilla(empresa)`, `siguiente_id()`, folio CLI-0001). Sin eventos.
+Identidad `id_cliente`; `TipoCliente` (Particular/Flotilla); nombre, teléfono, correo; si es flotilla, `empresa` y `ResponsableDeFlotilla` (VO: nombre, teléfono, correo). **Invariante:** un cliente de flotilla siempre tiene empresa y Responsable de Flotilla (CA-028). *(v3.1, CA-065)* Si se registra otra vez la misma empresa con los mismos datos del responsable, se devuelve la registrada; con datos distintos, `EmpresaYaRegistrada` (409), sin cambiar al responsable en silencio. `actualizar_contacto` cambia nombre, teléfono y correo de un cliente recurrente (CA-003) y, en la v3.1, también corrige los datos mal capturados (`PUT /api/clientes/{id}`, CA-055, RN-29). Repositorio: `RepositorioDeClientes` (`obtener`, `agregar`, `guardar`, `buscar_flotilla(empresa)`, `siguiente_id()`, folio CLI-0001). Sin eventos.
 
 ### 2.4 Vehículo — raíz `Vehiculo`
 
@@ -232,6 +232,7 @@ Las alertas por tiempo (CA-023 y CA-040) no vienen de un evento sino de la revis
 | `CancelacionNoPermitida` | E4 no se cumple. | 409 |
 | `VehiculoConOrdenAbierta` | *(v3.1)* El vehículo ya tiene una orden abierta (RN-27), también cuando la base rechaza un segundo registro simultáneo. | 409 · Planeado |
 | `CorreccionNoPermitida` | *(v3.1)* Una corrección de la orden fuera del estado que la permite: cambiar el técnico de diagnóstico cuando el diagnóstico ya está registrado (RN-28) corregir la recepción después de la cotización (RN-29), la forma de pago fuera de «Pagada» (RN-30) o, en P2, las placas. | 409 · Planeado |
+| `EmpresaYaRegistrada` | *(v3.1)* Se registra una empresa de flotilla que ya existe con datos distintos de su Responsable de Flotilla; el mensaje dice el nombre y el teléfono del responsable registrado (CA-065). | 409 · Planeado |
 | `OrdenNoEncontrada`, `CotizacionNoEncontrada`, `ClienteNoEncontrado`, `VehiculoNoEncontrado`, `EmpleadoNoEncontrado`, `TrabajoNoEncontrado`, `SolicitudNoEncontrada` | El identificador no existe. | 404 |
 
 *(v3.1)* Los errores con **«409 · Planeado»** en la columna HTTP están aprobados (Fase 13) pero todavía no existen en el código; `tests/api/test_errores_http.py` solo compara los demás, y la Fase 14 quita la marca al crear cada uno.
