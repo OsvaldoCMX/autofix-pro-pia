@@ -6,12 +6,13 @@ from __future__ import annotations
 
 from application.comandos import (
     CorregirCliente,
+    CorregirVehiculo,
     DatosDeVehiculo,
     RegistrarCliente,
     RegistrarOrden,
 )
 from application.puertos import PublicadorDeEventos, Reloj
-from application.resultados import ResultadoDeCliente, ResultadoDeOrden
+from application.resultados import ResultadoDeCliente, ResultadoDeOrden, ResultadoDeVehiculo
 from application.unidad_de_trabajo import UnidadDeTrabajo
 from domain.clientes.cliente import Cliente, ResponsableDeFlotilla, TipoCliente
 from domain.compartido.errores import ValorInvalido, VehiculoNoEncontrado
@@ -44,6 +45,19 @@ class ServicioDeRecepcion:
             uow.clientes.guardar(cliente)
             uow.confirmar()
         return _resultado_de_cliente(cliente)
+
+    def corregir_vehiculo(self, comando: CorregirVehiculo) -> ResultadoDeVehiculo:
+        """RN-29: el VIN no puede ser el de otro vehículo (lo revisa el repositorio)."""
+        with self._uow as uow:
+            vehiculo = uow.vehiculos.por_placas(Placas(comando.placas))
+            vehiculo.actualizar_datos(
+                VIN(comando.vin), comando.marca, comando.modelo, comando.anio
+            )
+            uow.vehiculos.guardar(vehiculo)
+            uow.confirmar()
+        return ResultadoDeVehiculo(
+            str(vehiculo.placas), str(vehiculo.vin), vehiculo.marca, vehiculo.modelo, vehiculo.anio
+        )
 
     def registrar_orden(self, comando: RegistrarOrden) -> ResultadoDeOrden:
         ahora = self._reloj.ahora()

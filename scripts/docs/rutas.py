@@ -14,7 +14,7 @@ RUTAS = [
     ("GET", "/health", P, "Salud del servicio (lo usa Render y Docker Compose).", "200", "—", "—", [], "P1", "Sistema"),
     # recepción
     ("GET", "/api/vehiculos/{placas}", A, "Buscar vehículo y cliente por placas.", "200", "401, 403, 404", "BuscarVehiculoPorPlacas", ["CA-003", "CA-004"], "P1", "Recepción"),
-    ("PUT", "/api/vehiculos/{placas}", A, "Corregir el VIN, la marca, el modelo o el año del vehículo (las placas no cambian).", "200", "401, 403, 404, 409, 422", "ServicioDeRecepcion.corregir_vehiculo", ["CA-056"], P1_PLANEADA, "Recepción"),
+    ("PUT", "/api/vehiculos/{placas}", A, "Corregir el VIN, la marca, el modelo o el año del vehículo (las placas no cambian; un VIN de otro vehículo responde 422, como al registrar).", "200", "401, 403, 404, 422", "ServicioDeRecepcion.corregir_vehiculo", ["CA-056"], "P1", "Recepción"),
     ("GET", "/api/clientes?tipo=Flotilla&empresa=", A, "Buscar la empresa de flotilla y su Responsable.", "200", "401, 403", "BuscarClientes", ["CA-028"], "P1", "Recepción"),
     ("POST", "/api/clientes", A, "Registrar cliente particular o de flotilla (con Responsable). *Planeado (H-PIA-28):* 409 si la empresa ya está registrada con otro responsable.", "201", "400, 401, 403, 422", "ServicioDeRecepcion.registrar_cliente", ["CA-028", "CA-059", "CA-065"], "P1", "Recepción"),
     ("PUT", "/api/clientes/{id}", A, "Corregir el nombre, el teléfono o el correo del cliente.", "200", "401, 403, 404, 422", "ServicioDeRecepcion.corregir_cliente", ["CA-055"], "P1", "Recepción"),

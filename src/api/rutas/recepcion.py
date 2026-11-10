@@ -16,11 +16,13 @@ from api.esquemas.recepcion import (
     ExpedienteDeOrden,
     NuevaOrden,
     NuevoCliente,
+    NuevoVehiculo,
     OrdenRegistrada,
+    VehiculoCorregido,
     VehiculoEncontrado,
 )
 from api.seguridad import SOLO_ASESOR, Asesor, requiere_rol
-from application.comandos import CorregirCliente
+from application.comandos import CorregirCliente, CorregirVehiculo
 from application.consultas.consultas import (
     BuscarClientes,
     BuscarVehiculoPorPlacas,
@@ -31,7 +33,7 @@ from application.consultas.vistas import (
     ExpedienteDeOrdenVista,
     VehiculoConClienteVista,
 )
-from application.resultados import ResultadoDeCliente
+from application.resultados import ResultadoDeCliente, ResultadoDeVehiculo
 from domain.clientes.cliente import TipoCliente
 from domain.empleados.empleado import RolDeEmpleado
 
@@ -53,6 +55,20 @@ _LEEN_EL_EXPEDIENTE = Depends(
 )
 def buscar_vehiculo(placas: str, contenedor: ContenedorDeLaApp) -> VehiculoConClienteVista:
     return contenedor.buscar_vehiculo_por_placas().ejecutar(BuscarVehiculoPorPlacas(placas))
+
+
+@router.put(
+    "/vehiculos/{placas}",
+    response_model=VehiculoCorregido,
+    summary="Corregir el VIN, la marca, el modelo o el año del vehículo",
+    dependencies=[SOLO_ASESOR],
+    responses=errores(400, 401, 403, 404, 422),
+)
+def corregir_vehiculo(
+    placas: str, datos: NuevoVehiculo, contenedor: ContenedorDeLaApp
+) -> ResultadoDeVehiculo:
+    comando = CorregirVehiculo(placas, datos.vin, datos.marca, datos.modelo, datos.anio)
+    return contenedor.recepcion().corregir_vehiculo(comando)
 
 
 @router.get(

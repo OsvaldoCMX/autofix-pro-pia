@@ -333,3 +333,30 @@ def test_ca_055_cliente_inexistente_responde_404(cliente: TestClient) -> None:
     respuesta = cliente.put("/api/clientes/CLI-9999", json={"nombre": "Nadie"}, headers=ASESOR)
 
     assert respuesta.status_code == 404
+
+
+def test_ca_056_corrige_el_vehiculo_por_sus_placas(cliente: TestClient) -> None:
+    datos = datos_de_orden()
+    exigir(cliente.post("/api/ordenes", json=datos, headers=ASESOR), 201)
+    correccion = {"vin": "5YJSA1E26HF000001", "marca": "Nissan", "modelo": "Sentra", "anio": 2021}
+
+    respuesta = exigir(
+        cliente.put(f"/api/vehiculos/{datos['placas']}", json=correccion, headers=ASESOR), 200
+    )
+
+    assert respuesta == {"placas": datos["placas"], **correccion}
+
+
+def test_ca_056_vin_de_otro_vehiculo_responde_422(cliente: TestClient) -> None:
+    primero, segundo = datos_de_orden(), datos_de_orden()
+    for datos in (primero, segundo):
+        exigir(cliente.post("/api/ordenes", json=datos, headers=ASESOR), 201)
+
+    respuesta = exigir(
+        cliente.put(
+            f"/api/vehiculos/{segundo['placas']}", json=primero["vehiculo"], headers=ASESOR
+        ),
+        422,
+    )
+
+    assert "Ya existe un vehículo con el VIN" in respuesta["detalle"]

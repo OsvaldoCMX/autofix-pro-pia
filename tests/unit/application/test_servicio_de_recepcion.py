@@ -6,12 +6,18 @@ import pytest
 from application.comandos import (
     CancelarOrden,
     CorregirCliente,
+    CorregirVehiculo,
     DatosDeVehiculo,
     RegistrarCliente,
     RegistrarOrden,
 )
 from domain.clientes.cliente import TipoCliente
-from domain.compartido.errores import ClienteNoEncontrado, ValorInvalido, VehiculoConOrdenAbierta
+from domain.compartido.errores import (
+    ClienteNoEncontrado,
+    ValorInvalido,
+    VehiculoConOrdenAbierta,
+    VehiculoNoEncontrado,
+)
 from domain.ordenes.eventos import OrdenRecibida
 from domain.ordenes.valores import EstadoDeRecepcion, NivelDeCombustible
 from tests.unit.application.escenarios import AHORA, ASESOR, FLOTILLA, PARTICULAR, Taller, recibida
@@ -273,3 +279,36 @@ def test_rn_29_cliente_con_nombre_vacio_no_se_corrige(taller: Taller) -> None:
 def test_ca_055_cliente_inexistente(taller: Taller) -> None:
     with pytest.raises(ClienteNoEncontrado):
         taller.recepcion.corregir_cliente(CorregirCliente("CLI-9999", "Nadie"))
+
+
+def test_ca_056_corrige_vin_marca_modelo_y_anio_sin_cambiar_placas(taller: Taller) -> None:
+    taller.recepcion.registrar_orden(_comando())
+
+    resultado = taller.recepcion.corregir_vehiculo(
+        CorregirVehiculo("abc-123", "2HGCM82633A004353", "Nissan", "Sentra", 2021)
+    )
+
+    vehiculo = taller.datos.vehiculos["ABC123"]
+    assert resultado.placas == "ABC123"
+    assert (vehiculo.vin.valor, vehiculo.modelo, vehiculo.anio) == (
+        "2HGCM82633A004353",
+        "Sentra",
+        2021,
+    )
+
+
+def test_ca_056_vin_de_otro_vehiculo_no_se_acepta(taller: Taller) -> None:
+    taller.recepcion.registrar_orden(_comando())
+    taller.recepcion.registrar_orden(
+        _comando(placas="XYZ-999", vehiculo=DatosDeVehiculo("2HGCM82633A004353", "Kia", "Rio", 2019))
+    )
+
+    with pytest.raises(ValorInvalido, match="Ya existe un vehículo con el VIN"):
+        taller.recepcion.corregir_vehiculo(
+            CorregirVehiculo("XYZ999", VIN_1, "Kia", "Rio", 2019)
+        )
+
+
+def test_ca_056_placas_no_registradas(taller: Taller) -> None:
+    with pytest.raises(VehiculoNoEncontrado):
+        taller.recepcion.corregir_vehiculo(CorregirVehiculo("ZZZ999", VIN_1, "Kia", "Rio", 2019))

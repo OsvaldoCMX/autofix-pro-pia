@@ -36,6 +36,17 @@ class CorregirCliente:
 
 
 @dataclass(frozen=True)
+class CorregirVehiculo:
+    """Corrige el VIN, la marca, el modelo o el año; las placas no cambian (CA-056)."""
+
+    placas: str
+    vin: str
+    marca: str
+    modelo: str
+    anio: int
+
+
+@dataclass(frozen=True)
 class DatosDeVehiculo:
     vin: str
     marca: str

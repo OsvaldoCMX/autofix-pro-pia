@@ -20,6 +20,15 @@ class ResultadoDeCliente:
 
 
 @dataclass(frozen=True)
+class ResultadoDeVehiculo:
+    placas: str
+    vin: str
+    marca: str
+    modelo: str
+    anio: int
+
+
+@dataclass(frozen=True)
 class ResultadoDeOrden:
     numero_orden: str
     estado: str

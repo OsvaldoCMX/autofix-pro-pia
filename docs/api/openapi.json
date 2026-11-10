@@ -148,6 +148,101 @@
             }
           }
         }
+      },
+      "put": {
+        "tags": [
+          "Recepción"
+        ],
+        "summary": "Corregir el VIN, la marca, el modelo o el año del vehículo",
+        "operationId": "corregir_vehiculo_api_vehiculos__placas__put",
+        "security": [
+          {
+            "TokenDeEmpleado": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "placas",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Placas"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NuevoVehiculo"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VehiculoCorregido"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "JSON mal formado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Falta el token o no es válido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o trabajo de otro técnico.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Un dato es inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/clientes": {
@@ -6343,6 +6438,39 @@
           "tecnico"
         ],
         "title": "TrabajosAsignados"
+      },
+      "VehiculoCorregido": {
+        "properties": {
+          "placas": {
+            "type": "string",
+            "title": "Placas"
+          },
+          "vin": {
+            "type": "string",
+            "title": "Vin"
+          },
+          "marca": {
+            "type": "string",
+            "title": "Marca"
+          },
+          "modelo": {
+            "type": "string",
+            "title": "Modelo"
+          },
+          "anio": {
+            "type": "integer",
+            "title": "Anio"
+          }
+        },
+        "type": "object",
+        "required": [
+          "placas",
+          "vin",
+          "marca",
+          "modelo",
+          "anio"
+        ],
+        "title": "VehiculoCorregido"
       },
       "VehiculoEncontrado": {
         "properties": {

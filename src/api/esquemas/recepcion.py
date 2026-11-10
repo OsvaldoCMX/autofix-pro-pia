@@ -95,6 +95,14 @@ class ClienteCorregido(ModeloDeSalida):
     correo: str | None
 
 
+class VehiculoCorregido(ModeloDeSalida):
+    placas: str
+    vin: str
+    marca: str
+    modelo: str
+    anio: int
+
+
 class OrdenRegistrada(ModeloDeSalida):
     numero_orden: str
     estado: str

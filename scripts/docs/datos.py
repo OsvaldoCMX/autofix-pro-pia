@@ -650,7 +650,7 @@ ca("CA-056", "US-027", [
     (E, "el sistema debe guardar los datos corregidos sin cambiar las placas"),
     (Y, "si el VIN corregido ya pertenece a otro vehículo, no debe permitirlo e indicar que revise el dato"),
 ], F1, ["RN-29"], "Vehiculo (actualizar_datos), VIN (VO)", "ServicioDeRecepcion.corregir_vehiculo",
-   "PUT /api/vehiculos/{placas}", ASE, cambio="H-PIA-24", nombre="Corregir los datos del vehículo", planeado=True)
+   "PUT /api/vehiculos/{placas}", ASE, cambio="H-PIA-24", nombre="Corregir los datos del vehículo")
 
 ca("CA-057", "US-027", [
     (D, "que una orden está en «Recibida» o «En Diagnóstico»"),
