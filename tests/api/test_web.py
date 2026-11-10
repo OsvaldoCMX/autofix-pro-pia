@@ -108,11 +108,22 @@ def test_la_pagina_solo_llama_rutas_que_existen_en_la_api(
     assert faltantes == set()
 
 
-@pytest.mark.parametrize("nombre", ["asesor.js", "expediente.js"])
-def test_las_rutas_del_asesor_estan_en_interfaz_web(nombre: str) -> None:
-    """Regla 1 de CLAUDE.md: cada botón del Asesor usa una ruta de su tabla (§4.2)."""
+@pytest.mark.parametrize(
+    ("nombre", "seccion_inicial", "seccion_final"),
+    [
+        ("asesor.js", "### 4.2 Asesor de Servicio", "### 4.3"),
+        ("expediente.js", "### 4.2 Asesor de Servicio", "### 4.3"),
+        ("tecnico.js", "### 4.3 Técnico", "### 4.4"),
+        ("gerente.js", "### 4.4 Gerente de Taller", "### 4.5"),
+        ("caja.js", "### 4.6 Personal de Caja", "### 4.7"),
+    ],
+)
+def test_las_rutas_de_cada_puesto_estan_en_interfaz_web(
+    nombre: str, seccion_inicial: str, seccion_final: str
+) -> None:
+    """Regla 1 de CLAUDE.md: cada botón de un puesto usa una ruta de la tabla de su sección."""
     texto = (RAIZ / "docs/interfaz-web.md").read_text(encoding="utf-8")
-    seccion = texto.split("### 4.2 Asesor de Servicio")[1].split("### 4.3")[0]
+    seccion = texto.split(seccion_inicial)[1].split(seccion_final)[0]
     llamadas = _rutas_que_usa(nombre)
 
     # La tabla escribe algunas rutas con sus parámetros: `GET /api/clientes?tipo=Flotilla&empresa=`.
