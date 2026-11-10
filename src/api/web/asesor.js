@@ -213,28 +213,180 @@ function aniosPosibles() {
   return anios;
 }
 
-function bloqueDeClienteExistente(cliente) {
-  if (cliente.tipo === "Flotilla") {
-    return crear(
-      "fieldset",
-      {},
-      crear("legend", {}, "Cliente"),
-      datos(datosDelCliente(cliente)),
-      crear("p", { className: "nota" }, "Si algún dato está mal, corríjalo desde «Corregir datos del cliente»."),
-    );
-  }
-  return bloqueDeParticular(cliente);
-}
-
-function bloqueDeParticular(cliente = {}) {
-  return crear(
-    "fieldset",
-    { className: "particular" },
-    crear("legend", {}, "Cliente"),
+function camposDeParticular(cliente = {}) {
+  return [
     campo("cliente-nombre", "Nombre del cliente", { maxLength: 120, autocomplete: "off", value: cliente.nombre ?? "" }),
     campo("cliente-telefono", "Teléfono", { type: "tel", maxLength: 20, autocomplete: "off", value: cliente.telefono ?? "" }),
     campo("cliente-correo", "Correo", { type: "email", maxLength: 120, autocomplete: "off", value: cliente.correo ?? "" }),
+  ];
+}
+
+/** El vehículo ya está registrado: su cliente no cambia aquí (la API lo exige). */
+function bloqueDeClienteExistente(vehiculo) {
+  const { cliente } = vehiculo;
+  if (cliente.tipo === "Flotilla") {
+    return {
+      elemento: crear(
+        "fieldset",
+        {},
+        crear("legend", {}, "Cliente"),
+        datos(datosDelCliente(cliente)),
+        crear("p", { className: "nota" }, "Si algún dato está mal, corríjalo desde «Corregir datos del cliente»."),
+      ),
+      leer: () => ({ nombre: `${cliente.empresa ?? cliente.nombre} (flotilla)`, cuerpo: { id_cliente: cliente.id_cliente } }),
+    };
+  }
+  return {
+    elemento: crear("fieldset", {}, crear("legend", {}, "Cliente"), ...camposDeParticular(cliente)),
+    leer: (forma) => {
+      const particular = leerClienteParticular(forma);
+      if (particular) {
+        particular.cuerpo.id_cliente = cliente.id_cliente;
+      }
+      return particular;
+    },
+  };
+}
+
+/** Vehículo nuevo: cliente particular (va dentro de la orden, AU-07) o empresa de flotilla. */
+function bloqueDeClienteNuevo() {
+  const tipo = lista("cliente-tipo", "Tipo de cliente", ["Particular", "Flotilla"], { valor: "Particular" });
+  const particular = crear("div", {}, ...camposDeParticular());
+  const flotilla = bloqueDeFlotilla();
+  flotilla.elemento.hidden = true;
+  const elegir = tipo.querySelector("select");
+  elegir.addEventListener("change", () => {
+    particular.hidden = elegir.value !== "Particular";
+    flotilla.elemento.hidden = elegir.value !== "Flotilla";
+  });
+  return {
+    elemento: crear("fieldset", {}, crear("legend", {}, "Cliente"), tipo, particular, flotilla.elemento),
+    leer: (forma) => (elegir.value === "Flotilla" ? flotilla.leer() : leerClienteParticular(forma)),
+  };
+}
+
+/**
+ * Empresa de flotilla (CA-028, CA-065): se busca y se muestra a su Responsable. Si es nueva, se
+ * piden los datos del Responsable y la empresa se registra antes de la orden (`POST /api/clientes`).
+ */
+function bloqueDeFlotilla() {
+  let elegida = null;
+  const empresa = campo("flotilla-empresa", "Empresa", { maxLength: 120, autocomplete: "off" });
+  const entrada = empresa.querySelector("input");
+  const resultados = crear("div", { className: "empresas" });
+  const nueva = crear(
+    "div",
+    { hidden: true },
+    crear("p", { className: "aviso aviso-info" }, "Empresa nueva: capture los datos de su Responsable de Flotilla. La empresa se registrará junto con la orden."),
+    campo("flotilla-telefono", "Teléfono de la empresa (opcional)", { type: "tel", maxLength: 20, autocomplete: "off" }),
+    campo("flotilla-correo", "Correo de la empresa (opcional)", { type: "email", maxLength: 120, autocomplete: "off" }),
+    campo("responsable-nombre", "Nombre del Responsable de Flotilla", { maxLength: 120, autocomplete: "off" }),
+    campo("responsable-telefono", "Teléfono del Responsable", { type: "tel", maxLength: 20, autocomplete: "off" }),
+    campo("responsable-correo", "Correo del Responsable", { type: "email", maxLength: 120, autocomplete: "off" }),
   );
+  const elemento = crear(
+    "div",
+    {},
+    empresa,
+    crear("div", { className: "acciones" }, secundario("Buscar empresa", (elementoBoton) => buscarEmpresa(elementoBoton))),
+    resultados,
+    nueva,
+  );
+  entrada.addEventListener("input", () => {
+    elegida = null;
+    resultados.replaceChildren();
+    nueva.hidden = true;
+  });
+
+  function elegir(cliente) {
+    elegida = cliente;
+    nueva.hidden = true;
+    marcarCampo(entrada, null);
+    resultados.replaceChildren(
+      crear("p", { className: "aviso aviso-exito" }, `Empresa elegida: ${cliente.empresa} · Responsable de Flotilla: ${cliente.responsable_nombre}`),
+    );
+  }
+
+  function registrarNueva() {
+    resultados.replaceChildren();
+    nueva.hidden = false;
+    nueva.querySelector("input").focus();
+  }
+
+  async function buscarEmpresa(elementoBoton) {
+    limpiarAvisos();
+    if (!revisarObligatorios([[entrada, "Escriba el nombre de la empresa."]])) {
+      return;
+    }
+    let encontradas;
+    try {
+      encontradas = await conBotonOcupado(elementoBoton, "Buscando…", () =>
+        pedir("GET", "/api/clientes", { parametros: { tipo: "Flotilla", empresa: entrada.value.trim() } }),
+      );
+    } catch (error) {
+      manejarError(error, () => buscarEmpresa(elementoBoton));
+      return;
+    }
+    elegida = null;
+    if (encontradas.length === 0) {
+      registrarNueva();
+      return;
+    }
+    nueva.hidden = true;
+    resultados.replaceChildren(
+      ...encontradas.map((cliente) =>
+        crear(
+          "div",
+          { className: "empresa" },
+          crear("span", {}, `${cliente.empresa} · Responsable: ${[cliente.responsable_nombre, cliente.responsable_telefono].filter(Boolean).join(" · ")}`),
+          secundario("Usar esta empresa", () => elegir(cliente)),
+        ),
+      ),
+      secundario("No es ninguna: registrar empresa nueva", registrarNueva),
+    );
+  }
+
+  function leer() {
+    if (elegida) {
+      return { nombre: `${elegida.empresa} (flotilla)`, cuerpo: { id_cliente: elegida.id_cliente } };
+    }
+    if (nueva.hidden) {
+      marcarCampo(entrada, entrada.value.trim() === "" ? "Escriba el nombre de la empresa." : "Busque la empresa con «Buscar empresa».");
+      entrada.focus();
+      return null;
+    }
+    const [nombre, telefono, correo] = ["#responsable-nombre", "#responsable-telefono", "#responsable-correo"].map((selector) =>
+      nueva.querySelector(selector),
+    );
+    const completos = revisarObligatorios([
+      [entrada, "Escriba el nombre de la empresa."],
+      [nombre, "Escriba el nombre del Responsable de Flotilla."],
+      [telefono, "Escriba el teléfono del Responsable."],
+      [correo, "Escriba el correo del Responsable."],
+    ]);
+    if (!completos) {
+      return null;
+    }
+    const texto = entrada.value.trim();
+    return {
+      nombre: `${texto} (flotilla nueva) · Responsable: ${nombre.value.trim()}`,
+      cuerpo: {},
+      // El cliente de flotilla es la empresa: su nombre es el mismo texto de la empresa.
+      nuevaEmpresa: {
+        nombre: texto,
+        tipo: "Flotilla",
+        telefono: opcional(valorDe(nueva, "#flotilla-telefono")),
+        correo: opcional(valorDe(nueva, "#flotilla-correo")),
+        empresa: texto,
+        responsable_nombre: nombre.value.trim(),
+        responsable_telefono: telefono.value.trim(),
+        responsable_correo: correo.value.trim(),
+      },
+      registrada: elegir,
+    };
+  }
+
+  return { elemento, leer };
 }
 
 function bloqueDeVehiculo(placas, vehiculo) {
@@ -297,17 +449,18 @@ function leerRecepcion(contenedor, prefijo) {
 function mostrarNuevaOrden(pantalla, { placas, vehiculo }) {
   limpiarAvisos();
   const registrar = crear("button", { type: "submit", className: "boton" }, "Registrar orden");
+  const cliente = vehiculo ? bloqueDeClienteExistente(vehiculo) : bloqueDeClienteNuevo();
   const forma = crear(
     "form",
     { className: "tarjeta", noValidate: true },
     crear("h1", {}, "Nueva orden"),
-    vehiculo ? bloqueDeClienteExistente(vehiculo.cliente) : bloqueDeParticular(),
+    cliente.elemento,
     bloqueDeVehiculo(placas.toUpperCase(), vehiculo),
     crear("fieldset", {}, crear("legend", {}, "Recepción"), ...camposDeRecepcion("orden")),
     crear("div", { className: "acciones" }, registrar, secundario("Regresar", () => mostrarBusqueda(pantalla))),
   );
   pantalla.replaceChildren(forma);
-  alEnviar(forma, () => registrarOrden(forma, registrar, vehiculo));
+  alEnviar(forma, () => registrarOrden(forma, registrar, cliente.leer));
   window.scrollTo(0, 0);
   forma.querySelector("input:not([readonly]), select")?.focus();
 }
@@ -351,25 +504,25 @@ function leerClienteParticular(forma) {
   };
 }
 
-/** Los datos del cliente para la orden: `{ cuerpo, nombre }`, o `null` si falta alguno. */
-function leerCliente(forma, vehiculo) {
-  const cliente = vehiculo?.cliente;
-  if (cliente?.tipo === "Flotilla") {
-    return { nombre: cliente.empresa ?? cliente.nombre, cuerpo: { id_cliente: cliente.id_cliente } };
+/** Registra primero la empresa de flotilla nueva, si la hay, y después la orden. */
+async function enviarOrden(cliente, cuerpo) {
+  if (cliente.nuevaEmpresa) {
+    const empresa = await pedir("POST", "/api/clientes", { cuerpo: cliente.nuevaEmpresa });
+    // Si la orden falla, el siguiente intento ya usa la empresa registrada.
+    cliente.registrada(empresa);
+    cliente.nuevaEmpresa = null;
+    cuerpo.id_cliente = empresa.id_cliente;
   }
-  const particular = leerClienteParticular(forma);
-  if (particular && cliente) {
-    particular.cuerpo.id_cliente = cliente.id_cliente;
-  }
-  return particular;
+  return pedir("POST", "/api/ordenes", { cuerpo });
 }
 
-async function registrarOrden(forma, registrar, vehiculoEncontrado) {
+/** `leerCliente(forma)` da `{ nombre, cuerpo, nuevaEmpresa? }` o `null` si falta algún dato. */
+async function registrarOrden(forma, registrar, leerCliente) {
   limpiarAvisos();
   // Se revisan todos los bloques para marcar de una vez todo lo que falta.
   const recepcion = leerRecepcion(forma, "orden");
   const vehiculo = leerVehiculo(forma);
-  const cliente = leerCliente(forma, vehiculoEncontrado);
+  const cliente = leerCliente(forma);
   if (!recepcion || !vehiculo || !cliente) {
     return;
   }
@@ -390,7 +543,7 @@ async function registrarOrden(forma, registrar, vehiculoEncontrado) {
   if (!confirmado) {
     return;
   }
-  await enviar(registrar, () => pedir("POST", "/api/ordenes", { cuerpo }), (orden) => {
+  await enviar(registrar, () => enviarOrden(cliente, cuerpo), (orden) => {
     avisarAlLlegar("exito", orden.mensaje);
     irAOrden(orden.numero_orden);
   });
@@ -451,6 +604,12 @@ function accionesDeLaOrden(contexto) {
   }
   if (estado === "Pagada" || estado === "Por Cobrar (Crédito)") {
     acciones.push(boton("Entregar vehículo", (elemento) => entregar(contexto, elemento)));
+  }
+  if (estado === "Cotizada" && expediente.rechazo_total) {
+    acciones.push(boton("Entregar sin reparación", (elemento) => entregarSinReparacion(contexto, elemento)));
+  }
+  if (estado === "Recibida" || estado === "En Diagnóstico") {
+    acciones.push(boton("Cancelar orden", (elemento) => cancelar(contexto, elemento), "boton boton-peligro"));
   }
   return acciones;
 }
@@ -626,6 +785,47 @@ async function entregar(contexto, elemento) {
     (entrega) => {
       const credito = entrega.fecha_vencimiento_credito ? ` El crédito vence el ${fecha(entrega.fecha_vencimiento_credito)}.` : "";
       mostrarExito(`Vehículo entregado. La orden ${entrega.numero_orden} quedó «${entrega.estado}».${credito}`);
+      contexto.recargar();
+    },
+  );
+}
+
+// Entregar sin reparación tras el rechazo total (CA-043).
+async function entregarSinReparacion(contexto, elemento) {
+  const confirmado = await confirmar({
+    titulo: "¿Entregar el vehículo sin reparación?",
+    lineas: [...identificacion(contexto.expediente), "El cliente rechazó todos los trabajos. La orden se cerrará sin reparación."],
+    verbo: "Entregar sin reparación",
+  });
+  if (!confirmado) {
+    return;
+  }
+  await enviar(
+    elemento,
+    () => pedir("POST", "/api/ordenes/{numero}/entrega-sin-reparacion", { enRuta: { numero: contexto.numero } }),
+    (entrega) => {
+      mostrarExito(`Vehículo entregado sin reparación. La orden ${entrega.numero_orden} quedó «${entrega.estado}».`);
+      contexto.recargar();
+    },
+  );
+}
+
+// Cancelar la orden con motivo obligatorio (CA-044, CA-045; AU-25).
+async function cancelar(contexto, elemento) {
+  const motivo = await confirmar({
+    titulo: "¿Cancelar la orden?",
+    lineas: [...identificacion(contexto.expediente), "La orden se cancelará sin costo para el cliente."],
+    verbo: "Cancelar orden",
+    motivo: "Motivo de la cancelación",
+  });
+  if (motivo === null) {
+    return;
+  }
+  await enviar(
+    elemento,
+    () => pedir("POST", "/api/ordenes/{numero}/cancelacion", { enRuta: { numero: contexto.numero }, cuerpo: { motivo } }),
+    (orden) => {
+      mostrarExito(`La orden ${orden.numero_orden} quedó «${orden.estado}».`);
       contexto.recargar();
     },
   );
