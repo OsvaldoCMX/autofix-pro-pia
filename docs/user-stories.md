@@ -14,7 +14,7 @@ Este documento contiene las User Stories derivadas del levantamiento de requerim
 
 Las historias siguen el formato *Como… quiero… para…* y cada criterio de aceptación está escrito en Gherkin (*Dado / Cuando / Entonces / Y*). Los mismos criterios, palabra por palabra, están en los archivos `docs/gherkin/*.feature` con las etiquetas `@US-xxx` y `@CA-xxx`, para que cada escenario se pueda relacionar con su prueba automatizada (convención `test_ca_0XX_…`). Los nombres de estados, roles y términos son los del [Glosario del Dominio](glosario.md).
 
-**Resumen:** 16 necesidades · 27 User Stories · 65 criterios de aceptación · 8 archivos `.feature`.
+**Resumen:** 16 necesidades · 27 User Stories · 66 criterios de aceptación · 8 archivos `.feature`.
 
 ## 1. Trazabilidad con el BRD
 
@@ -326,6 +326,7 @@ Los criterios marcados con **(v3.0)** se agregaron o se precisaron en el PIA y l
 | **CA-055**<br>Corregir los datos del cliente **(v3.1, H-PIA-24)** | **Dado** que el nombre, el teléfono o el correo de un cliente se capturaron mal<br>**Cuando** el asesor los corrige<br>**Entonces** el sistema debe guardar los datos corregidos sin cambiar las órdenes ni las cotizaciones del cliente<br>**Y** las decisiones que se registren después deben compararse con el nombre corregido |
 | **CA-056**<br>Corregir los datos del vehículo **(v3.1, H-PIA-24)** | **Dado** que el VIN, la marca, el modelo o el año de un vehículo se capturaron mal<br>**Cuando** el asesor los corrige<br>**Entonces** el sistema debe guardar los datos corregidos sin cambiar las placas<br>**Y** si el VIN corregido ya pertenece a otro vehículo, no debe permitirlo e indicar que revise el dato |
 | **CA-057**<br>Corregir el estado de recepción **(v3.1, H-PIA-24)** | **Dado** que una orden está en «Recibida» o «En Diagnóstico»<br>**Cuando** el asesor corrige el kilometraje, el nivel de combustible o el motivo de ingreso<br>**Entonces** el sistema debe guardar los datos corregidos sin cambiar el estado de la orden<br>**Y** si la orden ya tiene cotización, no debe permitirlo e indicar que esos datos solo se corrigen antes de la cotización |
+| **CA-066**<br>Corregir las placas mal capturadas **(v3.1, H-PIA-29)** | **Dado** que una orden está en «Recibida» o «En Diagnóstico» y las placas de su vehículo se capturaron mal<br>**Cuando** el asesor corrige las placas<br>**Entonces** el sistema debe cambiar las placas del vehículo y de sus órdenes<br>**Y** el cliente debe poder consultar el estado de su orden con las placas correctas<br>**Y** si las placas nuevas ya pertenecen a otro vehículo, o la orden está en otro estado, no debe permitirlo e indicar el motivo |
 
 ## 4. Validación y trazabilidad
 
@@ -346,7 +347,7 @@ Los criterios marcados con **(v3.0)** se agregaron o se precisaron en el PIA y l
 | N-13 | US-021 | CA-037, CA-038 | Consulta transversal (no es una tarea del flujo) |
 | N-14 | US-023 | CA-040 | Fase 3: Autorización (temporizador de 48 h) |
 | N-15 | US-025 | CA-044, CA-045 | Diagrama 2 (Casos especiales): Cliente desiste antes de la cotización |
-| N-16 | US-026, US-020, US-027, US-014 | CA-047, CA-048, CA-049, CA-050, CA-051, CA-054, CA-055, CA-056, CA-057, CA-058 | Fase 2 y Fase 3: corrección de la cotización (v3.1) |
+| N-16 | US-026, US-020, US-027, US-014 | CA-047, CA-048, CA-049, CA-050, CA-051, CA-054, CA-055, CA-056, CA-057, CA-058, CA-066 | Fase 2 y Fase 3: corrección de la cotización (v3.1) |
 
 La trazabilidad completa de cada criterio hasta la regla de negocio, el componente, la ruta de la API y la prueba está en [trazabilidad/matriz-trazabilidad.md](trazabilidad/matriz-trazabilidad.md).
 

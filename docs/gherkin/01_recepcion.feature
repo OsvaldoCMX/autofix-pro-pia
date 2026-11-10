@@ -115,3 +115,11 @@ Característica: Recepción y registro del vehículo
     Cuando el asesor corrige el kilometraje, el nivel de combustible o el motivo de ingreso
     Entonces el sistema debe guardar los datos corregidos sin cambiar el estado de la orden
     Y si la orden ya tiene cotización, no debe permitirlo e indicar que esos datos solo se corrigen antes de la cotización
+
+  @US-027 @CA-066 @v3.1
+  Escenario: CA-066 Corregir las placas mal capturadas
+    Dado que una orden está en «Recibida» o «En Diagnóstico» y las placas de su vehículo se capturaron mal
+    Cuando el asesor corrige las placas
+    Entonces el sistema debe cambiar las placas del vehículo y de sus órdenes
+    Y el cliente debe poder consultar el estado de su orden con las placas correctas
+    Y si las placas nuevas ya pertenecen a otro vehículo, o la orden está en otro estado, no debe permitirlo e indicar el motivo

@@ -2,7 +2,7 @@
 
 Relaciona **BRD → regla de negocio → componente → prueba**, como pide el paquete del profesor, y cada criterio de aceptación con su User Story, necesidad, fase del BPMN, ruta de la API y rol. Se genera con los scripts de `scripts/docs/` desde la misma fuente que `user-stories.md` y los `.feature`, así que los textos y conteos coinciden.
 
-**Conteos:** 16 necesidades · 27 User Stories · 65 criterios · 34 reglas de negocio · 8 Specifications · 49 rutas de API.
+**Conteos:** 16 necesidades · 27 User Stories · 66 criterios · 35 reglas de negocio · 8 Specifications · 50 rutas de API.
 
 La columna **Prueba prevista** usa la convención `test_ca_0XX_…` / `test_rn_XX_…` (ver `architecture/decisiones-tecnicas.md` §7). Al terminar la implementación se reemplaza por el nombre real de la prueba y su resultado (✔/✘), y se agrega la evidencia de cobertura.
 
@@ -25,7 +25,7 @@ La columna **Prueba prevista** usa la convención `test_ca_0XX_…` / `test_rn_X
 | N-13 | Permitir al cliente consultar el estado de su vehículo sin llamar al taller. | Media | US-021 | CA-037, CA-038 | Consulta transversal (no es una tarea del flujo) |
 | N-14 | (Implícita) Dar seguimiento a las cotizaciones que lleven más de 48 horas sin respuesta. | Media | US-023 | CA-040 | Fase 3: Autorización (temporizador de 48 h) |
 | N-15 | (Implícita, v3.0) Cancelar la orden cuando el cliente desiste antes de que se genere la cotización. | Media | US-025 | CA-044, CA-045 | Diagrama 2 (Casos especiales): Cliente desiste antes de la cotización |
-| N-16 | (Implícita, v3.1) Corregir los datos mal capturados dejando constancia y evitar registros repetidos (revisión del 09/11/2026). | Alta | US-026, US-020, US-027, US-014 | CA-047, CA-048, CA-049, CA-050, CA-051, CA-054, CA-055, CA-056, CA-057, CA-058 | Fase 2 y Fase 3: corrección de la cotización (v3.1) |
+| N-16 | (Implícita, v3.1) Corregir los datos mal capturados dejando constancia y evitar registros repetidos (revisión del 09/11/2026). | Alta | US-026, US-020, US-027, US-014 | CA-047, CA-048, CA-049, CA-050, CA-051, CA-054, CA-055, CA-056, CA-057, CA-058, CA-066 | Fase 2 y Fase 3: corrección de la cotización (v3.1) |
 
 ## 2. Reglas de negocio
 
@@ -67,6 +67,7 @@ Cada regla viene del BRD (o de un hallazgo documentado) y tiene un componente re
 | RN-32 | Cada trabajo de una cotización vale más de $0.00 (mano de obra más refacciones); el taller no maneja trabajos sin costo. | Revisión del 09/11/2026 (H-PIA-25); BRD §5 (sin garantías ni promociones) | CA-060 | `LineaDeCotizacion` (subtotal mayor a cero) | ADR-001 | Planeado · tests/**/test_rn_32_* |
 | RN-33 | Una orden tiene a lo más una cotización adicional sin decisión del cliente; la siguiente se genera después de registrar esa decisión. | Revisión del 09/11/2026 (H-PIA-26); BRD §2 Excepciones | CA-061 | `OrdenDeServicio.registrar_cotizacion_adicional_pendiente` (adicional sin decisión) | ADR-002 | Planeado · tests/**/test_rn_33_* |
 | RN-34 | Un trabajo no tiene dos solicitudes «Solicitada» de la misma refacción (misma descripción, sin distinguir mayúsculas ni espacios repetidos); cuando la pieza llega se puede volver a solicitar. | Revisión del 09/11/2026 (H-PIA-26); BRD Restricción 8 | CA-062 | `OrdenDeServicio.crear_solicitud_de_compra` → `SolicitudNoPermitida` | ADR-001 | Planeado · tests/**/test_rn_34_* |
+| RN-35 | Las placas de un vehículo se corrigen solo mientras su orden está «Recibida» o «En Diagnóstico» y si no pertenecen a otro vehículo; cambian en el vehículo y en sus órdenes a la vez (P2). | Revisión del 09/11/2026 (H-PIA-29); AU-01, AU-36 | CA-066 | `ServicioDeRecepcion.corregir_placas` (vehículo y órdenes en la misma Unidad de Trabajo) | ADR-002 | Planeado · tests/**/test_rn_35_* |
 
 ## 3. Specifications
 
@@ -152,8 +153,9 @@ Operadores cubiertos: **AND** (E1, E2, E3, E5, E6, E7, E8), **OR** (E2, E3, E4, 
 | CA-063 | El nombre del autorizante con espacios de más | US-006 | N-03 | Fase 3: Autorización | RN-07 | spec AutorizanteValido (AutorizaElCliente, AutorizaSuResponsableDeFlotilla) | ServicioDeAutorizacion.registrar_decision | POST /api/cotizaciones/{id}/decision | Asesor | tests/api/test_autorizacion.py::test_ca_063_* | P1 · Planeado | H-PIA-27 |
 | CA-064 | Flotilla: el mensaje dice a nombre de quién y con qué rol | US-016 | N-07 | Fase 3: Autorización | RN-07 | VerificadorDeAutorizante, error AutorizanteNoValido | ServicioDeAutorizacion.registrar_decision | POST /api/cotizaciones/{id}/decision (409) | Asesor | tests/api/test_recepcion.py::test_ca_064_* | P1 · Planeado | H-PIA-27 |
 | CA-065 | La empresa de flotilla ya está registrada | US-016 | N-07 | Fase 1: Recepción y registro | RN-07 | Cliente (TipoCliente.FLOTILLA), ResponsableDeFlotilla, error EmpresaYaRegistrada | ServicioDeRecepcion.registrar_cliente | POST /api/clientes (409) | Asesor | tests/api/test_recepcion.py::test_ca_065_* | P1 · Planeado | H-PIA-28 |
+| CA-066 | Corregir las placas mal capturadas | US-027 | N-16 | Fase 1: Recepción y registro | RN-35 | Vehiculo y OrdenDeServicio (corregir placas), Placas (VO), evento PlacasCorregidas, error CorreccionNoPermitida | ServicioDeRecepcion.corregir_placas | PUT /api/ordenes/{numero}/placas · GET /api/consulta-de-estado?orden=&placas= | Asesor | tests/api/test_recepcion.py::test_ca_066_* | P2 · Planeado | H-PIA-29 |
 
 **Prioridad:** 42 criterios son P1 completos; la parte P2 (PDF y fotos) se omitió por decisión del equipo y sus rutas responden 501 (ver `architecture/decisiones-tecnicas.md` §8). CA-027 no está implementado; CA-002, CA-005 y CA-024 están implementados, salvo sus fotos o su PDF.
 
-**Planeado:** criterio o regla aprobados en la Fase 13 (revisión del 09/11/2026) que todavía no se construyen; la Fase 14 quita la marca al construir cada uno y lo que se recorte queda documentado como planeado. Hoy: 19 criterios (CA-047 a CA-065) y 10 reglas.
+**Planeado:** criterio o regla aprobados en la Fase 13 (revisión del 09/11/2026) que todavía no se construyen; la Fase 14 quita la marca al construir cada uno y lo que se recorte queda documentado como planeado. Hoy: 20 criterios (CA-047 a CA-066) y 11 reglas.
 

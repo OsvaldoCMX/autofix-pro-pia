@@ -60,6 +60,7 @@ RN_COMPONENTE = {
     "RN-32": ("`LineaDeCotizacion` (subtotal mayor a cero)", "ADR-001"),
     "RN-33": ("`OrdenDeServicio.registrar_cotizacion_adicional_pendiente` (adicional sin decisión)", "ADR-002"),
     "RN-34": ("`OrdenDeServicio.crear_solicitud_de_compra` → `SolicitudNoPermitida`", "ADR-001"),
+    "RN-35": ("`ServicioDeRecepcion.corregir_placas` (vehículo y órdenes en la misma Unidad de Trabajo)", "ADR-002"),
 }
 assert set(RN_COMPONENTE) == set(REGLAS)
 

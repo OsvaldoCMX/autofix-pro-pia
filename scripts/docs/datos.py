@@ -42,7 +42,7 @@ TRAZA_NECESIDAD = {
     "N-13": (["US-021"], ["CA-037", "CA-038"], "Consulta transversal (no es una tarea del flujo)"),
     "N-14": (["US-023"], ["CA-040"], "Fase 3: Autorización (temporizador de 48 h)"),
     "N-15": (["US-025"], ["CA-044", "CA-045"], "Diagrama 2 (Casos especiales): Cliente desiste antes de la cotización"),
-    "N-16": (["US-026", "US-020", "US-027", "US-014"], ["CA-047", "CA-048", "CA-049", "CA-050", "CA-051", "CA-054", "CA-055", "CA-056", "CA-057", "CA-058"],
+    "N-16": (["US-026", "US-020", "US-027", "US-014"], ["CA-047", "CA-048", "CA-049", "CA-050", "CA-051", "CA-054", "CA-055", "CA-056", "CA-057", "CA-058", "CA-066"],
              "Fase 2 y Fase 3: corrección de la cotización (v3.1)"),
 }
 
@@ -738,6 +738,16 @@ ca("CA-065", "US-016", [
    "ServicioDeRecepcion.registrar_cliente", "POST /api/clientes (409)", ASE,
    cambio="H-PIA-28", nombre="La empresa de flotilla ya está registrada", planeado=True)
 
+ca("CA-066", "US-027", [
+    (D, "que una orden está en «Recibida» o «En Diagnóstico» y las placas de su vehículo se capturaron mal"),
+    (C, "el asesor corrige las placas"),
+    (E, "el sistema debe cambiar las placas del vehículo y de sus órdenes"),
+    (Y, "el cliente debe poder consultar el estado de su orden con las placas correctas"),
+    (Y, "si las placas nuevas ya pertenecen a otro vehículo, o la orden está en otro estado, no debe permitirlo e indicar el motivo"),
+], F1, ["RN-35"], "Vehiculo y OrdenDeServicio (corregir placas), Placas (VO), evento PlacasCorregidas, error CorreccionNoPermitida",
+   "ServicioDeRecepcion.corregir_placas", "PUT /api/ordenes/{numero}/placas · GET /api/consulta-de-estado?orden=&placas=", ASE,
+   prioridad="P2", cambio="H-PIA-29", nombre="Corregir las placas mal capturadas", planeado=True)
+
 # ----------------------------------------------------------------------------- áreas (archivos .feature)
 AREAS = [
     ("01_recepcion", "Recepción y registro del vehículo",
@@ -803,10 +813,11 @@ REGLAS = {
     "RN-32": ("Cada trabajo de una cotización vale más de $0.00 (mano de obra más refacciones); el taller no maneja trabajos sin costo.", "Revisión del 09/11/2026 (H-PIA-25); BRD §5 (sin garantías ni promociones)"),
     "RN-33": ("Una orden tiene a lo más una cotización adicional sin decisión del cliente; la siguiente se genera después de registrar esa decisión.", "Revisión del 09/11/2026 (H-PIA-26); BRD §2 Excepciones"),
     "RN-34": ("Un trabajo no tiene dos solicitudes «Solicitada» de la misma refacción (misma descripción, sin distinguir mayúsculas ni espacios repetidos); cuando la pieza llega se puede volver a solicitar.", "Revisión del 09/11/2026 (H-PIA-26); BRD Restricción 8"),
+    "RN-35": ("Las placas de un vehículo se corrigen solo mientras su orden está «Recibida» o «En Diagnóstico» y si no pertenecen a otro vehículo; cambian en el vehículo y en sus órdenes a la vez (P2).", "Revisión del 09/11/2026 (H-PIA-29); AU-01, AU-36"),
 }
 
 # Reglas aprobadas en la Fase 13 que todavía no se construyen (misma idea que `planeado` en los CA).
-REGLAS_PLANEADAS = {"RN-25", "RN-26", "RN-27", "RN-28", "RN-29", "RN-30", "RN-31", "RN-32", "RN-33", "RN-34"}
+REGLAS_PLANEADAS = {"RN-25", "RN-26", "RN-27", "RN-28", "RN-29", "RN-30", "RN-31", "RN-32", "RN-33", "RN-34", "RN-35"}
 
 # ----------------------------------------------------------------------------- pruebas previstas
 # Convención: toda prueba de aceptación se llama test_ca_0XX_<descripcion> para poder

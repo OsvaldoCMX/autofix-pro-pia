@@ -12,7 +12,7 @@ Contrato de la API que se implementa con FastAPI (ADR-008). Cuando la API esté 
 - Importes como texto con dos decimales (`"1500.00"`); fechas ISO 8601 con zona horaria.
 - **Planeado** en la columna Prioridad: la ruta está aprobada (Fase 13, revisión del 09/11/2026) y todavía no existe en la API; la Fase 14 quita la marca al construirla (`tests/api/test_contrato.py` comprueba que una ruta planeada aún no exista).
 
-## Rutas (49)
+## Rutas (50)
 
 ### Sistema
 
@@ -34,6 +34,7 @@ Contrato de la API que se implementa con FastAPI (ADR-008). Cuando la API esté 
 | POST | `/api/ordenes/{numero}/fotos` | Asesor | Adjuntar foto de daños (multipart). | 201 | 401, 403, 404, 422 | `ServicioDeRecepcion.adjuntar_foto` | CA-002 | P2 |
 | GET | `/api/ordenes/{numero}` | Asesor, Gerente, Técnico, Caja | Expediente completo de la orden (estado, cotizaciones, trabajos, solicitudes, pagos). | 200 | 401, 403, 404 | `ConsultarExpedienteDeOrden` | — | P1 |
 | PUT | `/api/ordenes/{numero}/recepcion` | Asesor | Corregir el kilometraje, el nivel de combustible o el motivo de ingreso (orden «Recibida» o «En Diagnóstico»). | 200 | 401, 403, 404, 409, 422 | `ServicioDeRecepcion.corregir_recepcion` | CA-057 | P1 · Planeado |
+| PUT | `/api/ordenes/{numero}/placas` | Asesor | Corregir las placas mal capturadas (orden «Recibida» o «En Diagnóstico»). Mientras responda 501 no aparece en la página. | 200 | 401, 403, 404, 409, 422 | `ServicioDeRecepcion.corregir_placas` | CA-066 | P2 · Planeado |
 
 ### Cancelación
 
@@ -120,7 +121,7 @@ Contrato de la API que se implementa con FastAPI (ADR-008). Cuando la API esté 
 |---|---|---|---|---|---|---|---|---|
 | GET | `/api/gerencia/ordenes` | Gerente | Listado de órdenes abiertas y cerradas (filtro opcional `estado`). | 200 | 401, 403 | `ListarOrdenes` | CA-030 | P1 |
 | GET | `/api/gerencia/ingresos-del-dia` | Gerente | Total de pagos de contado de hoy (zona America/Monterrey). | 200 | 401, 403 | `ConsultarIngresosDelDia` | CA-031 | P1 |
-| GET | `/api/consulta-de-estado?orden=&placas=` | Público | Consulta pública del cliente (sin token). | 200 | 404, 422 | `ConsultarEstadoDeOrden` | CA-037, CA-038 | P1 |
+| GET | `/api/consulta-de-estado?orden=&placas=` | Público | Consulta pública del cliente (sin token). | 200 | 404, 422 | `ConsultarEstadoDeOrden` | CA-037, CA-038, CA-066 | P1 |
 | GET | `/api/alertas` | Cualquier empleado | Alertas internas del empleado que hace la petición (el token de Sistema responde 403: no es un empleado). | 200 | 401, 403 | `ListarAlertas` | CA-007, CA-008, CA-009, CA-015, CA-017, CA-022, CA-023, CA-032, CA-034, CA-040, CA-048 | P1 |
 
 ## Ejemplos

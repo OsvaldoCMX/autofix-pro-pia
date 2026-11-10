@@ -21,6 +21,7 @@ RUTAS = [
     ("POST", "/api/ordenes/{numero}/fotos", A, "Adjuntar foto de daños (multipart).", "201", "401, 403, 404, 422", "ServicioDeRecepcion.adjuntar_foto", ["CA-002"], "P2", "Recepción"),
     ("GET", "/api/ordenes/{numero}", f"{A}, {G}, {T}, {CJ}", "Expediente completo de la orden (estado, cotizaciones, trabajos, solicitudes, pagos).", "200", "401, 403, 404", "ConsultarExpedienteDeOrden", [], "P1", "Recepción"),
     ("PUT", "/api/ordenes/{numero}/recepcion", A, "Corregir el kilometraje, el nivel de combustible o el motivo de ingreso (orden «Recibida» o «En Diagnóstico»).", "200", "401, 403, 404, 409, 422", "ServicioDeRecepcion.corregir_recepcion", ["CA-057"], P1_PLANEADA, "Recepción"),
+    ("PUT", "/api/ordenes/{numero}/placas", A, "Corregir las placas mal capturadas (orden «Recibida» o «En Diagnóstico»). Mientras responda 501 no aparece en la página.", "200", "401, 403, 404, 409, 422", "ServicioDeRecepcion.corregir_placas", ["CA-066"], P2_PLANEADA, "Recepción"),
     # cancelación
     ("POST", "/api/ordenes/{numero}/cancelacion", A, "Cancelar la orden con motivo (solo sin cotización).", "200", "401, 403, 404, 409, 422", "ServicioDeCancelacion.cancelar", ["CA-044", "CA-045"], "P1", "Cancelación"),
     # diagnóstico
@@ -67,7 +68,7 @@ RUTAS = [
     # consultas
     ("GET", "/api/gerencia/ordenes", G, "Listado de órdenes abiertas y cerradas (filtro opcional `estado`).", "200", "401, 403", "ListarOrdenes", ["CA-030"], "P1", "Consultas"),
     ("GET", "/api/gerencia/ingresos-del-dia", G, "Total de pagos de contado de hoy (zona America/Monterrey).", "200", "401, 403", "ConsultarIngresosDelDia", ["CA-031"], "P1", "Consultas"),
-    ("GET", "/api/consulta-de-estado?orden=&placas=", P, "Consulta pública del cliente (sin token).", "200", "404, 422", "ConsultarEstadoDeOrden", ["CA-037", "CA-038"], "P1", "Consultas"),
+    ("GET", "/api/consulta-de-estado?orden=&placas=", P, "Consulta pública del cliente (sin token).", "200", "404, 422", "ConsultarEstadoDeOrden", ["CA-037", "CA-038", "CA-066"], "P1", "Consultas"),
     ("GET", "/api/alertas", TODOS, "Alertas internas del empleado que hace la petición (el token de Sistema responde 403: no es un empleado).", "200", "401, 403", "ListarAlertas",
      ["CA-007", "CA-008", "CA-009", "CA-015", "CA-017", "CA-022", "CA-023", "CA-032", "CA-034", "CA-040", "CA-048"], "P1", "Consultas"),
     ("POST", "/api/revisiones/plazos", S, "Revisión de plazos de 3 días hábiles y 48 h (la llama un workflow programado).", "200", "401, 403", "ServicioDeRevisionDePlazos.revisar", ["CA-023", "CA-040", "CA-051"], "P1", "Sistema"),
