@@ -1,4 +1,4 @@
-"""Las 18 tablas de `database/01_esquema.sql` con SQLAlchemy Core (ADR-009, modelo-de-datos.md).
+"""Las 19 tablas de `database/01_esquema.sql` con SQLAlchemy Core (ADR-009, modelo-de-datos.md).
 
 El dominio no conoce este módulo: `mapeo.py` traduce filas y objetos. La aplicación no crea tablas
 en producción; `metadata.create_all()` solo se usa en las pruebas con SQLite. Cada cambio se hace
@@ -423,6 +423,45 @@ recontactos = Table(
     ),
     ForeignKeyConstraint(
         ["asesor"], ["empleados.id"], name="fk_recontactos_asesor", ondelete="RESTRICT"
+    ),
+)
+
+_ESTADOS_CORREGIBLES = "'Pendiente de Aprobación Gerencial', 'Pendiente de Autorización del Cliente'"
+
+correcciones_de_cotizacion = Table(
+    "correcciones_de_cotizacion",
+    metadata,
+    Column("id", _ID_AUTOMATICO, nullable=False),
+    Column("id_cotizacion", String(20), nullable=False),
+    Column("asesor", String(20), nullable=False),
+    Column("registrada_en", FechaUTC(), nullable=False),
+    Column("motivo", Text(), nullable=False),
+    Column("total_anterior", _IMPORTE, nullable=False),
+    Column("total_nuevo", _IMPORTE, nullable=False),
+    Column("estado_anterior", String(50), nullable=False),
+    Column("estado_nuevo", String(50), nullable=False),
+    Column("fecha_presentacion_anterior", FechaUTC(), nullable=True),
+    Column("fecha_aprobacion_gerencial_anterior", FechaUTC(), nullable=True),
+    PrimaryKeyConstraint("id", name="pk_correcciones_de_cotizacion"),
+    ForeignKeyConstraint(
+        ["id_cotizacion"],
+        ["cotizaciones.id"],
+        name="fk_correcciones_de_cotizacion_id_cotizacion",
+        ondelete="CASCADE",
+    ),
+    ForeignKeyConstraint(
+        ["asesor"],
+        ["empleados.id"],
+        name="fk_correcciones_de_cotizacion_asesor",
+        ondelete="RESTRICT",
+    ),
+    CheckConstraint("total_anterior >= 0", name="ck_correcciones_de_cotizacion_1"),
+    CheckConstraint("total_nuevo >= 0", name="ck_correcciones_de_cotizacion_2"),
+    CheckConstraint(
+        f"estado_anterior IN ({_ESTADOS_CORREGIBLES})", name="ck_correcciones_de_cotizacion_3"
+    ),
+    CheckConstraint(
+        f"estado_nuevo IN ({_ESTADOS_CORREGIBLES})", name="ck_correcciones_de_cotizacion_4"
     ),
 )
 

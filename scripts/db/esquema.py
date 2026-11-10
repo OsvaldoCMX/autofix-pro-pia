@@ -17,6 +17,8 @@ ESTADOS_ORDEN = ["Recibida", "En Diagnóstico", "Cotizada", "Autorizada", "En Re
                  "Cerrada sin Reparación", "Cancelada"]
 ESTADOS_COTIZACION = ["Pendiente de Aprobación Gerencial", "Requiere Ajuste", "Pendiente de Autorización del Cliente",
                       "Autorizada", "Autorizada Parcialmente", "Rechazada"]
+# Estados en los que el asesor puede corregir una cotización (RN-25)
+ESTADOS_CORREGIBLES = ["Pendiente de Aprobación Gerencial", "Pendiente de Autorización del Cliente"]
 ESTADOS_TRABAJO = ["Pendiente", "En Progreso", "Completado", "No Autorizado"]
 ESTADOS_SOLICITUD = ["Solicitada", "Disponible"]
 ROLES = ["Asesor", "Técnico", "Gerente", "Compras", "Caja"]
@@ -221,6 +223,26 @@ tabla("recontactos", "Recontactos al cliente por cotizaciones sin respuesta (CA-
     ("registrado_en", TS, False, None, "Fecha y hora (el plazo de 48 h vuelve a contar)"),
 ], ["id"], fks=[(["id_cotizacion"], "cotizaciones", ["id"], "CASCADE"), (["asesor"], "empleados", ["id"], "RESTRICT")])
 
+tabla("correcciones_de_cotizacion", "Historial de correcciones de una cotización antes de la decisión del cliente (CA-047 a CA-050, H-PIA-21, ADR-018).", [
+    ("id", "BIGSERIAL", False, None, "Identificador"),
+    ("id_cotizacion", "VARCHAR(20)", False, None, "Cotización"),
+    ("asesor", "VARCHAR(20)", False, None, "Asesor que corrigió"),
+    ("registrada_en", TS, False, None, "Fecha y hora de la corrección"),
+    ("motivo", "TEXT", False, None, "Motivo de la corrección (obligatorio)"),
+    ("total_anterior", MXN, False, None, "Total antes de corregir"),
+    ("total_nuevo", MXN, False, None, "Total después de corregir"),
+    ("estado_anterior", "VARCHAR(50)", False, None, "Estado antes de corregir"),
+    ("estado_nuevo", "VARCHAR(50)", False, None, "Estado después de corregir (se vuelve a evaluar E1)"),
+    ("fecha_presentacion_anterior", TS, True, None, "Presentación al cliente que se anuló al corregir"),
+    ("fecha_aprobacion_gerencial_anterior", TS, True, None, "Aprobación del Gerente que tenía (se borra si regresa a revisión)"),
+], ["id"], fks=[(["id_cotizacion"], "cotizaciones", ["id"], "CASCADE"), (["asesor"], "empleados", ["id"], "RESTRICT")],
+    checks=[
+    "total_anterior >= 0",
+    "total_nuevo >= 0",
+    f"estado_anterior IN ({lista(ESTADOS_CORREGIBLES)})",
+    f"estado_nuevo IN ({lista(ESTADOS_CORREGIBLES)})",
+])
+
 tabla("alertas_internas", "Alertas internas del panel de cada empleado (no son correos ni SMS).", [
     ("id", "BIGSERIAL", False, None, "Identificador"),
     ("destinatario", "VARCHAR(20)", True, None, "Empleado destinatario (o NULL si va a todo un rol)"),
@@ -281,7 +303,7 @@ tabla("referencia_operaciones_profesor", "Columnas del profesor sin equivalente 
 
 def sql():
     o = ["-- =============================================================================",
-         "-- AutoFix Pro · Esquema de la base de datos (PostgreSQL 16 / Supabase) · PIA v3.0",
+         "-- AutoFix Pro · Esquema de la base de datos (PostgreSQL 16 / Supabase) · PIA v3.1",
          "-- Generado por scripts/db/esquema.py — no editar a mano: cambie esquema.py y regenere.",
          "--",
          "-- Cómo usarlo:",
@@ -334,7 +356,7 @@ def sql():
 def puml():
     o = ["@startuml modelo-de-datos", "skinparam defaultFontName Arial", "skinparam defaultFontSize 11", "skinparam shadowing false",
          "skinparam dpi 150", "skinparam linetype ortho", "hide circle", "hide methods", "left to right direction",
-         "title Modelo de datos — AutoFix Pro (PostgreSQL / Supabase) · PIA v3.0", ""]
+         "title Modelo de datos — AutoFix Pro (PostgreSQL / Supabase) · PIA v3.1", ""]
     colores = {"Dominio": "#EEF5FF", "Soporte": "#F4F6F6", "Datos del profesor": "#FEF9E7"}
     for t in T:
         o.append(f"entity \"{t['nombre']}\" as {t['nombre']} {colores[t['grupo']]} {{")
@@ -365,7 +387,7 @@ def puml():
 
 
 def md():
-    o = ["# Modelo de datos — AutoFix Pro (PIA v3.0)\n",
+    o = ["# Modelo de datos — AutoFix Pro (PIA v3.1)\n",
          "Esquema oficial de la base de datos (PostgreSQL 16 en Docker y en **Supabase**, ADR-009). Lo genera `scripts/db/esquema.py`, que también produce `database/01_esquema.sql` y el diagrama `diagramas/modelo-de-datos.png`.\n",
          "**Reglas del mapeo:** cada Aggregate tiene su tabla raíz (`ordenes`, `cotizaciones`, `clientes`, `vehiculos`, `empleados`); las entidades internas tienen llave compuesta con el folio de su raíz; los Value Objects se guardan como columnas. Importes en `NUMERIC(12,2)` (pesos con centavos, se leen como `Decimal`) y fechas en `TIMESTAMPTZ` (UTC). Los nombres de estado son los del Glosario y la base los valida con `CHECK`. Las reglas de negocio **no** se programan en la base: viven en el dominio; la base solo protege la integridad (llaves, tipos y valores permitidos).\n",
          "**Implementación:** `src/infrastructure/base_de_datos/tablas.py` (SQLAlchemy) debe tener exactamente estas tablas y columnas; una prueba de integración con PostgreSQL lo verifica. En las pruebas sin Docker se usa SQLite con `metadata.create_all()`.\n",

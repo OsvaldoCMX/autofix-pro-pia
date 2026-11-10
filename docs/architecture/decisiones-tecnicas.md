@@ -114,7 +114,7 @@ Toda la configuración viene del entorno; `.env.example` se sube al repositorio 
 
 La base se prepara con tres scripts de `database/` (en Supabase: SQL Editor; en Docker: automáticamente al crear el volumen):
 
-1. `01_esquema.sql` — crea las 18 tablas (borra las anteriores; los datos son ficticios).
+1. `01_esquema.sql` — crea las 19 tablas (borra las anteriores; los datos son ficticios).
 2. `02_datos_iniciales.sql` — 6 empleados de demostración y el **estado inicial** de los datos del profesor: 40 clientes, 60 vehículos, 60 órdenes «Recibida», 20 servicios de catálogo y 117 líneas de detalle. Los cambios de estado se hacen después con la API, como pide el paquete del profesor.
 3. `03_verificacion.sql` — muestra los conteos obtenidos contra los esperados.
 

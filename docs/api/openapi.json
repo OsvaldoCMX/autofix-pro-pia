@@ -1731,6 +1731,113 @@
         }
       }
     },
+    "/api/cotizaciones/{id}/correcciones": {
+      "post": {
+        "tags": [
+          "Cotización"
+        ],
+        "summary": "Corregir una cotización que espera al Gerente o al cliente",
+        "operationId": "corregir_api_cotizaciones__id__correcciones_post",
+        "security": [
+          {
+            "TokenDeEmpleado": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DatosDeCorreccion"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CotizacionRegistrada"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "JSON mal formado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Falta el token o no es válido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o trabajo de otro técnico.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Viola una regla o transición del negocio.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Un dato es inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/cotizaciones/{id}/recontactos": {
       "post": {
         "tags": [
@@ -3966,6 +4073,76 @@
         ],
         "title": "ClienteRegistrado"
       },
+      "CorreccionDeCotizacion": {
+        "properties": {
+          "asesor": {
+            "type": "string",
+            "title": "Asesor"
+          },
+          "registrada_en": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Registrada En"
+          },
+          "motivo": {
+            "type": "string",
+            "title": "Motivo"
+          },
+          "total_anterior": {
+            "type": "string",
+            "title": "Total Anterior"
+          },
+          "total_nuevo": {
+            "type": "string",
+            "title": "Total Nuevo"
+          },
+          "estado_anterior": {
+            "type": "string",
+            "title": "Estado Anterior"
+          },
+          "estado_nuevo": {
+            "type": "string",
+            "title": "Estado Nuevo"
+          },
+          "fecha_presentacion_anterior": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fecha Presentacion Anterior"
+          },
+          "fecha_aprobacion_gerencial_anterior": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fecha Aprobacion Gerencial Anterior"
+          }
+        },
+        "type": "object",
+        "required": [
+          "asesor",
+          "registrada_en",
+          "motivo",
+          "total_anterior",
+          "total_nuevo",
+          "estado_anterior",
+          "estado_nuevo",
+          "fecha_presentacion_anterior",
+          "fecha_aprobacion_gerencial_anterior"
+        ],
+        "title": "CorreccionDeCotizacion"
+      },
       "CotizacionDetallada": {
         "properties": {
           "id": {
@@ -4061,6 +4238,13 @@
             },
             "type": "array",
             "title": "Lineas"
+          },
+          "correcciones": {
+            "items": {
+              "$ref": "#/components/schemas/CorreccionDeCotizacion"
+            },
+            "type": "array",
+            "title": "Correcciones"
           }
         },
         "type": "object",
@@ -4077,7 +4261,8 @@
           "fecha_presentacion",
           "autorizante",
           "fecha_decision",
-          "lineas"
+          "lineas",
+          "correcciones"
         ],
         "title": "CotizacionDetallada"
       },
@@ -4185,6 +4370,30 @@
           "motivo"
         ],
         "title": "DatosDeCancelacion"
+      },
+      "DatosDeCorreccion": {
+        "properties": {
+          "trabajos": {
+            "items": {
+              "$ref": "#/components/schemas/NuevoTrabajo"
+            },
+            "type": "array",
+            "title": "Trabajos"
+          },
+          "motivo": {
+            "type": "string",
+            "maxLength": 1000,
+            "title": "Motivo"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "trabajos",
+          "motivo"
+        ],
+        "title": "DatosDeCorreccion",
+        "description": "Los trabajos correctos y el motivo; el asesor sale de su clave de acceso (H-PIA-21)."
       },
       "DatosDeCotizacion": {
         "properties": {

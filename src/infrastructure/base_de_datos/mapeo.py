@@ -17,6 +17,7 @@ from domain.cotizaciones.estados import EstadoCotizacion
 from domain.cotizaciones.linea_de_cotizacion import DecisionDeLinea, LineaDeCotizacion
 from domain.cotizaciones.valores import (
     Autorizante,
+    CorreccionDeCotizacion,
     DecisionDelCliente,
     Recontacto,
     RefaccionCotizada,
@@ -60,6 +61,7 @@ class FilasDeCotizacion:
     lineas: Sequence[Fila] = ()
     refacciones: Sequence[Fila] = ()
     recontactos: Sequence[Fila] = ()
+    correcciones: Sequence[Fila] = ()
 
 
 def _monto(dinero: Dinero | None) -> Any:
@@ -400,6 +402,36 @@ def filas_de_cotizacion(cotizacion: Cotizacion) -> FilasDeCotizacion:
             }
             for recontacto in cotizacion.recontactos
         ],
+        [_fila_de_correccion(id_cotizacion, correccion) for correccion in cotizacion.correcciones],
+    )
+
+
+def _fila_de_correccion(id_cotizacion: str, correccion: CorreccionDeCotizacion) -> dict[str, Any]:
+    return {
+        "id_cotizacion": id_cotizacion,
+        "asesor": correccion.asesor,
+        "registrada_en": correccion.registrada_en,
+        "motivo": correccion.motivo,
+        "total_anterior": _monto(correccion.total_anterior),
+        "total_nuevo": _monto(correccion.total_nuevo),
+        "estado_anterior": correccion.estado_anterior.value,
+        "estado_nuevo": correccion.estado_nuevo.value,
+        "fecha_presentacion_anterior": correccion.fecha_presentacion_anterior,
+        "fecha_aprobacion_gerencial_anterior": correccion.fecha_aprobacion_gerencial_anterior,
+    }
+
+
+def _correccion_desde_fila(fila: Fila) -> CorreccionDeCotizacion:
+    return CorreccionDeCotizacion(
+        fila["asesor"],
+        fila["registrada_en"],
+        fila["motivo"],
+        Dinero(fila["total_anterior"]),
+        Dinero(fila["total_nuevo"]),
+        EstadoCotizacion(fila["estado_anterior"]),
+        EstadoCotizacion(fila["estado_nuevo"]),
+        fila["fecha_presentacion_anterior"],
+        fila["fecha_aprobacion_gerencial_anterior"],
     )
 
 
@@ -444,6 +476,7 @@ def cotizacion_desde_filas(filas: FilasDeCotizacion) -> Cotizacion:
     cotizacion._recontactos = [
         Recontacto(f["asesor"], f["registrado_en"]) for f in filas.recontactos
     ]
+    cotizacion._correcciones = [_correccion_desde_fila(f) for f in filas.correcciones]
     return cotizacion
 
 

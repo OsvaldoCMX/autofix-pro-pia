@@ -1,4 +1,4 @@
-"""Generar, presentar, ajustar y recontactar cotizaciones (US-004, US-009, US-023).
+"""Generar, presentar, ajustar, corregir y recontactar cotizaciones (US-004, US-009, US-023, US-026).
 
 No decide si se requiere al Gerente: eso lo resuelve la Specification E1 dentro de `Cotizacion`.
 """
@@ -6,6 +6,7 @@ from __future__ import annotations
 
 from application.comandos import (
     AjustarCotizacion,
+    CorregirCotizacion,
     GenerarCotizacion,
     PresentarCotizacion,
     RegistrarRecontacto,
@@ -81,6 +82,18 @@ class ServicioDeCotizacion:
         with self._uow as uow:
             cotizacion = uow.cotizaciones.obtener(comando.id_cotizacion)
             cotizacion.ajustar(a_lineas(comando.trabajos), self._reloj.ahora())
+            uow.cotizaciones.guardar(cotizacion)
+            uow.confirmar()
+        self._publicador.publicar(uow.eventos_confirmados())
+        return resultado_de_cotizacion(cotizacion)
+
+    def corregir(self, comando: CorregirCotizacion) -> ResultadoDeCotizacion:
+        """RN-25 y RN-26: la regla de $15,000 la vuelve a evaluar la propia cotización."""
+        with self._uow as uow:
+            cotizacion = uow.cotizaciones.obtener(comando.id_cotizacion)
+            cotizacion.corregir(
+                a_lineas(comando.trabajos), comando.motivo, comando.asesor, self._reloj.ahora()
+            )
             uow.cotizaciones.guardar(cotizacion)
             uow.confirmar()
         self._publicador.publicar(uow.eventos_confirmados())

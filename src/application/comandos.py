@@ -111,6 +111,16 @@ class AjustarCotizacion:
 
 
 @dataclass(frozen=True)
+class CorregirCotizacion:
+    """El asesor corrige una cotización antes de la decisión del cliente (H-PIA-21)."""
+
+    id_cotizacion: str
+    trabajos: tuple[TrabajoPropuesto, ...]
+    motivo: str
+    asesor: str
+
+
+@dataclass(frozen=True)
 class RegistrarRecontacto:
     id_cotizacion: str
     asesor: str

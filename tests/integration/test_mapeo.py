@@ -10,14 +10,17 @@ from sqlalchemy import select
 
 from application.comandos import (
     CancelarOrden,
+    CorregirCotizacion,
     PresentarCotizacion,
     RegistrarEntrega,
     RegistrarLlegadaDeRefaccion,
     RegistrarRecontacto,
+    RevisarCotizacion,
 )
 from domain.clientes.cliente import Cliente, TipoCliente
 from domain.compartido.valores import VIN, Dinero, NumeroOrden, Placas
 from domain.cotizaciones.cotizacion import Cotizacion
+from domain.cotizaciones.estados import EstadoCotizacion
 from domain.cotizaciones.valores import RolDeAutorizante
 from domain.ordenes.orden_de_servicio import OrdenDeServicio
 from domain.ordenes.valores import EstadoDeRecepcion, FormaDePago, NivelDeCombustible, Pago
@@ -37,6 +40,7 @@ from tests.unit.application.escenarios import (
     poner_hora,
     por_cobrar,
     recibida,
+    trabajos,
 )
 
 
@@ -177,6 +181,32 @@ def test_ca_040_recontactos_conservan_su_orden(taller_en_base: TallerEnBase) -> 
     ]
     assert cotizacion.ultimo_contacto == AHORA + timedelta(hours=100)
     assert cotizacion.fecha_presentacion == AHORA
+
+
+def test_rn_25_correcciones_conservan_su_historial(taller_en_base: TallerEnBase) -> None:
+    _, id_cotizacion = cotizada(taller_en_base, importes=("20000.00",))
+    taller_en_base.aprobacion.revisar(RevisarCotizacion(id_cotizacion, aprobada=True))
+    taller_en_base.cotizacion.presentar(PresentarCotizacion(id_cotizacion))
+    poner_hora(taller_en_base.reloj, AHORA + timedelta(hours=3))
+    taller_en_base.cotizacion.corregir(
+        CorregirCotizacion(id_cotizacion, trabajos("20500.00"), "Faltaba una refacción", ASESOR)
+    )
+
+    cotizacion = _cotizacion(taller_en_base, id_cotizacion)
+
+    (correccion,) = cotizacion.correcciones
+    assert cotizacion.estado is EstadoCotizacion.PENDIENTE_DE_APROBACION_GERENCIAL
+    assert cotizacion.fecha_aprobacion_gerencial is None
+    assert cotizacion.fecha_presentacion is None
+    assert correccion.asesor == ASESOR
+    assert correccion.registrada_en == AHORA + timedelta(hours=3)
+    assert correccion.motivo == "Faltaba una refacción"
+    assert correccion.total_anterior == Dinero(Decimal("20000.00"))
+    assert correccion.total_nuevo == Dinero(Decimal("20500.00"))
+    assert correccion.estado_anterior is EstadoCotizacion.PENDIENTE_DE_AUTORIZACION_DEL_CLIENTE
+    assert correccion.estado_nuevo is EstadoCotizacion.PENDIENTE_DE_APROBACION_GERENCIAL
+    assert correccion.fecha_presentacion_anterior == AHORA
+    assert correccion.fecha_aprobacion_gerencial_anterior == AHORA
 
 
 def test_rn_23_importes_vuelven_como_decimal(taller_en_base: TallerEnBase) -> None:

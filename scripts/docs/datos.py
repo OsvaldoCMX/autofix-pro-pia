@@ -558,7 +558,7 @@ ca("CA-047", "US-026", [
 ], F23, ["RN-25", "RN-26", "RN-23"],
    "Cotizacion (corregir), CorreccionDeCotizacion, spec RequiereAprobacionGerencial, evento CotizacionCorregida",
    "ServicioDeCotizacion.corregir", "POST /api/cotizaciones/{id}/correcciones", ASE,
-   cambio="H-PIA-21", nombre="Corregir una cotización que espera la decisión del cliente", planeado=True)
+   cambio="H-PIA-21", nombre="Corregir una cotización que espera la decisión del cliente")
 
 ca("CA-048", "US-026", [
     (D, "que una cotización inicial está en «Pendiente de Autorización del Cliente», aunque el Gerente ya la haya aprobado o se haya ajustado según sus observaciones"),
@@ -570,7 +570,7 @@ ca("CA-048", "US-026", [
 ], F23, ["RN-26", "RN-04", "RN-06", "RN-22"],
    "Cotizacion (corregir), spec RequiereAprobacionGerencial, MAQUINA_DE_COTIZACION, eventos CotizacionCorregida y AprobacionGerencialRequerida → AlertaInterna",
    "ServicioDeCotizacion.corregir", "POST /api/cotizaciones/{id}/correcciones · GET /api/alertas", f"{ASE} / {GER}",
-   cambio="H-PIA-21", nombre="La corrección sube la cotización inicial arriba de $15,000 MXN", planeado=True)
+   cambio="H-PIA-21", nombre="La corrección sube la cotización inicial arriba de $15,000 MXN")
 
 ca("CA-049", "US-026", [
     (D, "que una cotización está en «Pendiente de Aprobación Gerencial»"),
@@ -581,7 +581,7 @@ ca("CA-049", "US-026", [
 ], F23, ["RN-25", "RN-26", "RN-04"],
    "Cotizacion (corregir), spec RequiereAprobacionGerencial, MAQUINA_DE_COTIZACION, evento CotizacionCorregida",
    "ServicioDeCotizacion.corregir", "POST /api/cotizaciones/{id}/correcciones", ASE,
-   cambio="H-PIA-21", nombre="Corregir una cotización que espera al Gerente", planeado=True)
+   cambio="H-PIA-21", nombre="Corregir una cotización que espera al Gerente")
 
 ca("CA-050", "US-026", [
     (D, "que el asesor intenta corregir una cotización"),
@@ -593,7 +593,7 @@ ca("CA-050", "US-026", [
 ], F23, ["RN-25", "RN-05"],
    "Cotizacion (corregir), error OperacionDeCotizacionNoPermitida, ValorInvalido (motivo)",
    "ServicioDeCotizacion.corregir", "POST /api/cotizaciones/{id}/correcciones (409, 422)", ASE,
-   cambio="H-PIA-21", nombre="No se corrige sin motivo ni una cotización por ajustar o ya decidida", planeado=True)
+   cambio="H-PIA-21", nombre="No se corrige sin motivo ni una cotización por ajustar o ya decidida")
 
 ca("CA-051", "US-026", [
     (D, "que una cotización presentada, con recontactos registrados, se corrigió y quedó en «Pendiente de Autorización del Cliente»"),
@@ -606,7 +606,7 @@ ca("CA-051", "US-026", [
    "Cotizacion (fecha_presentacion, ultimo_contacto), spec RequiereRecontacto, ServicioDeRevisionDePlazos",
    "ServicioDeRevisionDePlazos.revisar · ServicioDeCotizacion.presentar",
    "POST /api/revisiones/plazos · POST /api/cotizaciones/{id}/presentacion", f"{SIS} / {ASE}",
-   cambio="H-PIA-21", nombre="El plazo de 48 horas después de una corrección", planeado=True)
+   cambio="H-PIA-21", nombre="El plazo de 48 horas después de una corrección")
 
 ca("CA-052", "US-001", [
     (D, "que el vehículo con placas XYZ998 ya tiene una orden abierta (en un estado distinto de «Cerrada», «Cerrada sin Reparación» y «Cancelada»)"),
@@ -817,7 +817,7 @@ REGLAS = {
 }
 
 # Reglas aprobadas en la Fase 13 que todavía no se construyen (misma idea que `planeado` en los CA).
-REGLAS_PLANEADAS = {"RN-25", "RN-26", "RN-27", "RN-28", "RN-29", "RN-30", "RN-31", "RN-32", "RN-33", "RN-34", "RN-35"}
+REGLAS_PLANEADAS = {"RN-27", "RN-28", "RN-29", "RN-30", "RN-31", "RN-32", "RN-33", "RN-34", "RN-35"}
 
 # ----------------------------------------------------------------------------- pruebas previstas
 # Convención: toda prueba de aceptación se llama test_ca_0XX_<descripcion> para poder

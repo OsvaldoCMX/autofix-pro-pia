@@ -10,6 +10,7 @@ from datetime import date, datetime
 
 from domain.clientes.cliente import Cliente
 from domain.cotizaciones.cotizacion import Cotizacion
+from domain.cotizaciones.valores import CorreccionDeCotizacion
 from domain.ordenes.estados import EstadoOrden, EstadoTrabajo
 from domain.ordenes.orden_de_servicio import OrdenDeServicio
 from domain.ordenes.solicitud_de_compra import SolicitudDeCompra
@@ -112,6 +113,21 @@ class LineaVista:
 
 
 @dataclass(frozen=True)
+class CorreccionVista:
+    """Una corrección del historial de la cotización (H-PIA-21)."""
+
+    asesor: str
+    registrada_en: datetime
+    motivo: str
+    total_anterior: str
+    total_nuevo: str
+    estado_anterior: str
+    estado_nuevo: str
+    fecha_presentacion_anterior: datetime | None
+    fecha_aprobacion_gerencial_anterior: datetime | None
+
+
+@dataclass(frozen=True)
 class CotizacionVista:
     id: str
     numero_orden: str
@@ -126,6 +142,7 @@ class CotizacionVista:
     autorizante: str | None
     fecha_decision: datetime | None
     lineas: tuple[LineaVista, ...]
+    correcciones: tuple[CorreccionVista, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -268,6 +285,21 @@ def vista_de_cotizacion(cotizacion: Cotizacion) -> CotizacionVista:
             )
             for linea in cotizacion.lineas
         ),
+        tuple(_vista_de_correccion(correccion) for correccion in cotizacion.correcciones),
+    )
+
+
+def _vista_de_correccion(correccion: CorreccionDeCotizacion) -> CorreccionVista:
+    return CorreccionVista(
+        correccion.asesor,
+        correccion.registrada_en,
+        correccion.motivo,
+        str(correccion.total_anterior.monto),
+        str(correccion.total_nuevo.monto),
+        correccion.estado_anterior.value,
+        correccion.estado_nuevo.value,
+        correccion.fecha_presentacion_anterior,
+        correccion.fecha_aprobacion_gerencial_anterior,
     )
 
 

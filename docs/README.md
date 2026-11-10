@@ -26,6 +26,6 @@ Esta carpeta es la fuente única del análisis y la arquitectura del PIA. Todo e
 
 Fuera de `docs/`: `database/` (esquema y datos iniciales para Supabase y Docker) y `scripts/` (generadores de la documentación y del SQL).
 
-16 necesidades · 27 User Stories · 66 criterios (20 planeados) · 35 reglas de negocio (11 planeadas) · 8 Specifications · 4 máquinas de estados (25 estados) · 31 Domain Events (5 planeados) · 12 servicios de aplicación · 12 consultas (1 planeada: `ListarTecnicos`) · 51 rutas de API (8 planeadas) · 18 ADR · 18 tablas (19 cuando la Fase 14 agregue `correcciones_de_cotizacion`).
+16 necesidades · 27 User Stories · 66 criterios (20 planeados) · 35 reglas de negocio (11 planeadas) · 8 Specifications · 4 máquinas de estados (25 estados) · 31 Domain Events (5 planeados) · 12 servicios de aplicación · 12 consultas (1 planeada: `ListarTecnicos`) · 51 rutas de API (8 planeadas) · 18 ADR · 19 tablas.
 
 Lo **planeado** está aprobado en la Fase 13 (revisión del 09/11/2026) y todavía no se construye; la Fase 14 quita la marca de cada cosa al construirla.

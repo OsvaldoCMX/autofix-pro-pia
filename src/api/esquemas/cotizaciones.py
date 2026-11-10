@@ -10,6 +10,7 @@ from api.esquemas.comunes import (
     ModeloDeEntrada,
     ModeloDeSalida,
     TextoDeRefaccion,
+    TextoLargo,
 )
 from application.comandos import RefaccionPropuesta, TrabajoPropuesto
 
@@ -42,6 +43,16 @@ class NuevoTrabajo(ModeloDeEntrada):
 
 class DatosDeCotizacion(ModeloDeEntrada):
     trabajos: list[NuevoTrabajo]
+
+    def a_trabajos(self) -> tuple[TrabajoPropuesto, ...]:
+        return tuple(trabajo.a_comando() for trabajo in self.trabajos)
+
+
+class DatosDeCorreccion(ModeloDeEntrada):
+    """Los trabajos correctos y el motivo; el asesor sale de su clave de acceso (H-PIA-21)."""
+
+    trabajos: list[NuevoTrabajo]
+    motivo: TextoLargo
 
     def a_trabajos(self) -> tuple[TrabajoPropuesto, ...]:
         return tuple(trabajo.a_comando() for trabajo in self.trabajos)
@@ -94,6 +105,18 @@ class LineaDetallada(ModeloDeSalida):
     decision: str | None
 
 
+class CorreccionDeCotizacion(ModeloDeSalida):
+    asesor: str
+    registrada_en: datetime
+    motivo: str
+    total_anterior: str
+    total_nuevo: str
+    estado_anterior: str
+    estado_nuevo: str
+    fecha_presentacion_anterior: datetime | None
+    fecha_aprobacion_gerencial_anterior: datetime | None
+
+
 class CotizacionDetallada(ModeloDeSalida):
     id: str
     numero_orden: str
@@ -108,3 +131,4 @@ class CotizacionDetallada(ModeloDeSalida):
     autorizante: str | None
     fecha_decision: datetime | None
     lineas: list[LineaDetallada]
+    correcciones: list[CorreccionDeCotizacion]

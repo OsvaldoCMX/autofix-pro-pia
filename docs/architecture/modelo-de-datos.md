@@ -1,4 +1,4 @@
-# Modelo de datos — AutoFix Pro (PIA v3.0)
+# Modelo de datos — AutoFix Pro (PIA v3.1)
 
 Esquema oficial de la base de datos (PostgreSQL 16 en Docker y en **Supabase**, ADR-009). Lo genera `scripts/db/esquema.py`, que también produce `database/01_esquema.sql` y el diagrama `diagramas/modelo-de-datos.png`.
 
@@ -8,7 +8,7 @@ Esquema oficial de la base de datos (PostgreSQL 16 en Docker y en **Supabase**, 
 
 ![Modelo de datos](diagramas/modelo-de-datos.png)
 
-## Tablas (18)
+## Tablas (19)
 
 ### Dominio
 
@@ -229,6 +229,26 @@ Recontactos al cliente por cotizaciones sin respuesta (CA-040).
 | `registrado_en` | TIMESTAMPTZ | no | Fecha y hora (el plazo de 48 h vuelve a contar) |
 
 FK (id_cotizacion) → `cotizaciones` (id) · FK (asesor) → `empleados` (id)
+
+#### `correcciones_de_cotizacion`
+
+Historial de correcciones de una cotización antes de la decisión del cliente (CA-047 a CA-050, H-PIA-21, ADR-018).
+
+| Columna | Tipo | Nulo | Descripción |
+|---|---|---|---|
+| `id` (PK) | BIGSERIAL | no | Identificador |
+| `id_cotizacion` | VARCHAR(20) | no | Cotización |
+| `asesor` | VARCHAR(20) | no | Asesor que corrigió |
+| `registrada_en` | TIMESTAMPTZ | no | Fecha y hora de la corrección |
+| `motivo` | TEXT | no | Motivo de la corrección (obligatorio) |
+| `total_anterior` | NUMERIC(12,2) | no | Total antes de corregir |
+| `total_nuevo` | NUMERIC(12,2) | no | Total después de corregir |
+| `estado_anterior` | VARCHAR(50) | no | Estado antes de corregir |
+| `estado_nuevo` | VARCHAR(50) | no | Estado después de corregir (se vuelve a evaluar E1) |
+| `fecha_presentacion_anterior` | TIMESTAMPTZ | sí | Presentación al cliente que se anuló al corregir |
+| `fecha_aprobacion_gerencial_anterior` | TIMESTAMPTZ | sí | Aprobación del Gerente que tenía (se borra si regresa a revisión) |
+
+FK (id_cotizacion) → `cotizaciones` (id) · FK (asesor) → `empleados` (id) · CHECK `total_anterior >= 0` · CHECK `total_nuevo >= 0` · CHECK `estado_anterior IN ('Pendiente de Aprobación Gerencial', 'Pendiente de Autorización del Cliente')` · CHECK `estado_nuevo IN ('Pendiente de Aprobación Gerencial', 'Pendiente de Autorización del Cliente')`
 
 #### `alertas_internas`
 

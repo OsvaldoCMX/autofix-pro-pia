@@ -34,12 +34,12 @@ RUTAS = [
     # cotización
     ("POST", "/api/ordenes/{numero}/cotizaciones", A, "Generar la cotización inicial (v.1).", "201", "401, 403, 404, 409, 422", "ServicioDeCotizacion.generar_inicial", ["CA-005", "CA-007", "CA-060"], "P1", "Cotización"),
     ("POST", "/api/ordenes/{numero}/cotizaciones-adicionales", A, "Generar una cotización adicional (v.2, v.3…).", "201", "401, 403, 404, 409, 422", "ServicioDeCotizacion.generar_adicional", ["CA-016", "CA-060", "CA-061"], "P1", "Cotización"),
-    ("GET", "/api/cotizaciones/{id}", f"{A}, {G}", "Detalle de la cotización con su desglose y estado. *Planeado (H-PIA-21):* también su historial de correcciones.", "200", "401, 403, 404", "ConsultarCotizacion", ["CA-005"], "P1", "Cotización"),
+    ("GET", "/api/cotizaciones/{id}", f"{A}, {G}", "Detalle de la cotización con su desglose, su estado y su historial de correcciones (H-PIA-21).", "200", "401, 403, 404", "ConsultarCotizacion", ["CA-005"], "P1", "Cotización"),
     ("GET", "/api/cotizaciones/{id}/pdf", A, "PDF de la cotización.", "200", "401, 403, 404", "ServicioDeCotizacion.generar_pdf", ["CA-005"], "P2", "Cotización"),
     ("POST", "/api/cotizaciones/{id}/presentacion", A, "Marcar como presentada (inicia las 48 h).", "200", "401, 403, 404, 409", "ServicioDeCotizacion.presentar", ["CA-006", "CA-007", "CA-051"], "P1", "Cotización"),
     ("POST", "/api/cotizaciones/{id}/revision-gerencial", G, "Aprobar o rechazar (con observaciones) una cotización mayor a $15,000.", "200", "401, 403, 404, 409, 422", "ServicioDeAprobacionGerencial.revisar", ["CA-008", "CA-009"], "P1", "Cotización"),
     ("PUT", "/api/cotizaciones/{id}/lineas", A, "Guardar la cotización ajustada según el Gerente.", "200", "401, 403, 404, 409, 422", "ServicioDeCotizacion.ajustar", ["CA-009"], "P1", "Cotización"),
-    ("POST", "/api/cotizaciones/{id}/correcciones", A, "Corregir una cotización que espera al Gerente o al cliente (motivo obligatorio; guarda el historial y vuelve a evaluar la regla de $15,000).", "201", "401, 403, 404, 409, 422", "ServicioDeCotizacion.corregir", ["CA-047", "CA-048", "CA-049", "CA-050"], P1_PLANEADA, "Cotización"),
+    ("POST", "/api/cotizaciones/{id}/correcciones", A, "Corregir una cotización que espera al Gerente o al cliente (motivo obligatorio; guarda el historial y vuelve a evaluar la regla de $15,000).", "201", "401, 403, 404, 409, 422", "ServicioDeCotizacion.corregir", ["CA-047", "CA-048", "CA-049", "CA-050"], "P1", "Cotización"),
     ("POST", "/api/cotizaciones/{id}/recontactos", A, "Registrar el recontacto al cliente (48 h).", "201", "401, 403, 404, 409", "ServicioDeCotizacion.registrar_recontacto", ["CA-040"], "P1", "Cotización"),
     ("GET", "/api/gerencia/cotizaciones-por-aprobar", G, "Cotizaciones en «Pendiente de Aprobación Gerencial».", "200", "401, 403", "ListarCotizacionesPendientesDeAprobacion", ["CA-007"], "P1", "Cotización"),
     # autorización

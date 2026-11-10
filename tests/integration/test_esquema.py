@@ -31,6 +31,7 @@ from domain.ordenes.estados import EstadoOrden
 from domain.ordenes.valores import NivelDeCombustible
 from infrastructure.base_de_datos.tablas import (
     alertas_internas,
+    correcciones_de_cotizacion,
     fallas_adicionales,
     fotos_de_danos,
     lineas_de_cotizacion,
@@ -52,7 +53,7 @@ _TIPOS_EQUIVALENTES = {
     "BIGSERIAL": "BIGINT",
     "NUMERIC(12,2)": "NUMERIC(12, 2)",
 }
-_NOMBRES_DE_LAS_18_TABLAS = {
+_NOMBRES_DE_LAS_19_TABLAS = {
     "empleados",
     "clientes",
     "vehiculos",
@@ -65,6 +66,7 @@ _NOMBRES_DE_LAS_18_TABLAS = {
     "lineas_de_cotizacion",
     "refacciones_cotizadas",
     "recontactos",
+    "correcciones_de_cotizacion",
     "alertas_internas",
     "eventos",
     "secuencias",
@@ -159,12 +161,12 @@ def _definicion_desde_tablas(tabla: Table) -> DefinicionDeTabla:
 
 
 def test_tablas_tiene_las_18_tablas_del_modelo_de_datos() -> None:
-    assert set(metadata.tables) == _NOMBRES_DE_LAS_18_TABLAS
+    assert set(metadata.tables) == _NOMBRES_DE_LAS_19_TABLAS
     creadas = set(re.findall(r"^CREATE TABLE (\w+) \(", _sql_del_esquema(), re.MULTILINE))
-    assert creadas == _NOMBRES_DE_LAS_18_TABLAS
+    assert creadas == _NOMBRES_DE_LAS_19_TABLAS
 
 
-@pytest.mark.parametrize("nombre", sorted(_NOMBRES_DE_LAS_18_TABLAS))
+@pytest.mark.parametrize("nombre", sorted(_NOMBRES_DE_LAS_19_TABLAS))
 def test_tablas_coincide_con_el_sql(nombre: str) -> None:
     del_sql = _definicion_desde_el_sql(_sql_del_esquema(), nombre)
     de_tablas = _definicion_desde_tablas(metadata.tables[nombre])
@@ -193,7 +195,7 @@ def base_real(motor_postgresql: Engine | None) -> Engine:
     return motor_postgresql
 
 
-@pytest.mark.parametrize("nombre", sorted(_NOMBRES_DE_LAS_18_TABLAS))
+@pytest.mark.parametrize("nombre", sorted(_NOMBRES_DE_LAS_19_TABLAS))
 def test_tablas_coincide_con_postgresql_real(base_real: Engine, nombre: str) -> None:
     inspector = inspect(base_real)
     tabla = metadata.tables[nombre]
@@ -226,6 +228,7 @@ _SECUENCIAS_DE_ID = (
     "fotos_de_danos_id_seq",
     "refacciones_cotizadas_id_seq",
     "recontactos_id_seq",
+    "correcciones_de_cotizacion_id_seq",
     "alertas_internas_id_seq",
     "eventos_id_seq",
 )
@@ -276,6 +279,18 @@ def _llenar_todas_las_tablas(motor: Engine) -> None:
         conexion.execute(
             insert(recontactos).values(
                 id_cotizacion=linea.id_cotizacion, asesor=ASESOR, registrado_en=ahora
+            )
+        )
+        conexion.execute(
+            insert(correcciones_de_cotizacion).values(
+                id_cotizacion=linea.id_cotizacion,
+                asesor=ASESOR,
+                registrada_en=ahora,
+                motivo="Importe mal capturado",
+                total_anterior=Decimal("100.00"),
+                total_nuevo=Decimal("90.00"),
+                estado_anterior="Pendiente de Autorización del Cliente",
+                estado_nuevo="Pendiente de Autorización del Cliente",
             )
         )
         conexion.execute(

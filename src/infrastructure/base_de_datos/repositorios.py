@@ -41,6 +41,7 @@ from infrastructure.base_de_datos.tablas import (
     alertas_internas,
     catalogo_servicios,
     clientes,
+    correcciones_de_cotizacion,
     cotizaciones,
     empleados,
     fallas_adicionales,
@@ -109,6 +110,9 @@ def cargar_cotizacion(
         refacciones_cotizadas.c.id_cotizacion == id_cotizacion
     )
     contactos = select(recontactos).where(recontactos.c.id_cotizacion == id_cotizacion)
+    corregidas = select(correcciones_de_cotizacion).where(
+        correcciones_de_cotizacion.c.id_cotizacion == id_cotizacion
+    )
     return mapeo.cotizacion_desde_filas(
         mapeo.FilasDeCotizacion(
             fila,
@@ -121,6 +125,9 @@ def cargar_cotizacion(
             .mappings()
             .all(),
             conexion.execute(contactos.order_by(recontactos.c.id)).mappings().all(),
+            conexion.execute(corregidas.order_by(correcciones_de_cotizacion.c.id))
+            .mappings()
+            .all(),
         )
     )
 
@@ -245,12 +252,18 @@ class RepositorioDeCotizacionesSqlAlchemy(RepositorioDeCotizaciones):
             cotizaciones.c.id == id_cotizacion,
             dict(filas.cotizacion),
         )
-        # Ajustar una cotización cambia sus líneas: las partes internas se reemplazan completas.
-        for tabla in (refacciones_cotizadas, lineas_de_cotizacion, recontactos):
+        # Ajustar o corregir una cotización cambia sus líneas: las partes internas se reemplazan.
+        for tabla in (
+            refacciones_cotizadas,
+            lineas_de_cotizacion,
+            recontactos,
+            correcciones_de_cotizacion,
+        ):
             self._conexion.execute(delete(tabla).where(tabla.c.id_cotizacion == id_cotizacion))
         _insertar(self._conexion, lineas_de_cotizacion, filas.lineas)
         _insertar(self._conexion, refacciones_cotizadas, filas.refacciones)
         _insertar(self._conexion, recontactos, filas.recontactos)
+        _insertar(self._conexion, correcciones_de_cotizacion, filas.correcciones)
 
     def _recordar(self, cotizacion: Cotizacion) -> None:
         self._cargadas[cotizacion.id] = cotizacion

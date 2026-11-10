@@ -42,6 +42,15 @@ class CotizacionAjustada(EventoDeCotizacion):
 
 
 @dataclass(frozen=True)
+class CotizacionCorregida(EventoDeCotizacion):
+    asesor: str
+    motivo: str
+    total_anterior: str
+    total_nuevo: str
+    estado_nuevo: str
+
+
+@dataclass(frozen=True)
 class CotizacionPresentada(EventoDeCotizacion):
     pass
 

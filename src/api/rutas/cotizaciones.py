@@ -1,4 +1,4 @@
-"""Generar, presentar, revisar, ajustar y recontactar cotizaciones (US-004, US-005, US-023)."""
+"""Generar, presentar, revisar, ajustar, corregir y recontactar cotizaciones (US-004 a US-026)."""
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, status
@@ -10,6 +10,7 @@ from api.esquemas.cotizaciones import (
     CotizacionDetallada,
     CotizacionPorAprobar,
     CotizacionRegistrada,
+    DatosDeCorreccion,
     DatosDeCotizacion,
     DatosDeRevision,
     RecontactoRegistrado,
@@ -17,6 +18,7 @@ from api.esquemas.cotizaciones import (
 from api.seguridad import SOLO_ASESOR, SOLO_GERENTE, Asesor, requiere_rol
 from application.comandos import (
     AjustarCotizacion,
+    CorregirCotizacion,
     GenerarCotizacion,
     PresentarCotizacion,
     RegistrarRecontacto,
@@ -128,6 +130,21 @@ def ajustar(
 ) -> ResultadoDeCotizacion:
     comando = AjustarCotizacion(id, datos.a_trabajos())
     return contenedor.cotizacion().ajustar(comando)
+
+
+@router.post(
+    "/cotizaciones/{id}/correcciones",
+    response_model=CotizacionRegistrada,
+    response_model_exclude_none=True,
+    status_code=status.HTTP_201_CREATED,
+    summary="Corregir una cotización que espera al Gerente o al cliente",
+    responses=errores(400, 401, 403, 404, 409, 422),
+)
+def corregir(
+    id: str, datos: DatosDeCorreccion, asesor: Asesor, contenedor: ContenedorDeLaApp
+) -> ResultadoDeCotizacion:
+    comando = CorregirCotizacion(id, datos.a_trabajos(), datos.motivo, asesor.id_empleado)
+    return contenedor.cotizacion().corregir(comando)
 
 
 @router.post(

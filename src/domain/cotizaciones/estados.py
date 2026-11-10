@@ -25,7 +25,9 @@ MAQUINA_DE_COTIZACION: MaquinaDeEstados[EstadoCotizacion] = MaquinaDeEstados(
             _E.REQUIERE_AJUSTE,
         },
         _E.REQUIERE_AJUSTE: {_E.PENDIENTE_DE_AUTORIZACION_DEL_CLIENTE},
+        # Corregir una cotización que vuelve a superar $15,000 la regresa al Gerente (H-PIA-21).
         _E.PENDIENTE_DE_AUTORIZACION_DEL_CLIENTE: {
+            _E.PENDIENTE_DE_APROBACION_GERENCIAL,
             _E.AUTORIZADA,
             _E.AUTORIZADA_PARCIALMENTE,
             _E.RECHAZADA,
