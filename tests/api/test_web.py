@@ -117,6 +117,7 @@ def test_la_pagina_solo_llama_rutas_que_existen_en_la_api(
         ("gerente.js", "### 4.4 Gerente de Taller", "### 4.5"),
         ("compras.js", "### 4.5 Personal de Compras", "### 4.6"),
         ("caja.js", "### 4.6 Personal de Caja", "### 4.7"),
+        ("alertas.js", "### 4.1 Públicas y comunes", "### 4.2"),
     ],
 )
 def test_las_rutas_de_cada_puesto_estan_en_interfaz_web(

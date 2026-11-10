@@ -93,6 +93,30 @@ a { color: var(--principal); }
 
 .saludo { font-weight: 600; }
 
+.campana {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.9rem;
+  border-radius: var(--radio);
+  color: #ffffff;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.campana:hover { background: rgba(255, 255, 255, 0.15); }
+.campana[aria-current="page"] { background: rgba(255, 255, 255, 0.25); }
+
+.campana-numero {
+  min-width: 1.6rem;
+  padding: 0 0.45rem;
+  border-radius: 999px;
+  background: var(--enfoque);
+  color: var(--texto);
+  font-weight: 800;
+  text-align: center;
+}
+
 /* Avisos */
 
 .avisos { max-width: 60rem; margin: 1rem auto 0; padding: 0 1.25rem; }
@@ -334,6 +358,10 @@ legend { font-weight: 700; font-size: 1.1rem; padding: 0 0.4rem; }
 .importe-grande { font-size: 2.4rem; font-weight: 800; margin: 0.5rem 0; }
 
 .retrasada { color: var(--error-borde); }
+
+.alertas { list-style: none; margin: 0; padding: 0; }
+.alerta { padding: 0.75rem 0; border-bottom: 1px solid var(--borde); }
+.alerta p { margin: 0.2rem 0; }
 
 .subtotal { font-weight: 600; color: var(--texto-suave); }
 .total-preliminar { font-size: 1.3rem; font-weight: 800; margin: 1.25rem 0 0; }

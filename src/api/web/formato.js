@@ -56,6 +56,20 @@ export function fecha(textoFecha) {
   return partes ? `${partes[3]}/${partes[2]}/${partes[1]}` : String(textoFecha);
 }
 
+// "en-CA" escribe la fecha como aaaa-mm-dd, fácil de comparar.
+const DIA = new Intl.DateTimeFormat("en-CA", {
+  timeZone: ZONA_DEL_TALLER,
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+
+/** El día ("2026-11-10") de una fecha de la API (UTC) o de un `Date`, en la hora de Monterrey. */
+export function diaEnMonterrey(valor) {
+  const momento = valor instanceof Date ? valor : new Date(valor);
+  return Number.isNaN(momento.getTime()) ? null : DIA.format(momento);
+}
+
 /** Fecha de la API (UTC) → "dd/mm/aaaa hh:mm" en la hora de Monterrey. */
 export function fechaYHora(textoIso) {
   const fecha = new Date(textoIso);

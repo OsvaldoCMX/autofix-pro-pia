@@ -2,6 +2,7 @@
 // Con `#`, recargar la página nunca da error. Mandar a cada quien a su menú solo ayuda a navegar:
 // los permisos los decide la API en cada llamada.
 
+import { actualizarCampana, mostrarAlertas } from "./alertas.js";
 import { cuandoVenzaLaSesion } from "./api.js";
 import * as asesor from "./asesor.js";
 import * as caja from "./caja.js";
@@ -28,6 +29,7 @@ import {
 
 const pantalla = document.getElementById("pantalla");
 const OTRO_PUESTO = "Esa pantalla es de otro puesto del taller. Le mostramos su menú.";
+const ALERTAS = "/alertas"; // P-04: de todos los puestos.
 
 // Cada puesto tiene sus direcciones; el rol es el que manda la API en `GET /api/sesion`.
 const PUESTOS = {
@@ -82,6 +84,9 @@ function rolDeLaRuta(ruta) {
 /** A dónde debe ir cada quien: sin sesión, al inicio de sesión; con sesión, a su propio menú. */
 function destinoDe(ruta, empleado) {
   const menuPropio = empleado ? PUESTOS[empleado.rol].inicio : null;
+  if (ruta === ALERTAS) {
+    return empleado ? ruta : "/entrar";
+  }
   const rol = rolDeLaRuta(ruta);
   if (rol) {
     if (!empleado) {
@@ -109,6 +114,13 @@ function actualizarEncabezado(empleado, ruta) {
     return;
   }
   document.getElementById("saludo").textContent = `Hola, ${empleado.nombre} · ${empleado.puesto}`;
+  const campana = document.getElementById("campana");
+  if (ruta === ALERTAS) {
+    campana.setAttribute("aria-current", "page");
+  } else {
+    campana.removeAttribute("aria-current");
+  }
+  actualizarCampana();
   menu.replaceChildren(
     ...PUESTOS[empleado.rol].modulo.MENU.map(({ texto, direccion }) => {
       const enlace = crear("a", { href: direccion }, texto);
@@ -143,7 +155,9 @@ async function navegar() {
   mostrarAvisosPendientes();
   window.scrollTo(0, 0);
   const rol = rolDeLaRuta(ruta);
-  if (rol) {
+  if (ruta === ALERTAS) {
+    mostrarAlertas(pantalla, empleado.rol);
+  } else if (rol) {
     PUESTOS[rol].modulo.mostrar(ruta, pantalla);
   } else {
     PANTALLAS_PUBLICAS[ruta](pantalla);
