@@ -31,7 +31,7 @@ Orden en que se construye el sistema a partir de esta documentación. Cada fase 
 | 13 | Documentar la interfaz web y las correcciones aprobadas | Terminada | 09/11/2026 | `docs: cerrar la Fase 13` |
 | 14 | Correcciones en el dominio y la API | Terminada | 10/11/2026 | `docs: cerrar la Fase 14` |
 | 15 | Base de la interfaz web | Terminada | 10/11/2026 | `docs: cerrar la Fase 15` |
-| 16 | Pantallas del Asesor | Pendiente | — | — |
+| 16 | Pantallas del Asesor | Terminada | 10/11/2026 | `docs: cerrar la Fase 16` |
 | 17 | Pantallas de Técnico, Gerente, Compras y Caja | Pendiente | — | — |
 | 18 | Revisión como usuario del taller | Pendiente | — | — |
 | 19 | Despliegue de la interfaz en Render y datos limpios en Supabase | Pendiente | — | — |
@@ -334,6 +334,14 @@ La prioridad es **Alta** si el profesor lo puede encontrar en una demo de 10 min
 **Listo cuando:** en Docker local se completan, solo desde la página, los escenarios 1, 3, 4 y 5 del guion de demostración del `README.md` en la parte del Asesor.
 
 **Commits:** uno por grupo de pantallas (`feat(web): recepción y expediente`, `feat(web): cotizaciones y decisión del cliente`, …).
+
+**Resultado (10/11/2026).** Se construyeron A-01 a A-06 con todos los botones de la tabla de A-03, en tres grupos: (1) recorrido de una orden particular, (2) flotilla y cancelación, (3) cotización adicional, recontacto, aviso de retraso, retiro y corregir datos. Decisiones del equipo durante la fase:
+- `GET /api/vehiculos/{placas}` trae `orden_abierta` (folio y estado, o `null`) y A-01 muestra «Abrir la orden …»; sin eso, el Asesor no llegaba desde las placas a la orden abierta (`interfaz-web.md` §4.2 y §7, `rutas.py`).
+- Archivo nuevo `expediente.js` (el expediente solo para consulta, que reutiliza la Fase 17), anotado en `interfaz-web.md` §8 y en `decisiones-tecnicas.md` §2.
+- Flotilla nueva: el nombre del cliente es el mismo texto de la empresa, el teléfono y el correo de la empresa son opcionales y los datos del Responsable son obligatorios; la empresa se registra con `POST /api/clientes` justo antes de la orden.
+- El botón del formulario de «Asignar trabajos» dice «Asignar los trabajos marcados», para no repetir el texto del botón del expediente que lo abre.
+- `api.js` arma las direcciones con la ruta escrita como en el contrato (`"/api/ordenes/{numero}/entrega"`); `tests/api/test_web.py` revisa que cada ruta que llama la página exista en la API y que las del Asesor estén en `interfaz-web.md` §4.2.
+- Verificado: 2297 pruebas con SQLite y 2306 con PostgreSQL 16 en Docker (perfil `tests`), cobertura 99.80 %; recorrido en Chrome sin ventana, con la aplicación en memoria, de los escenarios 1, 3, 4 y 5 del guion en la parte del Asesor, más el rechazo total, el retiro con nota, la cotización adicional y las correcciones (los pasos del Técnico, el Gerente, Compras y Caja, por la API), sin errores de JavaScript. La prueba con Docker Compose y los datos del profesor la hace el equipo desde una copia en `C:`.
 
 ## Fase 17 — Pantallas de Técnico, Gerente, Compras y Caja
 
