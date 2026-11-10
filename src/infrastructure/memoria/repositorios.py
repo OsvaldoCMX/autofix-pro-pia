@@ -19,6 +19,7 @@ from domain.cotizaciones.repositorio import RepositorioDeCotizaciones
 from domain.cotizaciones.valores import VersionCotizacion
 from domain.empleados.empleado import Empleado
 from domain.empleados.repositorio import RepositorioDeEmpleados
+from domain.ordenes.estados import esta_abierta
 from domain.ordenes.orden_de_servicio import OrdenDeServicio
 from domain.ordenes.repositorio import RepositorioDeOrdenes
 from domain.vehiculos.repositorio import RepositorioDeVehiculos
@@ -55,6 +56,14 @@ class RepositorioDeOrdenesEnMemoria(RepositorioDeOrdenes):
     def siguiente_numero(self) -> NumeroOrden:
         self._datos.ultimo_folio_de_orden += 1
         return NumeroOrden(f"OS-{self._datos.ultimo_folio_de_orden:04d}")
+
+    def abierta_del_vehiculo(self, placas: Placas) -> OrdenDeServicio | None:
+        for numero in sorted(self._datos.ordenes):
+            orden = self._datos.ordenes[numero]
+            if orden.placas == placas and esta_abierta(orden.estado):
+                self._vistos.append(orden)
+                return orden
+        return None
 
 
 class RepositorioDeCotizacionesEnMemoria(RepositorioDeCotizaciones):

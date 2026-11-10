@@ -15,7 +15,10 @@ from domain.vehiculos.repositorio import RepositorioDeVehiculos
 @pytest.mark.parametrize(
     ("interfaz", "metodos"),
     [
-        (RepositorioDeOrdenes, {"obtener", "agregar", "guardar", "siguiente_numero"}),
+        (
+            RepositorioDeOrdenes,
+            {"obtener", "agregar", "guardar", "siguiente_numero", "abierta_del_vehiculo"},
+        ),
         (
             RepositorioDeCotizaciones,
             {"obtener", "agregar", "guardar", "de_la_orden", "siguiente_version", "siguiente_id"},

@@ -23,11 +23,13 @@ from sqlalchemy.dialects import postgresql
 
 from application.comandos import (
     AsignarTecnicoParaDiagnostico,
+    CancelarOrden,
     RegistrarDiagnostico,
     RegistrarOrden,
 )
+from domain.compartido.errores import VehiculoConOrdenAbierta
 from domain.compartido.valores import NumeroOrden
-from domain.ordenes.estados import EstadoOrden
+from domain.ordenes.estados import ESTADOS_DE_ORDEN_CERRADA, MAQUINA_DE_ORDEN, EstadoOrden
 from domain.ordenes.valores import NivelDeCombustible
 from infrastructure.base_de_datos.tablas import (
     alertas_internas,
@@ -88,6 +90,7 @@ class DefinicionDeTabla:
     unicas: set[tuple[str, tuple[str, ...]]] = field(default_factory=set)
     checks: dict[str, str] = field(default_factory=dict)
     indices: dict[str, tuple[str, ...]] = field(default_factory=dict)
+    indices_unicos: dict[str, tuple[tuple[str, ...], str]] = field(default_factory=dict)
 
 
 def _lista(texto: str) -> tuple[str, ...]:
@@ -106,6 +109,9 @@ def _definicion_desde_el_sql(sql: str, tabla: str) -> DefinicionDeTabla:
         _leer_linea(linea.strip().rstrip(","), definicion)
     for nombre, columnas in re.findall(rf"CREATE INDEX (\w+) ON {tabla} \((.*?)\);", sql):
         definicion.indices[nombre] = _lista(columnas)
+    unicos = re.findall(rf"CREATE UNIQUE INDEX (\w+) ON {tabla} \((.*?)\) WHERE (.*?);", sql)
+    for nombre, columnas, condicion in unicos:
+        definicion.indices_unicos[nombre] = (_lista(columnas), condicion)
     return definicion
 
 
@@ -139,6 +145,15 @@ def _definicion_desde_tablas(tabla: Table) -> DefinicionDeTabla:
         indices={
             indice.name: tuple(columna.name for columna in indice.columns)
             for indice in tabla.indexes
+            if not indice.unique
+        },
+        indices_unicos={
+            indice.name: (
+                tuple(columna.name for columna in indice.columns),
+                str(indice.dialect_options["postgresql"]["where"]),
+            )
+            for indice in tabla.indexes
+            if indice.unique
         },
     )
     for restriccion in tabla.constraints:
@@ -160,7 +175,7 @@ def _definicion_desde_tablas(tabla: Table) -> DefinicionDeTabla:
     return definicion
 
 
-def test_tablas_tiene_las_18_tablas_del_modelo_de_datos() -> None:
+def test_tablas_tiene_las_19_tablas_del_modelo_de_datos() -> None:
     assert set(metadata.tables) == _NOMBRES_DE_LAS_19_TABLAS
     creadas = set(re.findall(r"^CREATE TABLE (\w+) \(", _sql_del_esquema(), re.MULTILINE))
     assert creadas == _NOMBRES_DE_LAS_19_TABLAS
@@ -177,6 +192,7 @@ def test_tablas_coincide_con_el_sql(nombre: str) -> None:
     assert de_tablas.unicas == del_sql.unicas
     assert de_tablas.checks == del_sql.checks
     assert de_tablas.indices == del_sql.indices
+    assert de_tablas.indices_unicos == del_sql.indices_unicos
 
 
 def test_los_check_con_expresion_regular_solo_existen_en_postgresql(motor: Engine) -> None:
@@ -186,6 +202,24 @@ def test_los_check_con_expresion_regular_solo_existen_en_postgresql(motor: Engin
 
     assert ("ck_vehiculos_1" in nombres) == (motor.dialect.name == "postgresql")
     assert "ck_vehiculos_3" in nombres
+
+
+def _estados_de_la_condicion(condicion: str) -> set[str]:
+    lista = re.fullmatch(r"estado NOT IN \((.*)\)", condicion)
+    assert lista, condicion
+    return set(re.findall(r"'([^']*)'", lista[1]))
+
+
+def test_rn_27_el_indice_usa_la_misma_lista_de_estados_cerrados_que_el_dominio() -> None:
+    """«Orden abierta» = cualquier estado distinto de los cerrados, en el dominio y en la base."""
+    del_dominio = {estado.value for estado in ESTADOS_DE_ORDEN_CERRADA}
+    (_, del_sql), = _definicion_desde_el_sql(_sql_del_esquema(), "ordenes").indices_unicos.values()
+    (_, de_tablas), = _definicion_desde_tablas(metadata.tables["ordenes"]).indices_unicos.values()
+
+    assert del_dominio == {"Cerrada", "Cerrada sin Reparación", "Cancelada"}
+    assert _estados_de_la_condicion(del_sql) == del_dominio
+    assert _estados_de_la_condicion(de_tablas) == del_dominio
+    assert {e for e in EstadoOrden if MAQUINA_DE_ORDEN.es_final(e)} == ESTADOS_DE_ORDEN_CERRADA
 
 
 @pytest.fixture
@@ -371,8 +405,12 @@ def test_orden_del_profesor_avanza_con_los_casos_de_uso(base_con_datos_iniciales
 
 
 def test_el_primer_folio_nuevo_es_os_0001(base_con_datos_iniciales: Engine) -> None:
-    """Un vehículo del profesor que regresa reutiliza sus registros (CA-003)."""
+    """Un vehículo del profesor que regresa reutiliza sus registros (CA-003).
+
+    Por RN-27 solo regresa cuando su orden anterior ya se cerró: aquí se cancela AUT-O001.
+    """
     taller = TallerEnBase(base_con_datos_iniciales)
+    taller.cancelacion.cancelar(CancelarOrden("AUT-O001", "Visita anterior", ASESOR))
 
     resultado = taller.recepcion.registrar_orden(
         RegistrarOrden(ASESOR, "PIA-AUT-001", "Revisión", 1000, NivelDeCombustible.LLENO)
@@ -380,3 +418,14 @@ def test_el_primer_folio_nuevo_es_os_0001(base_con_datos_iniciales: Engine) -> N
 
     assert resultado.numero_orden == "OS-0001"
     assert resultado.id_cliente == "AUT-C014"
+
+
+def test_rn_27_vehiculo_del_profesor_con_su_orden_abierta_no_abre_otra(
+    base_con_datos_iniciales: Engine,
+) -> None:
+    taller = TallerEnBase(base_con_datos_iniciales)
+
+    with pytest.raises(VehiculoConOrdenAbierta, match="AUT-O001"):
+        taller.recepcion.registrar_orden(
+            RegistrarOrden(ASESOR, "PIA-AUT-001", "Revisión", 1000, NivelDeCombustible.LLENO)
+        )

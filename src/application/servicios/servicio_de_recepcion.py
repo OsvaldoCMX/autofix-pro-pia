@@ -10,6 +10,7 @@ from domain.compartido.errores import ValorInvalido, VehiculoNoEncontrado
 from domain.compartido.valores import VIN, Placas
 from domain.ordenes.orden_de_servicio import OrdenDeServicio
 from domain.ordenes.valores import EstadoDeRecepcion
+from domain.servicios.verificador_de_orden_unica import VerificadorDeOrdenUnica
 from domain.vehiculos.vehiculo import Vehiculo
 
 
@@ -32,6 +33,7 @@ class ServicioDeRecepcion:
         placas = Placas(comando.placas)
         recepcion = EstadoDeRecepcion(comando.kilometraje, comando.nivel_de_combustible)
         with self._uow as uow:
+            VerificadorDeOrdenUnica().verificar(placas, uow.ordenes.abierta_del_vehiculo(placas))
             cliente = _preparar_cliente_y_vehiculo(uow, placas, comando)
             orden = OrdenDeServicio.registrar(
                 uow.ordenes.siguiente_numero(),

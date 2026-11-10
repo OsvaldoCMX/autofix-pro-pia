@@ -4,6 +4,7 @@ from __future__ import annotations
 import pytest
 from fastapi.testclient import TestClient
 
+from domain.servicios.verificador_de_orden_unica import VerificadorDeOrdenUnica
 from tests.api.pasos import (
     ASESOR,
     CAJA,
@@ -83,6 +84,14 @@ def test_ca_003_encuentra_cliente_recurrente_por_placas(cliente: TestClient) -> 
 def test_ca_003_orden_con_placas_existentes_reutiliza_y_actualiza(cliente: TestClient) -> None:
     datos = datos_de_orden()
     primera = exigir(cliente.post("/api/ordenes", json=datos, headers=ASESOR), 201)
+    # Cliente recurrente: su visita anterior ya terminó (RN-27).
+    cancelacion = {"motivo": "Visita anterior"}
+    exigir(
+        cliente.post(
+            f"/api/ordenes/{primera['numero_orden']}/cancelacion", json=cancelacion, headers=ASESOR
+        ),
+        200,
+    )
     actualizado = {**datos["cliente"], "telefono": "81-9999"}
 
     segunda = exigir(
@@ -271,3 +280,31 @@ def test_roles_que_leen_el_expediente(
     numero = recibida(cliente)
 
     assert cliente.get(f"/api/ordenes/{numero}", headers=encabezados).status_code == 200
+
+
+def test_ca_052_no_abre_segunda_orden_del_mismo_vehiculo(cliente: TestClient) -> None:
+    datos = datos_de_orden()
+    primera = exigir(cliente.post("/api/ordenes", json=datos, headers=ASESOR), 201)
+
+    segunda = exigir(cliente.post("/api/ordenes", json=datos, headers=ASESOR), 409)
+
+    assert segunda["error"] == "VehiculoConOrdenAbierta"
+    assert segunda["detalle"] == (
+        f"El vehículo con placas {primera['placas']} ya tiene abierta la orden "
+        f"{primera['numero_orden']} (estado «Recibida»). Ábrala en lugar de registrar otra."
+    )
+
+
+def test_rn_27_si_la_base_rechaza_la_segunda_orden_responde_el_mismo_409(
+    cliente: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Dos clics al mismo tiempo: los dos pasan la revisión y la base rechaza el segundo."""
+    datos = datos_de_orden()
+    primera = exigir(cliente.post("/api/ordenes", json=datos, headers=ASESOR), 201)
+    monkeypatch.setattr(VerificadorDeOrdenUnica, "verificar", lambda *_: None)
+
+    segunda = exigir(cliente.post("/api/ordenes", json=datos, headers=ASESOR), 409)
+
+    assert segunda["error"] == "VehiculoConOrdenAbierta"
+    assert primera["numero_orden"] in segunda["detalle"]
+    assert "Ábrala en lugar de registrar otra." in segunda["detalle"]

@@ -139,6 +139,10 @@ vehiculos = Table(
     Index("ix_vehiculos_cliente", "id_cliente"),
 )
 
+# RN-27: la misma lista de estados cerrados que el dominio (`ESTADOS_DE_ORDEN_CERRADA`).
+INDICE_DE_ORDEN_ABIERTA = "uq_ordenes_una_abierta_por_vehiculo"
+CONDICION_DE_ORDEN_ABIERTA = "estado NOT IN ('Cerrada', 'Cerrada sin Reparación', 'Cancelada')"
+
 ordenes = Table(
     "ordenes",
     metadata,
@@ -227,6 +231,13 @@ ordenes = Table(
     Index("ix_ordenes_cliente", "id_cliente"),
     Index("ix_ordenes_placas", "placas"),
     Index("ix_ordenes_pago_fecha", "pago_registrado_en"),
+    Index(
+        INDICE_DE_ORDEN_ABIERTA,
+        "placas",
+        unique=True,
+        postgresql_where=text(CONDICION_DE_ORDEN_ABIERTA),
+        sqlite_where=text(CONDICION_DE_ORDEN_ABIERTA),
+    ),
 )
 
 trabajos = Table(

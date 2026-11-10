@@ -31,6 +31,7 @@ CODIGOS_DE_ERROR: dict[type[dominio.ErrorDeDominio], int] = {
     dominio.PagoNoPermitido: 409,
     dominio.EntregaNoPermitida: 409,
     dominio.CancelacionNoPermitida: 409,
+    dominio.VehiculoConOrdenAbierta: 409,
     dominio.OrdenNoEncontrada: 404,
     dominio.CotizacionNoEncontrada: 404,
     dominio.ClienteNoEncontrado: 404,

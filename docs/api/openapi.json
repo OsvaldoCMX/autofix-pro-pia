@@ -386,6 +386,16 @@
               }
             }
           },
+          "409": {
+            "description": "Viola una regla o transición del negocio.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Un dato es inválido.",
             "content": {

@@ -13,6 +13,7 @@ from collections.abc import Sequence
 from typing import Any
 
 from sqlalchemy import Connection, Table, delete, func, insert, select, update
+from sqlalchemy.exc import IntegrityError
 
 from application.puertos import AlertaInterna, CatalogoDeServicios, RepositorioDeAlertas
 from domain.clientes.cliente import Cliente, TipoCliente
@@ -32,12 +33,15 @@ from domain.cotizaciones.repositorio import RepositorioDeCotizaciones
 from domain.cotizaciones.valores import VersionCotizacion
 from domain.empleados.empleado import Empleado
 from domain.empleados.repositorio import RepositorioDeEmpleados
+from domain.ordenes.estados import ESTADOS_DE_ORDEN_CERRADA
 from domain.ordenes.orden_de_servicio import OrdenDeServicio
 from domain.ordenes.repositorio import RepositorioDeOrdenes
+from domain.servicios.verificador_de_orden_unica import vehiculo_con_orden_abierta
 from domain.vehiculos.repositorio import RepositorioDeVehiculos
 from domain.vehiculos.vehiculo import Vehiculo
 from infrastructure.base_de_datos import mapeo
 from infrastructure.base_de_datos.tablas import (
+    INDICE_DE_ORDEN_ABIERTA,
     alertas_internas,
     catalogo_servicios,
     clientes,
@@ -168,8 +172,36 @@ class RepositorioDeOrdenesSqlAlchemy(RepositorioDeOrdenes):
             select(ordenes.c.numero).where(ordenes.c.numero == clave)
         ).first():
             raise ValorInvalido(f"La orden {orden.numero} ya existe.")
-        self._escribir(orden)
+        try:
+            self._escribir_orden_nueva(orden)
+        except IntegrityError as error:
+            if not _es_otra_orden_abierta(error):
+                raise
+            abierta = self.abierta_del_vehiculo(orden.placas)
+            raise vehiculo_con_orden_abierta(orden.placas, abierta) from error
         self._recordar(orden)
+
+    def abierta_del_vehiculo(self, placas: Placas) -> OrdenDeServicio | None:
+        numero = self._conexion.execute(
+            select(ordenes.c.numero)
+            .where(
+                ordenes.c.placas == str(placas),
+                ordenes.c.estado.not_in([estado.value for estado in ESTADOS_DE_ORDEN_CERRADA]),
+            )
+            .order_by(ordenes.c.numero)
+            .limit(1)
+        ).scalar()
+        return None if numero is None else self.obtener(NumeroOrden(numero))
+
+    def _escribir_orden_nueva(self, orden: OrdenDeServicio) -> None:
+        """En PostgreSQL un error deja la transacción inservible: el savepoint la conserva para
+        poder leer la otra orden y responder con el mismo mensaje del verificador (RN-27).
+        SQLite solo rechaza la sentencia, así que ahí no hace falta."""
+        if self._conexion.dialect.name != "postgresql":
+            self._escribir(orden)
+            return
+        with self._conexion.begin_nested():
+            self._escribir(orden)
 
     def guardar(self, orden: OrdenDeServicio) -> None:
         self._escribir(orden)
@@ -430,3 +462,9 @@ class CatalogoDeServiciosSqlAlchemy(CatalogoDeServicios):
             .order_by(catalogo_servicios.c.recurso_id)
         )
         return tuple(self._conexion.execute(consulta).scalars())
+
+
+def _es_otra_orden_abierta(error: IntegrityError) -> bool:
+    """PostgreSQL nombra el índice; SQLite solo dice qué columna repitió."""
+    mensaje = str(error.orig)
+    return INDICE_DE_ORDEN_ABIERTA in mensaje or "ordenes.placas" in mensaje

@@ -17,6 +17,8 @@ ESTADOS_ORDEN = ["Recibida", "En Diagnóstico", "Cotizada", "Autorizada", "En Re
                  "Cerrada sin Reparación", "Cancelada"]
 ESTADOS_COTIZACION = ["Pendiente de Aprobación Gerencial", "Requiere Ajuste", "Pendiente de Autorización del Cliente",
                       "Autorizada", "Autorizada Parcialmente", "Rechazada"]
+# Una orden en estos estados está cerrada; en cualquier otro, abierta (RN-27, ESTADOS_DE_ORDEN_CERRADA)
+ESTADOS_ORDEN_CERRADA = ["Cerrada", "Cerrada sin Reparación", "Cancelada"]
 # Estados en los que el asesor puede corregir una cotización (RN-25)
 ESTADOS_CORREGIBLES = ["Pendiente de Aprobación Gerencial", "Pendiente de Autorización del Cliente"]
 ESTADOS_TRABAJO = ["Pendiente", "En Progreso", "Completado", "No Autorizado"]
@@ -125,7 +127,10 @@ tabla("ordenes", "Órdenes de Servicio (Aggregate Orden de Servicio). Los Value 
     "NOT (pago_monto IS NOT NULL AND credito_monto IS NOT NULL)",
     "estado <> 'Cancelada' OR cancelacion_motivo IS NOT NULL",
 ], indices=[("ix_ordenes_estado", "estado"), ("ix_ordenes_cliente", "id_cliente"), ("ix_ordenes_placas", "placas"),
-            ("ix_ordenes_pago_fecha", "pago_registrado_en")])
+            ("ix_ordenes_pago_fecha", "pago_registrado_en"),
+            # RN-27: respaldo ante dos registros al mismo tiempo (doble clic)
+            ("uq_ordenes_una_abierta_por_vehiculo", "placas",
+             dict(unico=True, donde=f"estado NOT IN ({lista(ESTADOS_ORDEN_CERRADA)})"))])
 
 tabla("trabajos", "Trabajos de la orden (entidad interna). Se crean al registrar la decisión del cliente.", [
     ("numero_orden", "VARCHAR(20)", False, None, "Orden"),
@@ -337,8 +342,11 @@ def sql():
         o.append(f"CREATE TABLE {t['nombre']} (")
         o.append(",\n".join(lineas))
         o.append(");")
-        for nombre, cols in t["indices"]:
-            o.append(f"CREATE INDEX {nombre} ON {t['nombre']} ({cols});")
+        for nombre, cols, *opciones in t["indices"]:
+            opcion = opciones[0] if opciones else {}
+            unico = "UNIQUE " if opcion.get("unico") else ""
+            donde = f" WHERE {opcion['donde']}" if opcion.get("donde") else ""
+            o.append(f"CREATE {unico}INDEX {nombre} ON {t['nombre']} ({cols}){donde};")
         o.append(f"COMMENT ON TABLE {t['nombre']} IS '{t['descripcion'].replace(chr(39), chr(39) * 2)}';")
         for c, _tipo, _n, _d, com in t["columnas"]:
             o.append(f"COMMENT ON COLUMN {t['nombre']}.{c} IS '{com.replace(chr(39), chr(39) * 2)}';")

@@ -3,9 +3,9 @@ from __future__ import annotations
 
 import pytest
 
-from application.comandos import DatosDeVehiculo, RegistrarCliente, RegistrarOrden
+from application.comandos import CancelarOrden, DatosDeVehiculo, RegistrarCliente, RegistrarOrden
 from domain.clientes.cliente import TipoCliente
-from domain.compartido.errores import ClienteNoEncontrado, ValorInvalido
+from domain.compartido.errores import ClienteNoEncontrado, ValorInvalido, VehiculoConOrdenAbierta
 from domain.ordenes.eventos import OrdenRecibida
 from domain.ordenes.valores import EstadoDeRecepcion, NivelDeCombustible
 from tests.unit.application.escenarios import AHORA, ASESOR, FLOTILLA, PARTICULAR, Taller, recibida
@@ -25,6 +25,12 @@ def _comando(**cambios: object) -> RegistrarOrden:
         "cliente": PARTICULAR,
     }
     return RegistrarOrden(**{**datos, **cambios})  # type: ignore[arg-type]
+
+
+def _visita_anterior_terminada(taller: Taller) -> None:
+    """Un cliente recurrente regresa cuando su orden anterior ya se cerró (RN-27)."""
+    anterior = taller.recepcion.registrar_orden(_comando())
+    taller.cancelacion.cancelar(CancelarOrden(anterior.numero_orden, "Visita anterior", ASESOR))
 
 
 def test_ca_001_registra_cliente_vehiculo_y_orden_recibida(taller: Taller) -> None:
@@ -62,7 +68,7 @@ def test_ca_002_guarda_kilometraje_y_combustible(taller: Taller) -> None:
 
 
 def test_ca_003_reutiliza_vehiculo_y_cliente_por_placas(taller: Taller) -> None:
-    taller.recepcion.registrar_orden(_comando())
+    _visita_anterior_terminada(taller)
 
     segunda = taller.recepcion.registrar_orden(_comando(vehiculo=None, cliente=None))
 
@@ -73,7 +79,7 @@ def test_ca_003_reutiliza_vehiculo_y_cliente_por_placas(taller: Taller) -> None:
 
 
 def test_ca_003_actualiza_cliente_y_vehiculo(taller: Taller) -> None:
-    taller.recepcion.registrar_orden(_comando())
+    _visita_anterior_terminada(taller)
 
     taller.recepcion.registrar_orden(
         _comando(
@@ -89,7 +95,7 @@ def test_ca_003_actualiza_cliente_y_vehiculo(taller: Taller) -> None:
 
 
 def test_ca_003_placas_de_otro_cliente_es_invalido(taller: Taller) -> None:
-    taller.recepcion.registrar_orden(_comando())
+    _visita_anterior_terminada(taller)
 
     with pytest.raises(ValorInvalido, match="otro cliente"):
         taller.recepcion.registrar_orden(_comando(id_cliente="CLI-9999"))
@@ -197,3 +203,39 @@ def test_rn_23_error_al_registrar_no_consume_folios(taller: Taller) -> None:
         taller.recepcion.registrar_orden(_comando(motivo_de_ingreso="  "))
 
     assert taller.recepcion.registrar_orden(_comando()).numero_orden == "OS-0001"
+
+
+def test_ca_052_no_abre_segunda_orden_del_mismo_vehiculo(taller: Taller) -> None:
+    taller.recepcion.registrar_orden(_comando())
+
+    with pytest.raises(VehiculoConOrdenAbierta) as error:
+        taller.recepcion.registrar_orden(_comando(vehiculo=None, cliente=None))
+
+    assert str(error.value) == (
+        "El vehículo con placas ABC123 ya tiene abierta la orden OS-0001 (estado «Recibida»). "
+        "Ábrala en lugar de registrar otra."
+    )
+    assert list(taller.datos.ordenes) == ["OS-0001"]
+
+
+def test_rn_27_si_hay_orden_abierta_no_cambia_cliente_ni_vehiculo(taller: Taller) -> None:
+    taller.recepcion.registrar_orden(_comando())
+
+    with pytest.raises(VehiculoConOrdenAbierta):
+        taller.recepcion.registrar_orden(
+            _comando(
+                vehiculo=DatosDeVehiculo(VIN_1, "Nissan", "Sentra", 2021),
+                cliente=RegistrarCliente("Otro Nombre"),
+            )
+        )
+
+    assert taller.datos.clientes["CLI-0001"].nombre == "Luis Peña"
+    assert taller.datos.vehiculos["ABC123"].modelo == "Versa"
+
+
+def test_rn_27_con_la_orden_anterior_cancelada_si_se_abre_otra(taller: Taller) -> None:
+    _visita_anterior_terminada(taller)
+
+    segunda = taller.recepcion.registrar_orden(_comando(vehiculo=None, cliente=None))
+
+    assert segunda.numero_orden == "OS-0002"

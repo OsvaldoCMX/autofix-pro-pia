@@ -153,6 +153,7 @@ CREATE INDEX ix_ordenes_estado ON ordenes (estado);
 CREATE INDEX ix_ordenes_cliente ON ordenes (id_cliente);
 CREATE INDEX ix_ordenes_placas ON ordenes (placas);
 CREATE INDEX ix_ordenes_pago_fecha ON ordenes (pago_registrado_en);
+CREATE UNIQUE INDEX uq_ordenes_una_abierta_por_vehiculo ON ordenes (placas) WHERE estado NOT IN ('Cerrada', 'Cerrada sin Reparación', 'Cancelada');
 COMMENT ON TABLE ordenes IS 'Órdenes de Servicio (Aggregate Orden de Servicio). Los Value Objects (recepción, diagnóstico, nota, pago, crédito, cancelación) se guardan como columnas.';
 COMMENT ON COLUMN ordenes.numero IS 'Folio (NumeroOrden): OS-0001… o AUT-O001 en los datos del profesor';
 COMMENT ON COLUMN ordenes.id_cliente IS 'Cliente';

@@ -86,6 +86,10 @@ class CancelacionNoPermitida(ErrorDeDominio):
     )
 
 
+class VehiculoConOrdenAbierta(ErrorDeDominio):
+    """RN-27: el vehículo ya tiene una orden abierta (H-PIA-22)."""
+
+
 class OrdenNoEncontrada(ErrorDeDominio):
     mensaje_por_defecto = "No se encontró la orden de servicio."
 

@@ -616,7 +616,7 @@ ca("CA-052", "US-001", [
     (Y, "aunque las dos solicitudes lleguen al mismo tiempo, solo una orden debe quedar registrada y la otra debe recibir el mismo mensaje"),
 ], F1, ["RN-27"], "VerificadorDeOrdenUnica, RepositorioDeOrdenes.abierta_del_vehiculo, índice único parcial de ordenes(placas), error VehiculoConOrdenAbierta",
    "ServicioDeRecepcion.registrar_orden", "POST /api/ordenes (409)", ASE,
-   cambio="H-PIA-22", nombre="No se abre una segunda orden del mismo vehículo", planeado=True)
+   cambio="H-PIA-22", nombre="No se abre una segunda orden del mismo vehículo")
 
 ca("CA-053", "US-020", [
     (D, "que el asesor va a asignar un técnico para el diagnóstico o para los trabajos autorizados"),
@@ -817,7 +817,7 @@ REGLAS = {
 }
 
 # Reglas aprobadas en la Fase 13 que todavía no se construyen (misma idea que `planeado` en los CA).
-REGLAS_PLANEADAS = {"RN-27", "RN-28", "RN-29", "RN-30", "RN-31", "RN-32", "RN-33", "RN-34", "RN-35"}
+REGLAS_PLANEADAS = {"RN-28", "RN-29", "RN-30", "RN-31", "RN-32", "RN-33", "RN-34", "RN-35"}
 
 # ----------------------------------------------------------------------------- pruebas previstas
 # Convención: toda prueba de aceptación se llama test_ca_0XX_<descripcion> para poder

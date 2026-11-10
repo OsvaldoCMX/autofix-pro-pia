@@ -81,7 +81,7 @@ def registrar_cliente(datos: NuevoCliente, contenedor: ContenedorDeLaApp) -> Res
     "/ordenes",
     status_code=status.HTTP_201_CREATED,
     summary="Registrar la orden de servicio",
-    responses=errores(400, 401, 403, 404, 422),
+    responses=errores(400, 401, 403, 404, 409, 422),
 )
 def registrar_orden(
     datos: NuevaOrden, asesor: Asesor, contenedor: ContenedorDeLaApp

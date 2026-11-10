@@ -5,6 +5,7 @@ from collections.abc import Callable
 
 import pytest
 
+from application.comandos import CancelarOrden
 from application.puertos import AlertaInterna
 from application.unidad_de_trabajo import UnidadDeTrabajo
 from domain.clientes.cliente import Cliente, ResponsableDeFlotilla, TipoCliente
@@ -15,6 +16,7 @@ from domain.compartido.errores import (
     ErrorDeDominio,
     OrdenNoEncontrada,
     ValorInvalido,
+    VehiculoConOrdenAbierta,
     VehiculoNoEncontrado,
 )
 from domain.compartido.valores import VIN, Dinero, NumeroOrden, Placas
@@ -24,8 +26,17 @@ from domain.cotizaciones.valores import TipoCotizacion, VersionCotizacion
 from domain.empleados.empleado import RolDeEmpleado
 from domain.ordenes.orden_de_servicio import OrdenDeServicio
 from domain.ordenes.valores import EstadoDeRecepcion, NivelDeCombustible
+from domain.servicios.verificador_de_orden_unica import vehiculo_con_orden_abierta
 from domain.vehiculos.vehiculo import Vehiculo
-from tests.unit.application.escenarios import AHORA, ASESOR, TECNICO, Taller, en_diagnostico
+from tests.integration.apoyo_base import TallerEnBase
+from tests.unit.application.escenarios import (
+    AHORA,
+    ASESOR,
+    TECNICO,
+    Taller,
+    en_diagnostico,
+    recibida,
+)
 
 ID_CLIENTE = "CLI-1"
 NUMERO = NumeroOrden("OS-0001")
@@ -285,3 +296,55 @@ def test_catalogo_devuelve_los_servicios_inhabilitados_de_la_orden(taller: Talle
             "AUT-P011",
         )
         assert uow.catalogo.servicios_inhabilitados_de_la_orden(NumeroOrden("OS-9999")) == ()
+
+
+def _placas_de(taller: Taller, numero: str) -> Placas:
+    with taller.uow() as uow:
+        return uow.ordenes.obtener(NumeroOrden(numero)).placas
+
+
+def test_rn_27_abierta_del_vehiculo_encuentra_la_orden_abierta(taller: Taller) -> None:
+    numero = recibida(taller)
+    placas = _placas_de(taller, numero)
+
+    with taller.uow() as uow:
+        abierta = uow.ordenes.abierta_del_vehiculo(placas)
+        sin_ordenes = uow.ordenes.abierta_del_vehiculo(Placas("ZZZ999"))
+
+    assert abierta is not None and str(abierta.numero) == numero
+    assert sin_ordenes is None
+
+
+def test_rn_27_una_orden_cancelada_ya_no_esta_abierta(taller: Taller) -> None:
+    numero = recibida(taller)
+    taller.cancelacion.cancelar(CancelarOrden(numero, "El cliente desistió", ASESOR))
+
+    with taller.uow() as uow:
+        assert uow.ordenes.abierta_del_vehiculo(_placas_de(taller, numero)) is None
+
+
+def test_rn_27_si_la_base_rechaza_la_segunda_orden_lanza_el_mismo_error(
+    taller_en_base: TallerEnBase,
+) -> None:
+    """Dos registros al mismo tiempo: el segundo se salta la revisión y lo detiene el índice."""
+    numero = recibida(taller_en_base)
+
+    with taller_en_base.uow() as uow:
+        primera = uow.ordenes.obtener(NumeroOrden(numero))
+        repetida = OrdenDeServicio.registrar(
+            uow.ordenes.siguiente_numero(),
+            primera.id_cliente,
+            False,
+            primera.placas,
+            ASESOR,
+            "Doble clic",
+            EstadoDeRecepcion(1000, NivelDeCombustible.MEDIO),
+            AHORA,
+        )
+        with pytest.raises(VehiculoConOrdenAbierta) as error:
+            uow.ordenes.agregar(repetida)
+        esperado = str(vehiculo_con_orden_abierta(primera.placas, primera))
+
+    assert str(error.value) == esperado
+    with taller_en_base.uow() as uow:
+        assert uow.ordenes.abierta_del_vehiculo(primera.placas) is not None
