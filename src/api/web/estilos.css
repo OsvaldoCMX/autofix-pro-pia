@@ -183,6 +183,8 @@ a { color: var(--principal); }
   font: inherit;
 }
 
+.campo input[readonly] { background: var(--gris-fondo); font-weight: 700; }
+
 .campo [aria-invalid="true"] { border-color: var(--error-borde); background: var(--error-fondo); }
 
 .ayuda-campo { color: var(--error-borde); font-weight: 600; }
