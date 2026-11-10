@@ -74,8 +74,13 @@ async function leerJson(respuesta) {
   }
 }
 
-async function enviar(metodo, ruta, { cuerpo, parametros, clave } = {}) {
-  const url = new URL(ruta, window.location.origin);
+/** "/api/ordenes/{numero}" con `{ numero: "OS-0001" }` → "/api/ordenes/OS-0001" (AU-38). */
+function armarRuta(ruta, enRuta = {}) {
+  return ruta.replace(/\{(\w+)\}/g, (_, nombre) => encodeURIComponent(String(enRuta[nombre])));
+}
+
+async function enviar(metodo, ruta, { cuerpo, parametros, clave, enRuta } = {}) {
+  const url = new URL(armarRuta(ruta, enRuta), window.location.origin);
   for (const [nombre, valor] of Object.entries(parametros ?? {})) {
     url.searchParams.set(nombre, valor);
   }
@@ -100,7 +105,11 @@ async function enviar(metodo, ruta, { cuerpo, parametros, clave } = {}) {
   throw new ErrorDeLaApi(datos.detalle, respuesta.status);
 }
 
-/** Llamada de una pantalla del personal: usa la clave guardada. */
+/**
+ * Llamada de una pantalla del personal: usa la clave guardada. La ruta se escribe como en el
+ * contrato de la API y sus partes van en `enRuta`:
+ * `pedir("POST", "/api/ordenes/{numero}/entrega", { enRuta: { numero } })`.
+ */
 export async function pedir(metodo, ruta, opciones = {}) {
   try {
     return await enviar(metodo, ruta, { ...opciones, clave: leerClave() });

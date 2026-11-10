@@ -55,7 +55,7 @@ autofix-pro/
 │       │                      (v3.1: sesion)
 │       ├── interfaz.py        (v3.1) sirve la página: `/` entrega index.html y `/web/…` sus archivos
 │       └── web/               (v3.1) la página: index.html, estilos.css y módulos JS (principal, api,
-│                              sesion, formato, ui y uno por puesto); la sirve FastAPI en `/` (ADR-017)
+│                              sesion, formato, ui, expediente y uno por puesto); la sirve FastAPI en `/` (ADR-017)
 ├── tests/
 │   ├── unit/domain/ · unit/application/ · integration/ · api/ · datos_profesor/
 │   └── conftest.py

@@ -91,16 +91,33 @@ export async function conBotonOcupado(boton, textoOcupado, accion) {
   }
 }
 
-/** Cuadro de confirmación con el verbo de la acción y «Regresar» (interfaz-web.md §1.5). */
-export function confirmar({ titulo, lineas = [], verbo }) {
+/** Una línea de la confirmación: texto, `{ destacado: "ABC123" }` (letra grande) o un elemento. */
+function lineaDeConfirmacion(linea) {
+  if (linea instanceof Node) {
+    return linea;
+  }
+  if (linea?.destacado !== undefined) {
+    return crear("p", { className: "destacado" }, linea.destacado);
+  }
+  return crear("p", {}, linea);
+}
+
+/**
+ * Cuadro de confirmación con el verbo de la acción y «Regresar» (interfaz-web.md §1.5).
+ * Responde `true` o `false`; con `motivo` (la etiqueta del campo), responde el texto escrito
+ * o `null` si regresó. El motivo es obligatorio: sin texto no se cierra.
+ */
+export function confirmar({ titulo, lineas = [], verbo, motivo }) {
   return new Promise((resolver) => {
     const regresar = crear("button", { type: "button", className: "boton boton-secundario" }, "Regresar");
     const aceptar = crear("button", { type: "button", className: "boton" }, verbo);
+    const campoDeMotivo = motivo ? areaDeTexto("confirmacion-motivo", motivo, { maxLength: 1000 }) : null;
     const cuadro = crear(
       "dialog",
       { className: "confirmacion" },
       crear("h2", {}, titulo),
-      ...lineas.map((linea) => crear("p", {}, linea)),
+      ...lineas.map(lineaDeConfirmacion),
+      campoDeMotivo,
       crear("div", { className: "acciones" }, aceptar, regresar),
     );
     const cerrar = (respuesta) => {
@@ -108,11 +125,25 @@ export function confirmar({ titulo, lineas = [], verbo }) {
       cuadro.remove();
       resolver(respuesta);
     };
-    aceptar.addEventListener("click", () => cerrar(true));
-    regresar.addEventListener("click", () => cerrar(false));
+    aceptar.addEventListener("click", () => {
+      if (!campoDeMotivo) {
+        cerrar(true);
+        return;
+      }
+      const entrada = campoDeMotivo.querySelector("textarea");
+      const texto = entrada.value.trim();
+      if (texto === "") {
+        marcarCampo(entrada, `Escriba el ${motivo.toLowerCase()}.`);
+        entrada.focus();
+        return;
+      }
+      cerrar(texto);
+    });
+    const noConfirmar = motivo ? null : false;
+    regresar.addEventListener("click", () => cerrar(noConfirmar));
     cuadro.addEventListener("cancel", (evento) => {
       evento.preventDefault();
-      cerrar(false);
+      cerrar(noConfirmar);
     });
     document.body.append(cuadro);
     cuadro.showModal();
@@ -131,16 +162,93 @@ export function marcarCampo(campo, mensaje) {
   }
 }
 
-/** Un campo con su etiqueta y su lugar para el mensaje de error. */
-export function campo(id, etiqueta, atributos = {}) {
-  const entrada = crear("input", { id, name: id, type: "text", ...atributos });
-  entrada.setAttribute("aria-describedby", `${id}-ayuda`);
+function conEtiqueta(entrada, etiqueta) {
+  entrada.setAttribute("aria-describedby", `${entrada.id}-ayuda`);
   return crear(
     "div",
     { className: "campo" },
-    crear("label", { htmlFor: id }, etiqueta),
+    crear("label", { htmlFor: entrada.id }, etiqueta),
     entrada,
-    crear("span", { className: "ayuda-campo", id: `${id}-ayuda` }),
+    crear("span", { className: "ayuda-campo", id: `${entrada.id}-ayuda` }),
+  );
+}
+
+/** Un campo con su etiqueta y su lugar para el mensaje de error. */
+export function campo(id, etiqueta, atributos = {}) {
+  return conEtiqueta(crear("input", { id, name: id, type: "text", ...atributos }), etiqueta);
+}
+
+/** Campo de texto largo (motivos, descripciones). */
+export function areaDeTexto(id, etiqueta, atributos = {}) {
+  return conEtiqueta(crear("textarea", { id, name: id, rows: 3, ...atributos }), etiqueta);
+}
+
+/**
+ * Lista desplegable. `opciones`: textos, o `{ valor, texto }`. Con `vacia`, la primera opción
+ * es ese texto y no tiene valor (obliga a elegir).
+ */
+export function lista(id, etiqueta, opciones, { vacia, valor } = {}) {
+  const elegir = crear("select", { id, name: id });
+  if (vacia) {
+    elegir.append(crear("option", { value: "" }, vacia));
+  }
+  for (const opcion of opciones) {
+    const { valor: v, texto } = typeof opcion === "string" ? { valor: opcion, texto: opcion } : opcion;
+    elegir.append(crear("option", { value: v }, texto));
+  }
+  if (valor !== undefined && valor !== null) {
+    elegir.value = valor;
+  }
+  return conEtiqueta(elegir, etiqueta);
+}
+
+/** Casilla con su texto a la derecha; el área para tocar es todo el renglón. */
+export function casilla(id, texto, atributos = {}) {
+  return crear(
+    "label",
+    { className: "casilla", htmlFor: id },
+    crear("input", { id, name: id, type: "checkbox", ...atributos }),
+    crear("span", {}, texto),
+  );
+}
+
+/**
+ * Revisa los campos obligatorios de la página: `[[entrada, "Escriba …"], …]`. Marca los vacíos,
+ * lleva el cursor al primero y responde si todos tienen dato. Solo ayuda: la API vuelve a validar.
+ */
+export function revisarObligatorios(pares) {
+  let primero = null;
+  for (const [entrada, mensaje] of pares) {
+    const vacio = entrada.value.trim() === "";
+    marcarCampo(entrada, vacio ? mensaje : null);
+    primero ??= vacio ? entrada : null;
+  }
+  primero?.focus();
+  return primero === null;
+}
+
+/** Lista `dl` de datos: `[["Placas", "ABC123"], …]`; se omiten los que no tienen valor. */
+export function datos(pares) {
+  const contenedor = crear("dl", { className: "datos" });
+  for (const [titulo, valor] of pares) {
+    if (valor !== null && valor !== undefined && valor !== "") {
+      contenedor.append(crear("dt", {}, titulo), crear("dd", {}, valor));
+    }
+  }
+  return contenedor;
+}
+
+/** Tabla sencilla: encabezados y renglones (cada celda es texto o un elemento). */
+export function tabla(encabezados, renglones) {
+  return crear(
+    "div",
+    { className: "tabla-con-desplazamiento" },
+    crear(
+      "table",
+      { className: "tabla" },
+      crear("thead", {}, crear("tr", {}, ...encabezados.map((texto) => crear("th", { scope: "col" }, texto)))),
+      crear("tbody", {}, ...renglones.map((celdas) => crear("tr", {}, ...celdas.map((celda) => crear("td", {}, celda))))),
+    ),
   );
 }
 

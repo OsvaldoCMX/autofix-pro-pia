@@ -21,6 +21,7 @@ PUESTOS = ["asesor.js", "tecnico.js", "gerente.js", "compras.js", "caja.js"]
 TIPOS = {".html": "text/html", ".css": "text/css", ".js": "text/javascript"}
 IMPORTACION = re.compile(r'import\s*\{([^}]*)\}\s*from\s*"\./([^"]+)"')
 EXPORTACION = re.compile(r"export\s+(?:async\s+)?(?:function|const|let|class)\s+(\w+)")
+LLAMADA = re.compile(r'pedir\(\s*"(GET|POST|PUT|DELETE)",\s*"(/api/[^"]+)"')
 RUTA_NO_ENCONTRADA = {
     "error": "RutaNoEncontrada",
     "detalle": "No encontramos lo que busca. Revise la dirección e intente de nuevo.",
@@ -85,6 +86,39 @@ def test_cada_puesto_tiene_menu_con_direcciones_documentadas(nombre: str) -> Non
 def _seccion_de_navegacion() -> str:
     texto = (RAIZ / "docs/interfaz-web.md").read_text(encoding="utf-8")
     return texto.split("## 3. Sesión y navegación")[1].split("## 4.")[0]
+
+
+def _rutas_que_usa(nombre: str) -> set[tuple[str, str]]:
+    """Las llamadas `pedir("POST", "/api/ordenes/{numero}/entrega", …)` de un módulo."""
+    return set(LLAMADA.findall(_texto(nombre)))
+
+
+@pytest.mark.parametrize("nombre", MODULOS)
+def test_la_pagina_solo_llama_rutas_que_existen_en_la_api(
+    cliente: TestClient, nombre: str
+) -> None:
+    contrato = cliente.get("/openapi.json").json()["paths"]
+    llamadas = _rutas_que_usa(nombre)
+
+    faltantes = {
+        (metodo, ruta)
+        for metodo, ruta in llamadas
+        if metodo.lower() not in contrato.get(ruta, {})
+    }
+    assert faltantes == set()
+
+
+@pytest.mark.parametrize("nombre", ["asesor.js", "expediente.js"])
+def test_las_rutas_del_asesor_estan_en_interfaz_web(nombre: str) -> None:
+    """Regla 1 de CLAUDE.md: cada botón del Asesor usa una ruta de su tabla (§4.2)."""
+    texto = (RAIZ / "docs/interfaz-web.md").read_text(encoding="utf-8")
+    seccion = texto.split("### 4.2 Asesor de Servicio")[1].split("### 4.3")[0]
+    llamadas = _rutas_que_usa(nombre)
+
+    documentadas = {f"{metodo} {ruta}" for metodo, ruta in llamadas if f"`{metodo} {ruta}`" in seccion}
+
+    assert llamadas, f"{nombre} no llama a la API"
+    assert {f"{metodo} {ruta}" for metodo, ruta in llamadas} - documentadas == set()
 
 
 @pytest.mark.parametrize("nombre", ARCHIVOS)
