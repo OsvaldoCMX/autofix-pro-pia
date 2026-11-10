@@ -1,7 +1,9 @@
 """Contrato planeado de la API REST (prefijo /api). Se valida contra las rutas citadas en datos.CA."""
 import re
 
-from datos import CA
+from datos import CA, PLANEADO
+
+P1_PLANEADA, P2_PLANEADA = f"P1 · {PLANEADO}", f"P2 · {PLANEADO}"
 
 A, T, G, CO, CJ, P, S, TODOS = ("Asesor", "Técnico", "Gerente", "Compras", "Caja", "Público",
                                 "Sistema", "Cualquier empleado")

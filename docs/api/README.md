@@ -10,6 +10,7 @@ Contrato de la API que se implementa con FastAPI (ADR-008). Cuando la API esté 
 - **201** crea · **200** acción o consulta · **400** JSON mal formado · **401** sin token o token inválido · **403** rol no permitido o trabajo de otro técnico · **404** no existe · **409** regla o transición violada · **422** dato inválido · **501** función P2 aún no implementada.
 - Además de los errores que lista cada ruta, cualquier ruta con cuerpo JSON responde **400** si está mal formado, y cualquier ruta que reciba datos (cuerpo, ruta o parámetros) responde **422** si uno es inválido. FastAPI lee el JSON antes de revisar el token: un JSON mal formado responde 400 aunque falte el token.
 - Importes como texto con dos decimales (`"1500.00"`); fechas ISO 8601 con zona horaria.
+- **Planeado** en la columna Prioridad: la ruta está aprobada (Fase 13, revisión del 09/11/2026) y todavía no existe en la API; la Fase 14 quita la marca al construirla (`tests/api/test_contrato.py` comprueba que una ruta planeada aún no exista).
 
 ## Rutas (43)
 

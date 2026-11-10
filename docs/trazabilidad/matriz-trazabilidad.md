@@ -125,3 +125,5 @@ Operadores cubiertos: **AND** (E1, E2, E3, E5, E6, E7, E8), **OR** (E2, E3, E4, 
 
 **Prioridad:** 42 criterios son P1 completos; la parte P2 (PDF y fotos) se omitió por decisión del equipo y sus rutas responden 501 (ver `architecture/decisiones-tecnicas.md` §8). CA-027 no está implementado; CA-002, CA-005 y CA-024 están implementados, salvo sus fotos o su PDF.
 
+**Planeado:** criterio o regla aprobados en la Fase 13 (revisión del 09/11/2026) que todavía no se construyen; la Fase 14 quita la marca al construir cada uno y lo que se recorte queda documentado como planeado. Hoy no hay ninguno.
+

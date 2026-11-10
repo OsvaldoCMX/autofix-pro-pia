@@ -79,15 +79,23 @@ US = {
 #   máquina de estados, evento) · servicio: caso de uso · ruta: endpoint · rol · prioridad:
 #   P1 = se implementa en el PIA; P2 = se implementa si el tiempo lo permite (PDF/fotos)
 #   cambio: hallazgo que modificó el criterio en v3.0 (None = sin cambios desde U2/U3)
+#   planeado: aprobado en la Fase 13 y todavía sin construir; la Fase 14 quita la marca al
+#   construirlo (tests/test_trazabilidad.py exige que un criterio planeado aún no tenga prueba)
 D, C, E, Y = "Dado", "Cuando", "Entonces", "Y"
+PLANEADO = "Planeado"
 
 CA = {}
 
 
-def ca(id_, us, pasos, bpmn, reglas, dominio, servicio, ruta, rol, prioridad="P1", cambio=None, nombre=None):
+def ca(id_, us, pasos, bpmn, reglas, dominio, servicio, ruta, rol, prioridad="P1", cambio=None, nombre=None,
+       planeado=False):
     CA[id_] = dict(id=id_, us=us, pasos=pasos, bpmn=bpmn, reglas=reglas, dominio=dominio,
                    servicio=servicio, ruta=ruta, rol=rol, prioridad=prioridad, cambio=cambio,
-                   nombre=nombre)
+                   nombre=nombre, planeado=planeado)
+
+
+def prioridad_de(c):
+    return f"{c['prioridad']} · {PLANEADO}" if c["planeado"] else c["prioridad"]
 
 
 F1, F2, F3, F4, F5, F6 = ("Fase 1: Recepción y registro", "Fase 2: Diagnóstico y cotización",
@@ -589,6 +597,9 @@ REGLAS = {
     "RN-24": ("La cotización adicional es la versión siguiente (v.2, v.3…) y no modifica la cotización original.", "BRD §2 Excepciones"),
 }
 
+# Reglas aprobadas en la Fase 13 que todavía no se construyen (misma idea que `planeado` en los CA).
+REGLAS_PLANEADAS = set()
+
 # ----------------------------------------------------------------------------- pruebas previstas
 # Convención: toda prueba de aceptación se llama test_ca_0XX_<descripcion> para poder
 # localizarla desde la matriz (ver docs/architecture/decisiones-tecnicas.md §7).
@@ -623,6 +634,7 @@ def validar():
             assert r in REGLAS, (c["id"], r)
     reglas_usadas = {r for c in CA.values() for r in c["reglas"]}
     assert reglas_usadas == set(REGLAS), set(REGLAS) - reglas_usadas
+    assert REGLAS_PLANEADAS <= set(REGLAS), REGLAS_PLANEADAS - set(REGLAS)
     return len(NECESIDADES), len(US), len(CA), len(REGLAS)
 
 

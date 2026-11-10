@@ -1,4 +1,8 @@
-"""Compara la API real con el contrato de `docs/api/README.md`: las 43 rutas y sus roles."""
+"""Compara la API real con el contrato de `docs/api/README.md`: sus rutas y sus roles.
+
+Las rutas con la marca «Planeado» en la columna Prioridad están aprobadas (Fase 13) pero todavía
+no existen: se comprueba que sigan sin existir, y la Fase 14 quita la marca al construir cada una.
+"""
 from __future__ import annotations
 
 import json
@@ -18,6 +22,7 @@ from tests.api.pasos import ASESOR, CAJA, COMPRAS, GERENTE, SISTEMA, TECNICO, TO
 CONTRATO = Path(__file__).resolve().parents[2] / "docs/api/README.md"
 OPENAPI = CONTRATO.parent / "openapi.json"
 TOTAL_DE_RUTAS = 43
+MARCA_DE_PLANEADO = "Planeado"
 TOKENS_POR_ROL = {
     "Asesor": ASESOR,
     "Técnico": TECNICO,
@@ -51,6 +56,10 @@ class Ruta:
             url = url.replace(parametro, valor)
         return url
 
+    @property
+    def es_planeada(self) -> bool:
+        return MARCA_DE_PLANEADO in self.prioridad
+
     def __str__(self) -> str:
         return f"{self.metodo} {self.ruta}"
 
@@ -77,7 +86,9 @@ def _leer_contrato() -> list[Ruta]:
     return rutas
 
 
-RUTAS = _leer_contrato()
+CONTRATO_COMPLETO = _leer_contrato()
+PLANEADAS = [ruta for ruta in CONTRATO_COMPLETO if ruta.es_planeada]
+RUTAS = [ruta for ruta in CONTRATO_COMPLETO if not ruta.es_planeada]
 PROTEGIDAS = [ruta for ruta in RUTAS if not ruta.es_publica]
 ACCESOS_PROHIBIDOS = [
     (ruta, rol) for ruta in PROTEGIDAS for rol in TOKENS_POR_ROL if rol not in ruta.roles
@@ -119,18 +130,26 @@ def test_exportar_escribe_un_json_valido(tmp_path: Path) -> None:
     assert len(json.loads(destino.read_text(encoding="utf-8"))["paths"]) > 0
 
 
-def test_el_contrato_tiene_las_43_rutas() -> None:
-    assert len(RUTAS) == TOTAL_DE_RUTAS
+def test_el_contrato_tiene_todas_sus_rutas() -> None:
+    assert len(CONTRATO_COMPLETO) == TOTAL_DE_RUTAS
 
 
-def test_la_api_expone_exactamente_las_rutas_del_contrato(documento: dict[str, Any]) -> None:
-    expuestas = {
+def _expuestas(documento: dict[str, Any]) -> set[tuple[str, str]]:
+    return {
         (metodo.upper(), ruta)
         for ruta, operaciones in documento["paths"].items()
         for metodo in operaciones
     }
 
-    assert expuestas == {(ruta.metodo, ruta.ruta) for ruta in RUTAS}
+
+def test_la_api_expone_exactamente_las_rutas_del_contrato(documento: dict[str, Any]) -> None:
+    assert _expuestas(documento) == {(ruta.metodo, ruta.ruta) for ruta in RUTAS}
+
+
+def test_las_rutas_planeadas_todavia_no_existen(documento: dict[str, Any]) -> None:
+    construidas = {(r.metodo, r.ruta) for r in PLANEADAS} & _expuestas(documento)
+
+    assert construidas == set(), "Quite la marca «Planeado» en scripts/docs/rutas.py"
 
 
 @pytest.mark.parametrize("ruta", RUTAS, ids=str)
