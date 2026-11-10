@@ -2,7 +2,7 @@
 
 Relaciona **BRD → regla de negocio → componente → prueba**, como pide el paquete del profesor, y cada criterio de aceptación con su User Story, necesidad, fase del BPMN, ruta de la API y rol. Se genera con los scripts de `scripts/docs/` desde la misma fuente que `user-stories.md` y los `.feature`, así que los textos y conteos coinciden.
 
-**Conteos:** 16 necesidades · 27 User Stories · 66 criterios · 35 reglas de negocio · 8 Specifications · 50 rutas de API.
+**Conteos:** 16 necesidades · 27 User Stories · 66 criterios · 35 reglas de negocio · 8 Specifications · 51 rutas de API.
 
 La columna **Prueba prevista** usa la convención `test_ca_0XX_…` / `test_rn_XX_…` (ver `architecture/decisiones-tecnicas.md` §7). Al terminar la implementación se reemplaza por el nombre real de la prueba y su resultado (✔/✘), y se agrega la evidencia de cobertura.
 

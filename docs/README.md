@@ -18,6 +18,8 @@ Esta carpeta es la fuente única del análisis y la arquitectura del PIA. Todo e
 | [trazabilidad/](trazabilidad/matriz-trazabilidad.md) | Matriz BRD → regla → componente → prueba (Markdown y Excel). |
 | [datos-profesor/](datos-profesor/README.md) | Cómo se cargan los datos del profesor, diferencias D-01 a D-07, anomalías y oráculos de los 120 casos y 20 transiciones. |
 | [registro-de-cambios.md](registro-de-cambios.md) | Hallazgos H-PIA-01 a H-PIA-18 y conteos U3 → PIA. |
+| [interfaz-web.md](interfaz-web.md) | *(v3.1)* Pantallas de la página web por puesto: qué ve cada usuario, sus botones por estado, la ruta que llama y los criterios que cubre. |
+| [auditoria-errores-de-usuario.md](auditoria-errores-de-usuario.md) | *(v3.1)* Auditoría «¿y si me equivoco?» (AU-01 a AU-39) con las decisiones del equipo. |
 | [plan-de-implementacion.md](plan-de-implementacion.md) | Las 12 fases de la implementación (de la preparación del repositorio al README técnico), con lo que construye cada una, sus pruebas y su estado de avance. |
 
 ## Conteos clave

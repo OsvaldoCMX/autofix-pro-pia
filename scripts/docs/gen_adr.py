@@ -183,6 +183,7 @@ adr(12, "seguridad-por-token", "Seguridad con token sencillo por empleado y rol"
       "(−) Los tokens no expiran; se cambian modificando la variable. Es una limitación documentada para un entorno de demostración.",
       "(−) Nunca se suben tokens reales: `.env.example` solo tiene marcadores."],
      "RN-01, RN-14 · BRD §2 Roles y permisos, §5 Fuera del alcance (sin cuentas de clientes) · CA-013, CA-021, CA-030, CA-037",
+     nota="**Actualización v3.1 (09/11/2026).** La página web (`/` y sus archivos, ADR-017) también es pública: pide la clave de acceso del empleado, que es este mismo token, y la manda a la API como `Authorization: Bearer`. La ruta `GET /api/sesion` devuelve el nombre y el puesto del empleado de la clave.",
      necesidades="N-08, N-09, N-13")
 
 adr(13, "adaptacion-datos-del-profesor", "Adaptación de los datos ficticios del profesor",
@@ -239,6 +240,23 @@ adr(16, "domain-events", "Domain Events publicados después de confirmar y alert
      necesidades="N-04 a N-06, N-09 a N-11, N-14")
 
 REV = "09/11/2026 (revisión del PIA, Fase 13)"
+
+adr(17, "interfaz-web", "Interfaz web para el personal del taller y el cliente, servida por la misma API",
+     "Aceptada", REV,
+     "En la revisión del 09/11/2026 el profesor evaluó el sistema como un usuario del taller, no en Swagger: busca errores de captura y mensajes que entienda alguien que no sabe de computadoras. Hasta la v3.0 las «pantallas» de los criterios se representaban con sus endpoints y la demostración usaba Swagger UI (`decisiones-tecnicas.md` §4), que no es una herramienta para el personal del taller. El equipo son dos estudiantes sin experiencia en frameworks de JavaScript; la API se despliega como un solo Web Service gratuito de Render (ADR-011) y se protege con un token por empleado (ADR-012).",
+     ["**SPA con React o Vue:** componentes y ecosistema, pero agrega Node, npm y un paso de compilación (en el Dockerfile o en otro despliegue) que el equipo no domina.",
+      "**Páginas generadas en el servidor (plantillas Jinja2):** poco JavaScript, pero mezcla la presentación con las rutas de la API y cada formulario necesitaría su propia ruta HTML además de la JSON.",
+      "**Sitio estático en otro servicio:** separa la página, pero agrega otra URL, otro despliegue y la configuración de CORS.",
+      "**HTML, CSS y JavaScript sin framework (módulos ES) servidos por el mismo FastAPI** (elegida)."],
+     "La página vive en `src/api/web/` (capa de presentación; `src/` conserva sus cuatro paquetes y el Dockerfile no cambia) y FastAPI la sirve en `/` sin cambiar `/docs`, `/openapi.json`, `/health` ni `/api/*`. Navegación con `#` en la dirección para que recargar no dé 404. La página **solo habla con la API** (nunca con Supabase). El inicio de sesión pide la **clave de acceso** del empleado, que es el mismo token Bearer de ADR-012; se guarda en `sessionStorage` (se borra al cerrar la pestaña) y la nueva ruta `GET /api/sesion` devuelve el nombre y el puesto (401 sin clave o con una clave inválida; 403 con la de Sistema, que no es un empleado). Los errores se muestran con el `detalle` de la API tal cual: si un mensaje no se entiende, se corrige en el dominio o en `api/errores.py`. Las validaciones de la página solo ayudan; las reglas siguen en el dominio y la página no decide reglas del negocio (por ejemplo, no decide si una cotización va al Gerente). El dinero se maneja como texto o centavos, nunca con sumas de números decimales de JavaScript. Las rutas P2 que responden 501 no aparecen. Las pantallas, los botones por estado y los mensajes están en `docs/interfaz-web.md`; la revisión es manual (Fase 18), porque pytest prueba la API.",
+     ["(+) Una sola URL y un solo despliegue; sin CORS.",
+      "(+) Sin Node, sin npm ni compilación: el Dockerfile y el CI no cambian.",
+      "(+) La API sigue siendo la autoridad de las reglas; Swagger sigue disponible para la parte técnica.",
+      "(−) Más JavaScript escrito a mano; se mitiga con un módulo por puesto y un solo `api.js` para todas las llamadas y los errores.",
+      "(−) La clave queda en el navegador del empleado mientras la pestaña está abierta; aceptable con datos ficticios y ya documentado como limitación en ADR-012.",
+      "(−) La página no tiene pruebas automatizadas; se revisa con la lista de la Fase 18 (`docs/evidencias/revision-interfaz.md`)."],
+     "Revisión del 09/11/2026 · todas las User Stories · CA-037, CA-038 (consulta pública) · ADR-008, ADR-011, ADR-012 · `interfaz-web.md`",
+     necesidades="N-01 a N-16")
 
 adr(18, "correccion-de-cotizaciones", "Corrección de una cotización antes de la decisión del cliente",
      "Aceptada", REV,

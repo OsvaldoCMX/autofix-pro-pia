@@ -12,7 +12,13 @@ Contrato de la API que se implementa con FastAPI (ADR-008). Cuando la API esté 
 - Importes como texto con dos decimales (`"1500.00"`); fechas ISO 8601 con zona horaria.
 - **Planeado** en la columna Prioridad: la ruta está aprobada (Fase 13, revisión del 09/11/2026) y todavía no existe en la API; la Fase 14 quita la marca al construirla (`tests/api/test_contrato.py` comprueba que una ruta planeada aún no exista).
 
-## Rutas (50)
+## Rutas (51)
+
+### Sesión
+
+| Método | Ruta | Rol | Descripción | Éxito | Errores | Caso de uso | Criterios | Prioridad |
+|---|---|---|---|---|---|---|---|---|
+| GET | `/api/sesion` | Cualquier empleado | Nombre y puesto del empleado de la clave de acceso (la usa la página al iniciar sesión, ADR-017). El token de Sistema responde 403: no es un empleado. | 200 | 401, 403 | `ConsultarSesion` | — | P1 · Planeado |
 
 ### Sistema
 
@@ -58,7 +64,7 @@ Contrato de la API que se implementa con FastAPI (ADR-008). Cuando la API esté 
 |---|---|---|---|---|---|---|---|---|
 | POST | `/api/ordenes/{numero}/cotizaciones` | Asesor | Generar la cotización inicial (v.1). | 201 | 401, 403, 404, 409, 422 | `ServicioDeCotizacion.generar_inicial` | CA-005, CA-007, CA-060 | P1 |
 | POST | `/api/ordenes/{numero}/cotizaciones-adicionales` | Asesor | Generar una cotización adicional (v.2, v.3…). | 201 | 401, 403, 404, 409, 422 | `ServicioDeCotizacion.generar_adicional` | CA-016, CA-060, CA-061 | P1 |
-| GET | `/api/cotizaciones/{id}` | Asesor, Gerente | Detalle de la cotización con su desglose y estado. | 200 | 401, 403, 404 | `ConsultarCotizacion` | CA-005 | P1 |
+| GET | `/api/cotizaciones/{id}` | Asesor, Gerente | Detalle de la cotización con su desglose y estado. *Planeado (H-PIA-21):* también su historial de correcciones. | 200 | 401, 403, 404 | `ConsultarCotizacion` | CA-005 | P1 |
 | GET | `/api/cotizaciones/{id}/pdf` | Asesor | PDF de la cotización. | 200 | 401, 403, 404 | `ServicioDeCotizacion.generar_pdf` | CA-005 | P2 |
 | POST | `/api/cotizaciones/{id}/presentacion` | Asesor | Marcar como presentada (inicia las 48 h). | 200 | 401, 403, 404, 409 | `ServicioDeCotizacion.presentar` | CA-006, CA-007, CA-051 | P1 |
 | POST | `/api/cotizaciones/{id}/revision-gerencial` | Gerente | Aprobar o rechazar (con observaciones) una cotización mayor a $15,000. | 200 | 401, 403, 404, 409, 422 | `ServicioDeAprobacionGerencial.revisar` | CA-008, CA-009 | P1 |

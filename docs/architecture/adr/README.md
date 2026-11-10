@@ -20,4 +20,5 @@ Cada ADR sigue los campos de la guía de la Unidad 3: estado, fecha, contexto, a
 | [ADR-014](ADR-014-documentos-y-archivos.md) | PDF generados al vuelo y fotos guardadas en la base de datos | Aceptada | N-01, N-02, N-11, N-12 |
 | [ADR-015](ADR-015-revision-periodica-de-plazos.md) | Revisión periódica de plazos con un endpoint y un workflow programado | Aceptada | N-05, N-14 |
 | [ADR-016](ADR-016-domain-events.md) | Domain Events publicados después de confirmar y alertas internas | Aceptada | N-04 a N-06, N-09 a N-11, N-14 |
+| [ADR-017](ADR-017-interfaz-web.md) | Interfaz web para el personal del taller y el cliente, servida por la misma API | Aceptada | N-01 a N-16 |
 | [ADR-018](ADR-018-correccion-de-cotizaciones.md) | Corrección de una cotización antes de la decisión del cliente | Aceptada | N-02, N-04, N-16 |

@@ -10,6 +10,7 @@ A, T, G, CO, CJ, P, S, TODOS = ("Asesor", "Técnico", "Gerente", "Compras", "Caj
 
 # (método, ruta, rol, descripción, éxito, errores, caso de uso, CA, prioridad, área)
 RUTAS = [
+    ("GET", "/api/sesion", TODOS, "Nombre y puesto del empleado de la clave de acceso (la usa la página al iniciar sesión, ADR-017). El token de Sistema responde 403: no es un empleado.", "200", "401, 403", "ConsultarSesion", [], P1_PLANEADA, "Sesión"),
     ("GET", "/health", P, "Salud del servicio (lo usa Render y Docker Compose).", "200", "—", "—", [], "P1", "Sistema"),
     # recepción
     ("GET", "/api/vehiculos/{placas}", A, "Buscar vehículo y cliente por placas.", "200", "401, 403, 404", "BuscarVehiculoPorPlacas", ["CA-003", "CA-004"], "P1", "Recepción"),
@@ -33,7 +34,7 @@ RUTAS = [
     # cotización
     ("POST", "/api/ordenes/{numero}/cotizaciones", A, "Generar la cotización inicial (v.1).", "201", "401, 403, 404, 409, 422", "ServicioDeCotizacion.generar_inicial", ["CA-005", "CA-007", "CA-060"], "P1", "Cotización"),
     ("POST", "/api/ordenes/{numero}/cotizaciones-adicionales", A, "Generar una cotización adicional (v.2, v.3…).", "201", "401, 403, 404, 409, 422", "ServicioDeCotizacion.generar_adicional", ["CA-016", "CA-060", "CA-061"], "P1", "Cotización"),
-    ("GET", "/api/cotizaciones/{id}", f"{A}, {G}", "Detalle de la cotización con su desglose y estado.", "200", "401, 403, 404", "ConsultarCotizacion", ["CA-005"], "P1", "Cotización"),
+    ("GET", "/api/cotizaciones/{id}", f"{A}, {G}", "Detalle de la cotización con su desglose y estado. *Planeado (H-PIA-21):* también su historial de correcciones.", "200", "401, 403, 404", "ConsultarCotizacion", ["CA-005"], "P1", "Cotización"),
     ("GET", "/api/cotizaciones/{id}/pdf", A, "PDF de la cotización.", "200", "401, 403, 404", "ServicioDeCotizacion.generar_pdf", ["CA-005"], "P2", "Cotización"),
     ("POST", "/api/cotizaciones/{id}/presentacion", A, "Marcar como presentada (inicia las 48 h).", "200", "401, 403, 404, 409", "ServicioDeCotizacion.presentar", ["CA-006", "CA-007", "CA-051"], "P1", "Cotización"),
     ("POST", "/api/cotizaciones/{id}/revision-gerencial", G, "Aprobar o rechazar (con observaciones) una cotización mayor a $15,000.", "200", "401, 403, 404, 409, 422", "ServicioDeAprobacionGerencial.revisar", ["CA-008", "CA-009"], "P1", "Cotización"),
