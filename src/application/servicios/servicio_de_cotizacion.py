@@ -17,7 +17,7 @@ from application.resultados import ResultadoDeCotizacion, ResultadoDeRecontacto
 from application.unidad_de_trabajo import UnidadDeTrabajo
 from domain.compartido.errores import ValorInvalido
 from domain.compartido.valores import Dinero, NumeroOrden
-from domain.cotizaciones.cotizacion import Cotizacion
+from domain.cotizaciones.cotizacion import Cotizacion, exigir_sin_adicional_pendiente
 from domain.cotizaciones.linea_de_cotizacion import LineaDeCotizacion
 from domain.cotizaciones.valores import RefaccionCotizada, TipoCotizacion, VersionCotizacion
 
@@ -54,6 +54,7 @@ class ServicioDeCotizacion:
         ahora = self._reloj.ahora()
         with self._uow as uow:
             orden = uow.ordenes.obtener(NumeroOrden(comando.numero_orden))
+            exigir_sin_adicional_pendiente(uow.cotizaciones.de_la_orden(orden.numero))
             orden.registrar_cotizacion_adicional_pendiente(ahora)
             cotizacion = Cotizacion.generar(
                 uow.cotizaciones.siguiente_id(),

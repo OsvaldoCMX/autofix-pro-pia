@@ -1368,3 +1368,34 @@ def test_rn_31_kilometraje_hasta_2_millones() -> None:
 
 def test_rn_31_reconstruir_no_revisa_el_tope_del_kilometraje() -> None:
     assert EstadoDeRecepcion(2_000_000_000, NivelDeCombustible.LLENO).kilometraje == 2_000_000_000
+
+
+# ------------------------------------------------------------------ refacciones repetidas (RN-34)
+def test_ca_062_no_se_repite_la_solicitud_pendiente_de_la_misma_refaccion() -> None:
+    orden = c.autorizada()
+    orden.crear_solicitud_de_compra(1, "Balata delantera", 2, DESPUES)
+
+    with pytest.raises(SolicitudNoPermitida, match="ya está solicitada"):
+        orden.crear_solicitud_de_compra(1, "  balata   DELANTERA ", 1, DESPUES)
+
+    assert len(orden.solicitudes) == 1
+
+
+def test_rn_34_otra_refaccion_u_otro_trabajo_si_se_solicitan() -> None:
+    orden = c.autorizada(trabajos=2)
+    orden.crear_solicitud_de_compra(1, "Balata", 1, DESPUES)
+
+    orden.crear_solicitud_de_compra(1, "Disco", 1, DESPUES)
+    orden.crear_solicitud_de_compra(2, "Balata", 1, DESPUES)
+
+    assert len(orden.solicitudes) == 3
+
+
+def test_rn_34_cuando_la_pieza_llega_se_puede_volver_a_solicitar() -> None:
+    orden = c.autorizada()
+    solicitud = orden.crear_solicitud_de_compra(1, "Balata", 1, DESPUES)
+    orden.registrar_llegada_de_refaccion(solicitud.id, DESPUES)
+
+    orden.crear_solicitud_de_compra(1, "Balata", 1, DESPUES)
+
+    assert len(orden.solicitudes) == 2

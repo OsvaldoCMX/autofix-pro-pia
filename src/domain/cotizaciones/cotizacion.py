@@ -358,3 +358,13 @@ def _con_importe(lineas: Iterable[LineaDeCotizacion]) -> list[LineaDeCotizacion]
             )
     return lista
 
+
+def exigir_sin_adicional_pendiente(cotizaciones: Iterable[Cotizacion]) -> None:
+    """RN-33: una sola cotización adicional sin decisión del cliente a la vez (CA-061)."""
+    for cotizacion in cotizaciones:
+        if cotizacion.tipo is TipoCotizacion.ADICIONAL and cotizacion.estado in _CORREGIBLES:
+            raise OperacionDeCotizacionNoPermitida(
+                f"La cotización adicional {cotizacion.version} todavía espera la decisión del "
+                "cliente; registre esa decisión antes de generar otra."
+            )
+

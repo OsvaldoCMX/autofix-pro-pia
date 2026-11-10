@@ -33,6 +33,7 @@ from tests.unit.application.escenarios import (
     Taller,
     autorizada,
     cotizada,
+    decidir,
     diagnosticada,
     en_diagnostico,
     en_reparacion,
@@ -150,7 +151,8 @@ def test_ca_016_adicional_v2_sin_gerente(taller: Taller) -> None:
 
 def test_ca_016_cada_adicional_toma_la_siguiente_version(taller: Taller) -> None:
     numero = en_reparacion(taller)
-    taller.cotizacion.generar_adicional(GenerarCotizacion(numero, trabajos("100.00")))
+    primera = taller.cotizacion.generar_adicional(GenerarCotizacion(numero, trabajos("100.00")))
+    decidir(taller, primera.id, (1,))  # RN-33: la v.2 ya tiene decisión
 
     resultado = taller.cotizacion.generar_adicional(GenerarCotizacion(numero, trabajos("100.00")))
 
@@ -247,3 +249,25 @@ def test_orden_con_servicios_habilitados_si_se_cotiza(taller: Taller) -> None:
     resultado = taller.cotizacion.generar_inicial(GenerarCotizacion(numero, trabajos("1000.00")))
 
     assert resultado.version == "v.1"
+
+
+# ------------------------------------------------------------------ una adicional a la vez (RN-33)
+def test_ca_061_no_se_genera_otra_adicional_mientras_una_espera(taller: Taller) -> None:
+    numero = en_reparacion(taller)
+    taller.cotizacion.generar_adicional(GenerarCotizacion(numero, trabajos("500.00")))
+
+    with pytest.raises(OperacionDeCotizacionNoPermitida, match="adicional v.2 todavía espera"):
+        taller.cotizacion.generar_adicional(GenerarCotizacion(numero, trabajos("500.00")))
+
+    assert taller.datos.ordenes[numero].adicionales_pendientes == 1
+    assert len(taller.datos.cotizaciones) == 2
+
+
+def test_rn_33_despues_de_decidir_la_adicional_se_genera_otra(taller: Taller) -> None:
+    numero = en_reparacion(taller)
+    primera = taller.cotizacion.generar_adicional(GenerarCotizacion(numero, trabajos("500.00")))
+    decidir(taller, primera.id, (1,))
+
+    segunda = taller.cotizacion.generar_adicional(GenerarCotizacion(numero, trabajos("700.00")))
+
+    assert segunda.version == "v.3"

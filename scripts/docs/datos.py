@@ -698,7 +698,7 @@ ca("CA-061", "US-009", [
     (Y, "debe indicar que primero se registre la decisión del cliente sobre la cotización adicional pendiente, con su versión"),
 ], F5, ["RN-33", "RN-24"], "OrdenDeServicio (adicionales_pendientes), error OperacionDeCotizacionNoPermitida",
    "ServicioDeCotizacion.generar_adicional", "POST /api/ordenes/{numero}/cotizaciones-adicionales (409)", ASE,
-   cambio="H-PIA-26", nombre="Una sola cotización adicional sin decisión a la vez", planeado=True)
+   cambio="H-PIA-26", nombre="Una sola cotización adicional sin decisión a la vez")
 
 ca("CA-062", "US-010", [
     (D, "que un trabajo ya tiene una solicitud de compra «Solicitada» de una refacción"),
@@ -708,7 +708,7 @@ ca("CA-062", "US-010", [
     (Y, "la refacción debe compararse sin distinguir mayúsculas ni espacios repetidos"),
 ], F4, ["RN-34", "RN-09"], "OrdenDeServicio (crear_solicitud_de_compra), SolicitudDeCompra, error SolicitudNoPermitida",
    "ServicioDeRefacciones.solicitar", "POST /api/ordenes/{numero}/solicitudes-de-compra (409)", TEC,
-   cambio="H-PIA-26", nombre="No se repite la solicitud de una refacción pendiente", planeado=True)
+   cambio="H-PIA-26", nombre="No se repite la solicitud de una refacción pendiente")
 
 ca("CA-063", "US-006", [
     (D, "que el cliente particular se llama «Luis Peña»"),
@@ -817,7 +817,7 @@ REGLAS = {
 }
 
 # Reglas aprobadas en la Fase 13 que todavía no se construyen (misma idea que `planeado` en los CA).
-REGLAS_PLANEADAS = {"RN-33", "RN-34", "RN-35"}
+REGLAS_PLANEADAS = {"RN-35"}
 
 # ----------------------------------------------------------------------------- pruebas previstas
 # Convención: toda prueba de aceptación se llama test_ca_0XX_<descripcion> para poder

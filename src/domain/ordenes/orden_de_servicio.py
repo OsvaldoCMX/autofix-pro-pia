@@ -36,7 +36,7 @@ from domain.ordenes.especificaciones import (
     PuedeIniciarTrabajo,
     PuedeSolicitarRefaccion,
 )
-from domain.ordenes.estados import MAQUINA_DE_ORDEN, EstadoOrden, EstadoTrabajo
+from domain.ordenes.estados import MAQUINA_DE_ORDEN, EstadoOrden, EstadoSolicitud, EstadoTrabajo
 from domain.ordenes.falla_adicional import FallaAdicional
 from domain.ordenes.solicitud_de_compra import SolicitudDeCompra
 from domain.ordenes.trabajo import Trabajo
@@ -348,6 +348,7 @@ class OrdenDeServicio(RaizDeAgregado):
                 f"No se pueden solicitar refacciones del trabajo «{trabajo.descripcion}» "
                 f"({trabajo.estado.value}) con la orden en «{self.estado.value}»."
             )
+        self._exigir_refaccion_no_solicitada(trabajo, refaccion)
         solicitud = SolicitudDeCompra(
             len(self._solicitudes) + 1, trabajo.id, refaccion, cantidad, fecha
         )
@@ -361,6 +362,20 @@ class OrdenDeServicio(RaizDeAgregado):
             )
         )
         return solicitud
+
+    def _exigir_refaccion_no_solicitada(self, trabajo: Trabajo, refaccion: str) -> None:
+        """RN-34: la misma refacción no se pide dos veces mientras su solicitud esté pendiente."""
+        buscada = _sin_espacios_de_mas(refaccion)
+        for solicitud in self._solicitudes.values():
+            if (
+                solicitud.id_trabajo == trabajo.id
+                and solicitud.estado is EstadoSolicitud.SOLICITADA
+                and _sin_espacios_de_mas(solicitud.refaccion) == buscada
+            ):
+                raise SolicitudNoPermitida(
+                    f"La refacción «{solicitud.refaccion}» del trabajo «{trabajo.descripcion}» "
+                    "ya está solicitada y Compras la está gestionando."
+                )
 
     def registrar_llegada_de_refaccion(self, id_solicitud: int, fecha: datetime) -> None:
         solicitud = self._solicitud(id_solicitud)
@@ -704,3 +719,9 @@ class OrdenDeServicio(RaizDeAgregado):
         MAQUINA_DE_ORDEN.validar(self.estado, nuevo)
         self.estado = nuevo
         self.ultima_actualizacion = fecha
+
+
+def _sin_espacios_de_mas(texto: str) -> str:
+    """Compara textos sin distinguir mayúsculas ni espacios repetidos o en los extremos."""
+    return " ".join(texto.split()).casefold()
+

@@ -15,6 +15,7 @@ from tests.api.pasos import (
     cotizada,
     decidir,
     decision,
+    en_reparacion,
     exigir,
     expediente_de,
     iniciar,
@@ -171,7 +172,8 @@ def test_rn_08_trabajo_no_autorizado_no_se_inicia(cliente: TestClient) -> None:
 
 
 def test_rn_24_segunda_adicional_es_v3(cliente: TestClient) -> None:
-    numero, _ = con_adicional(cliente)
+    numero, id_adicional = con_adicional(cliente)
+    decidir(cliente, id_adicional, [1])  # RN-33: la v.2 ya tiene decisión
 
     respuesta = cliente.post(
         f"/api/ordenes/{numero}/cotizaciones-adicionales",
@@ -196,3 +198,17 @@ def test_rol_de_autorizante_desconocido_responde_422(cliente: TestClient) -> Non
     )
 
     assert respuesta.status_code == 422
+
+
+# ------------------------------------------------------------------ una adicional a la vez (H-PIA-26)
+def test_ca_061_doble_clic_en_adicional_responde_409(cliente: TestClient) -> None:
+    numero = en_reparacion(cliente)
+    url = f"/api/ordenes/{numero}/cotizaciones-adicionales"
+    exigir(cliente.post(url, json=trabajos("500.00"), headers=ASESOR), 201)
+
+    respuesta = exigir(cliente.post(url, json=trabajos("500.00"), headers=ASESOR), 409)
+
+    assert respuesta["detalle"] == (
+        "La cotización adicional v.2 todavía espera la decisión del cliente; "
+        "registre esa decisión antes de generar otra."
+    )
