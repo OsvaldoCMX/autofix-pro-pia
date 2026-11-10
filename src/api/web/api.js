@@ -113,6 +113,11 @@ export async function pedir(metodo, ruta, opciones = {}) {
   }
 }
 
+/** Inicio de sesión (P-03): con la clave que escribió el empleado, todavía sin guardar. */
+export function consultarSesion(clave) {
+  return enviar("GET", "/api/sesion", { clave });
+}
+
 // Consulta pública del cliente (P-02): sin clave.
 export function consultarEstadoDeOrden(orden, placas) {
   return enviar("GET", "/api/consulta-de-estado", { parametros: { orden, placas } });

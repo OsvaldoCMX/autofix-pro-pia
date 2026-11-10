@@ -31,6 +31,9 @@
 
 * { box-sizing: border-box; }
 
+/* Lo oculto se queda oculto aunque su clase diga `display: flex`. */
+[hidden] { display: none !important; }
+
 html { font-size: 112.5%; } /* 18 px */
 
 body {
@@ -122,6 +125,8 @@ a { color: var(--principal); }
   padding: 1.5rem;
   margin-bottom: 1.25rem;
 }
+
+.tarjeta > :first-child { margin-top: 0; }
 
 .cargando, .nota { color: var(--texto-suave); }
 

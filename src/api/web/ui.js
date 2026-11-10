@@ -122,10 +122,10 @@ export function confirmar({ titulo, lineas = [], verbo }) {
 
 // Campos y estados
 
-/** Marca el campo en rojo con un mensaje debajo; `null` lo deja limpio. */
+/** Marca el campo en rojo con un mensaje debajo (`""`: solo en rojo); `null` lo deja limpio. */
 export function marcarCampo(campo, mensaje) {
   const ayuda = document.getElementById(`${campo.id}-ayuda`);
-  campo.setAttribute("aria-invalid", mensaje ? "true" : "false");
+  campo.setAttribute("aria-invalid", mensaje === null ? "false" : "true");
   if (ayuda) {
     ayuda.textContent = mensaje ?? "";
   }
@@ -141,6 +141,19 @@ export function campo(id, etiqueta, atributos = {}) {
     crear("label", { htmlFor: id }, etiqueta),
     entrada,
     crear("span", { className: "ayuda-campo", id: `${id}-ayuda` }),
+  );
+}
+
+/** Lugar de una pantalla del menú que se construye en una fase posterior (16 o 17). */
+export function pantallaEnPreparacion(pantalla, menu, ruta) {
+  const entrada = menu.find(({ direccion }) => direccion === `#${ruta}`) ?? menu[0];
+  pantalla.replaceChildren(
+    crear(
+      "section",
+      { className: "tarjeta" },
+      crear("h1", {}, entrada.texto),
+      crear("p", { className: "nota" }, "Esta pantalla estará disponible pronto."),
+    ),
   );
 }
 

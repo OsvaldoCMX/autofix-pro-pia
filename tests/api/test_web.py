@@ -17,6 +17,7 @@ from tests.api.pasos import TOKENS
 RAIZ = Path(__file__).resolve().parents[2]
 ARCHIVOS = sorted(archivo.name for archivo in CARPETA_WEB.iterdir() if archivo.is_file())
 MODULOS = [nombre for nombre in ARCHIVOS if nombre.endswith(".js")]
+PUESTOS = ["asesor.js", "tecnico.js", "gerente.js", "compras.js", "caja.js"]
 TIPOS = {".html": "text/html", ".css": "text/css", ".js": "text/javascript"}
 IMPORTACION = re.compile(r'import\s*\{([^}]*)\}\s*from\s*"\./([^"]+)"')
 EXPORTACION = re.compile(r"export\s+(?:async\s+)?(?:function|const|let|class)\s+(\w+)")
@@ -61,12 +62,34 @@ def test_cada_archivo_de_la_pagina_se_sirve_con_su_tipo(cliente: TestClient, nom
 
 
 @pytest.mark.parametrize("nombre", MODULOS)
+def test_cada_modulo_importa_modulos_que_existen(nombre: str) -> None:
+    importados = re.findall(r'from\s*"\./([^"]+)"', _texto(nombre))
+
+    assert [modulo for modulo in importados if modulo not in MODULOS] == []
+
+
+@pytest.mark.parametrize("nombre", MODULOS)
 def test_cada_modulo_importa_lo_que_otro_modulo_exporta(nombre: str) -> None:
     for nombres, modulo in IMPORTACION.findall(_texto(nombre)):
-        assert modulo in MODULOS, f"{nombre} importa {modulo}, que no existe"
         exportados = set(EXPORTACION.findall(_texto(modulo)))
         importados = {parte.strip() for parte in nombres.split(",") if parte.strip()}
         assert importados <= exportados, f"{nombre} importa de {modulo}: {importados - exportados}"
+
+
+@pytest.mark.parametrize("nombre", PUESTOS)
+def test_cada_puesto_tiene_menu_con_direcciones_documentadas(nombre: str) -> None:
+    texto = _texto(nombre)
+    documentadas = set(re.findall(r"`(#/[^`]+)`", _seccion_de_navegacion()))
+    direcciones = re.findall(r'direccion:\s*"([^"]+)"', texto)
+
+    assert {"MENU", "mostrar"} <= set(EXPORTACION.findall(texto))
+    assert direcciones, f"{nombre} no tiene menú"
+    assert set(direcciones) <= documentadas
+
+
+def _seccion_de_navegacion() -> str:
+    texto = (RAIZ / "docs/interfaz-web.md").read_text(encoding="utf-8")
+    return texto.split("## 3. Sesión y navegación")[1].split("## 4.")[0]
 
 
 @pytest.mark.parametrize("nombre", ARCHIVOS)
