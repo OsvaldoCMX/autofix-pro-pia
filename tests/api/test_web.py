@@ -115,6 +115,7 @@ def test_la_pagina_solo_llama_rutas_que_existen_en_la_api(
         ("expediente.js", "### 4.2 Asesor de Servicio", "### 4.3"),
         ("tecnico.js", "### 4.3 Técnico", "### 4.4"),
         ("gerente.js", "### 4.4 Gerente de Taller", "### 4.5"),
+        ("compras.js", "### 4.5 Personal de Compras", "### 4.6"),
         ("caja.js", "### 4.6 Personal de Caja", "### 4.7"),
     ],
 )

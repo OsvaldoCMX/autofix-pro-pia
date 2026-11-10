@@ -333,6 +333,8 @@ legend { font-weight: 700; font-size: 1.1rem; padding: 0 0.4rem; }
 
 .importe-grande { font-size: 2.4rem; font-weight: 800; margin: 0.5rem 0; }
 
+.retrasada { color: var(--error-borde); }
+
 .subtotal { font-weight: 600; color: var(--texto-suave); }
 .total-preliminar { font-size: 1.3rem; font-weight: 800; margin: 1.25rem 0 0; }
 

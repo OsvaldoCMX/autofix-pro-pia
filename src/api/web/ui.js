@@ -294,19 +294,6 @@ export function tabla(encabezados, renglones) {
   );
 }
 
-/** Lugar de una pantalla del menú que se construye en una fase posterior (16 o 17). */
-export function pantallaEnPreparacion(pantalla, menu, ruta) {
-  const entrada = menu.find(({ direccion }) => direccion === `#${ruta}`) ?? menu[0];
-  pantalla.replaceChildren(
-    crear(
-      "section",
-      { className: "tarjeta" },
-      crear("h1", {}, entrada.texto),
-      crear("p", { className: "nota" }, "Esta pantalla estará disponible pronto."),
-    ),
-  );
-}
-
 /** El estado con su nombre del Glosario y el color de su grupo (interfaz-web.md §1.3). */
 export function etiquetaDeEstado(estado) {
   return crear("span", { className: `estado estado-${grupoDeEstado(estado)}` }, estado);
