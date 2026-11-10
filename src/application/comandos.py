@@ -241,6 +241,14 @@ class RegistrarPago:
 
 
 @dataclass(frozen=True)
+class CorregirFormaDePago:
+    """Caja corrige la forma de pago antes de la entrega (CA-058)."""
+
+    numero_orden: str
+    forma: FormaDePago
+
+
+@dataclass(frozen=True)
 class RegistrarCargoACredito:
     numero_orden: str
 

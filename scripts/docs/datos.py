@@ -669,7 +669,7 @@ ca("CA-058", "US-014", [
     (Y, "si el vehículo ya se entregó, no debe permitir el cambio"),
 ], F6, ["RN-30", "RN-16"], "OrdenDeServicio (corregir_forma_de_pago), Pago, FormaDePago, evento FormaDePagoCorregida, error CorreccionNoPermitida",
    "ServicioDeCaja.corregir_forma_de_pago", "PUT /api/ordenes/{numero}/pago", CAJ,
-   cambio="H-PIA-24", nombre="Corregir la forma de pago antes de la entrega", planeado=True)
+   cambio="H-PIA-24", nombre="Corregir la forma de pago antes de la entrega")
 
 ca("CA-059", "US-001", [
     (D, "que el asesor captura los datos del cliente, del Responsable de Flotilla, del vehículo y del estado de recepción"),
@@ -817,7 +817,7 @@ REGLAS = {
 }
 
 # Reglas aprobadas en la Fase 13 que todavía no se construyen (misma idea que `planeado` en los CA).
-REGLAS_PLANEADAS = {"RN-30", "RN-31", "RN-32", "RN-33", "RN-34", "RN-35"}
+REGLAS_PLANEADAS = {"RN-31", "RN-32", "RN-33", "RN-34", "RN-35"}
 
 # ----------------------------------------------------------------------------- pruebas previstas
 # Convención: toda prueba de aceptación se llama test_ca_0XX_<descripcion> para poder

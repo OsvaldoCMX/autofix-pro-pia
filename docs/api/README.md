@@ -110,7 +110,7 @@ Contrato de la API que se implementa con FastAPI (ADR-008). Cuando la API esté 
 | Método | Ruta | Rol | Descripción | Éxito | Errores | Caso de uso | Criterios | Prioridad |
 |---|---|---|---|---|---|---|---|---|
 | POST | `/api/ordenes/{numero}/pago` | Caja | Registrar el pago de contado de un cliente particular. | 201 | 401, 403, 404, 409, 422 | `ServicioDeCaja.registrar_pago` | CA-026 | P1 |
-| PUT | `/api/ordenes/{numero}/pago` | Caja | Corregir la forma de pago mientras la orden está «Pagada». | 200 | 401, 403, 404, 409, 422 | `ServicioDeCaja.corregir_forma_de_pago` | CA-058 | P1 · Planeado |
+| PUT | `/api/ordenes/{numero}/pago` | Caja | Corregir la forma de pago mientras la orden está «Pagada». | 200 | 401, 403, 404, 409, 422 | `ServicioDeCaja.corregir_forma_de_pago` | CA-058 | P1 |
 | GET | `/api/ordenes/{numero}/recibo/pdf` | Caja | PDF del recibo interno. | 200 | 401, 403, 404, 409 | `ServicioDeCaja.generar_recibo` | CA-027 | P2 |
 | POST | `/api/ordenes/{numero}/cargo-a-credito` | Caja | Registrar el cargo a crédito de una flotilla. | 201 | 401, 403, 404, 409 | `ServicioDeCaja.registrar_cargo_a_credito` | CA-039 | P1 |
 

@@ -60,7 +60,7 @@ RUTAS = [
     ("POST", "/api/ordenes/{numero}/reactivacion", A, "Reactivar la orden cuando el vehículo regresa (al final de la fila).", "200", "401, 403, 404, 409", "ServicioDeRetiro.reactivar", ["CA-025"], "P1", "Retiro anticipado"),
     # caja
     ("POST", "/api/ordenes/{numero}/pago", CJ, "Registrar el pago de contado de un cliente particular.", "201", "401, 403, 404, 409, 422", "ServicioDeCaja.registrar_pago", ["CA-026"], "P1", "Caja"),
-    ("PUT", "/api/ordenes/{numero}/pago", CJ, "Corregir la forma de pago mientras la orden está «Pagada».", "200", "401, 403, 404, 409, 422", "ServicioDeCaja.corregir_forma_de_pago", ["CA-058"], P1_PLANEADA, "Caja"),
+    ("PUT", "/api/ordenes/{numero}/pago", CJ, "Corregir la forma de pago mientras la orden está «Pagada».", "200", "401, 403, 404, 409, 422", "ServicioDeCaja.corregir_forma_de_pago", ["CA-058"], "P1", "Caja"),
     ("GET", "/api/ordenes/{numero}/recibo/pdf", CJ, "PDF del recibo interno.", "200", "401, 403, 404, 409", "ServicioDeCaja.generar_recibo", ["CA-027"], "P2", "Caja"),
     ("POST", "/api/ordenes/{numero}/cargo-a-credito", CJ, "Registrar el cargo a crédito de una flotilla.", "201", "401, 403, 404, 409", "ServicioDeCaja.registrar_cargo_a_credito", ["CA-039"], "P1", "Caja"),
     # entrega

@@ -115,6 +115,14 @@ class PagoRegistrado(EventoDeOrden):
 
 
 @dataclass(frozen=True)
+class FormaDePagoCorregida(EventoDeOrden):
+    """Caja corrigió la forma de pago antes de la entrega (RN-30, H-PIA-24)."""
+
+    forma_anterior: str
+    forma: str
+
+
+@dataclass(frozen=True)
 class CargoACreditoRegistrado(EventoDeOrden):
     monto: str
 

@@ -3558,6 +3558,111 @@
             }
           }
         }
+      },
+      "put": {
+        "tags": [
+          "Caja"
+        ],
+        "summary": "Corregir la forma de pago mientras la orden está «Pagada»",
+        "operationId": "corregir_forma_de_pago_api_ordenes__numero__pago_put",
+        "security": [
+          {
+            "TokenDeEmpleado": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "numero",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Numero"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DatosDeFormaDePago"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagoRegistrado"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "JSON mal formado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Falta el token o no es válido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o trabajo de otro técnico.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Viola una regla o transición del negocio.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Un dato es inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/ordenes/{numero}/recibo/pdf": {
@@ -4920,6 +5025,19 @@
           "descripcion"
         ],
         "title": "DatosDeFallaAdicional"
+      },
+      "DatosDeFormaDePago": {
+        "properties": {
+          "forma": {
+            "$ref": "#/components/schemas/FormaDePago"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "forma"
+        ],
+        "title": "DatosDeFormaDePago"
       },
       "DatosDePago": {
         "properties": {

@@ -1321,3 +1321,39 @@ def test_rn_29_motivo_vacio_no_se_corrige() -> None:
 
     with pytest.raises(ValorInvalido):
         orden.corregir_datos_de_recepcion(c.RECEPCION, "   ", DESPUES)
+
+
+# ------------------------------------------------------------------ corrección de la forma de pago
+def test_ca_058_corrige_la_forma_de_pago_de_una_orden_pagada() -> None:
+    orden = c.sin_eventos(c.pagada())
+    pago = orden.pago
+    assert pago is not None
+
+    orden.corregir_forma_de_pago(FormaDePago.TRANSFERENCIA, DESPUES)
+
+    assert orden.estado is _O.PAGADA
+    assert orden.pago == Pago(pago.monto, FormaDePago.TRANSFERENCIA, pago.registrado_en)
+    (evento,) = orden.extraer_eventos()
+    assert isinstance(evento, ev.FormaDePagoCorregida)
+    assert (evento.forma_anterior, evento.forma) == ("Efectivo", "Transferencia")
+
+
+def test_rn_30_la_misma_forma_no_registra_nada() -> None:
+    orden = c.sin_eventos(c.pagada())
+
+    orden.corregir_forma_de_pago(FormaDePago.EFECTIVO, DESPUES)
+
+    assert orden.extraer_eventos() == []
+
+
+def test_rn_30_entregada_ya_no_se_corrige() -> None:
+    orden = c.cerrada()
+
+    with pytest.raises(CorreccionNoPermitida, match="ya se entregó"):
+        orden.corregir_forma_de_pago(FormaDePago.EFECTIVO, DESPUES)
+
+
+@pytest.mark.parametrize("constructor", [c.lista, c.por_cobrar])
+def test_rn_30_sin_pago_de_contado_no_hay_que_corregir(constructor: c.Constructor) -> None:
+    with pytest.raises(CorreccionNoPermitida, match="no tiene un pago de contado"):
+        constructor().corregir_forma_de_pago(FormaDePago.EFECTIVO, DESPUES)

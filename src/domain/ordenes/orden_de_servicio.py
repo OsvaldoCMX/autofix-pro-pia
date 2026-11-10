@@ -6,6 +6,7 @@ valida antes de modificar nada, para no dejar el Aggregate a medias.
 from __future__ import annotations
 
 from collections.abc import Iterable
+from dataclasses import replace
 from datetime import datetime
 from typing import NoReturn
 
@@ -44,6 +45,7 @@ from domain.ordenes.valores import (
     CargoACredito,
     Diagnostico,
     EstadoDeRecepcion,
+    FormaDePago,
     NotaDeResponsabilidad,
     Pago,
 )
@@ -442,6 +444,30 @@ class OrdenDeServicio(RaizDeAgregado):
             ev.PagoRegistrado(
                 pago.registrado_en, str(self.numero), str(pago.monto.monto), pago.forma.value
             )
+        )
+
+    def corregir_forma_de_pago(self, forma: FormaDePago, fecha: datetime) -> None:
+        """RN-30: solo con la orden «Pagada»; el monto y la fecha del pago no cambian."""
+        if self.estado is not _O.PAGADA or self.pago is None:
+            raise CorreccionNoPermitida(self._por_que_no_se_corrige_el_pago())
+        anterior = self.pago.forma
+        if anterior is forma:
+            return
+        self.pago = replace(self.pago, forma=forma)
+        self.ultima_actualizacion = fecha
+        self._registrar(
+            ev.FormaDePagoCorregida(fecha, str(self.numero), anterior.value, forma.value)
+        )
+
+    def _por_que_no_se_corrige_el_pago(self) -> str:
+        if self.pago is not None:
+            return (
+                f"El vehículo de la orden {self.numero} ya se entregó; "
+                "la forma de pago ya no se corrige."
+            )
+        return (
+            f"La orden {self.numero} no tiene un pago de contado que corregir "
+            f"(estado «{self.estado.value}»)."
         )
 
     def registrar_cargo_a_credito(self, fecha: datetime) -> None:

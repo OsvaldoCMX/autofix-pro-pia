@@ -11,6 +11,7 @@ from fastapi.testclient import TestClient
 from tests.api.pasos import (
     ASESOR,
     CAJA,
+    GERENTE,
     autorizada,
     cotizada,
     decidir,
@@ -179,3 +180,42 @@ def test_rn_18_sin_rechazo_total_no_se_entrega_sin_reparacion(cliente: TestClien
 
     assert respuesta.status_code == 409
     assert respuesta.json()["error"] == "EntregaNoPermitida"
+
+
+# ------------------------------------------------------------------ corrección de la forma de pago
+def test_ca_058_corrige_la_forma_sin_cambiar_monto_ni_fecha(cliente: TestClient) -> None:
+    numero = pagada(cliente)
+    antes = expediente_de(cliente, numero)
+
+    respuesta = exigir(
+        cliente.put(f"/api/ordenes/{numero}/pago", json={"forma": "Efectivo"}, headers=CAJA), 200
+    )
+
+    despues = expediente_de(cliente, numero)
+    assert respuesta["forma"] == "Efectivo"
+    assert respuesta["estado"] == "Pagada"
+    assert despues["pago_monto"] == antes["pago_monto"]
+    assert despues["pago_registrado_en"] == antes["pago_registrado_en"]
+    assert despues["pago_forma"] == "Efectivo"
+
+
+def test_rn_30_forma_de_pago_no_cambia_los_ingresos_del_dia(cliente: TestClient) -> None:
+    numero = pagada(cliente)
+    antes = exigir(cliente.get("/api/gerencia/ingresos-del-dia", headers=GERENTE), 200)
+
+    exigir(
+        cliente.put(f"/api/ordenes/{numero}/pago", json={"forma": "Efectivo"}, headers=CAJA), 200
+    )
+
+    assert exigir(cliente.get("/api/gerencia/ingresos-del-dia", headers=GERENTE), 200) == antes
+
+
+def test_ca_058_despues_de_entregar_responde_409(cliente: TestClient) -> None:
+    numero = pagada(cliente)
+    exigir(cliente.post(f"/api/ordenes/{numero}/entrega", headers=ASESOR), 200)
+
+    respuesta = exigir(
+        cliente.put(f"/api/ordenes/{numero}/pago", json={"forma": "Efectivo"}, headers=CAJA), 409
+    )
+
+    assert respuesta["error"] == "CorreccionNoPermitida"
