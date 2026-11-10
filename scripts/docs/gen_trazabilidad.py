@@ -58,6 +58,8 @@ RN_COMPONENTE = {
     "RN-30": ("`OrdenDeServicio.corregir_forma_de_pago`, `Pago`, evento `FormaDePagoCorregida`", "ADR-001, ADR-016"),
     "RN-31": ("Value Objects `Telefono` y `Correo`; `Vehiculo`, `EstadoDeRecepcion` y textos con largo máximo; esquemas Pydantic (422)", "ADR-008"),
     "RN-32": ("`LineaDeCotizacion` (subtotal mayor a cero)", "ADR-001"),
+    "RN-33": ("`OrdenDeServicio.registrar_cotizacion_adicional_pendiente` (adicional sin decisión)", "ADR-002"),
+    "RN-34": ("`OrdenDeServicio.crear_solicitud_de_compra` → `SolicitudNoPermitida`", "ADR-001"),
 }
 assert set(RN_COMPONENTE) == set(REGLAS)
 

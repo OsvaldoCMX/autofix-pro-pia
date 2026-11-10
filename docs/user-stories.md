@@ -14,7 +14,7 @@ Este documento contiene las User Stories derivadas del levantamiento de requerim
 
 Las historias siguen el formato *Como… quiero… para…* y cada criterio de aceptación está escrito en Gherkin (*Dado / Cuando / Entonces / Y*). Los mismos criterios, palabra por palabra, están en los archivos `docs/gherkin/*.feature` con las etiquetas `@US-xxx` y `@CA-xxx`, para que cada escenario se pueda relacionar con su prueba automatizada (convención `test_ca_0XX_…`). Los nombres de estados, roles y términos son los del [Glosario del Dominio](glosario.md).
 
-**Resumen:** 16 necesidades · 27 User Stories · 60 criterios de aceptación · 8 archivos `.feature`.
+**Resumen:** 16 necesidades · 27 User Stories · 62 criterios de aceptación · 8 archivos `.feature`.
 
 ## 1. Trazabilidad con el BRD
 
@@ -157,6 +157,7 @@ Los criterios marcados con **(v3.0)** se agregaron o se precisaron en el PIA y l
 | **CA-016**<br>Crear una cotización adicional | **Dado** que el técnico reportó una falla adicional en una orden «En Reparación»<br>**Cuando** el asesor crea una nueva cotización vinculada a esa orden<br>**Entonces** el sistema debe etiquetarla como «Cotización Adicional»<br>**Y** debe asignarle la siguiente versión (v.2, v.3…)<br>**Y** debe dejarla en «Pendiente de Autorización del Cliente» sin importar su monto<br>**Y** debe mantener sin cambios la cotización original |
 | **CA-017**<br>El cliente autoriza la cotización adicional | **Dado** que el cliente autoriza la cotización adicional<br>**Cuando** el asesor registra la decisión<br>**Entonces** los trabajos adicionales se agregan a la orden en estado «Pendiente»<br>**Y** el sistema debe notificar al técnico |
 | **CA-018**<br>El cliente rechaza la cotización adicional **(v3.0, H-PIA-12)** | **Dado** que el cliente rechaza la cotización adicional<br>**Cuando** el asesor registra la decisión<br>**Entonces** el sistema debe marcar los trabajos adicionales como «No Autorizado»<br>**Y** la orden continúa solo con los trabajos autorizados originalmente<br>**Y** si esos trabajos ya estaban completados, la orden pasa a «Lista para Entrega» |
+| **CA-061**<br>Una sola cotización adicional sin decisión a la vez **(v3.1, H-PIA-26)** | **Dado** que una orden tiene una cotización adicional en «Pendiente de Autorización del Cliente»<br>**Cuando** el asesor intenta generar otra cotización adicional, por ejemplo con un doble clic<br>**Entonces** el sistema no debe generarla<br>**Y** debe indicar que primero se registre la decisión del cliente sobre la cotización adicional pendiente, con su versión |
 
 ### US-010
 
@@ -166,6 +167,7 @@ Los criterios marcados con **(v3.0)** se agregaron o se precisaron en el PIA y l
 |---|---|
 | **CA-019**<br>Solicitar una refacción no disponible | **Dado** que el técnico verificó en el almacén que una refacción de un trabajo autorizado no está disponible<br>**Cuando** la marca como «No disponible» y captura la descripción y la cantidad<br>**Entonces** el sistema debe crear una «Solicitud de Compra» en estado «Solicitada» con su fecha<br>**Y** debe mostrarla en la lista de Compras<br>**Y** debe cambiar la orden a «En Espera de Refacción» |
 | **CA-020**<br>No se piden refacciones de trabajos no autorizados | **Dado** que un trabajo no ha sido autorizado por el cliente<br>**Cuando** el técnico intenta crear una solicitud de compra para ese trabajo<br>**Entonces** el sistema no debe permitirlo |
+| **CA-062**<br>No se repite la solicitud de una refacción pendiente **(v3.1, H-PIA-26)** | **Dado** que un trabajo ya tiene una solicitud de compra «Solicitada» de una refacción<br>**Cuando** el técnico vuelve a solicitar la misma refacción para el mismo trabajo, por ejemplo con un doble clic<br>**Entonces** el sistema no debe crear otra solicitud<br>**Y** debe indicar que esa refacción ya está solicitada y que Compras la está gestionando<br>**Y** la refacción debe compararse sin distinguir mayúsculas ni espacios repetidos |
 
 ### US-011
 
@@ -331,11 +333,11 @@ Los criterios marcados con **(v3.0)** se agregaron o se precisaron en el PIA y l
 | N-03 | US-006 | CA-010, CA-011, CA-012 | Fase 3: Autorización |
 | N-04 | US-005 | CA-007, CA-008, CA-009 | Fase 2: Diagnóstico y cotización |
 | N-05 | US-012 | CA-023 | Fase 4: Gestión de refacciones |
-| N-06 | US-009, US-019 | CA-016, CA-017, CA-018, CA-034 | Fase 5: Reparación y ampliación |
+| N-06 | US-009, US-019 | CA-016, CA-017, CA-018, CA-034, CA-061 | Fase 5: Reparación y ampliación |
 | N-07 | US-016, US-022 | CA-028, CA-029, CA-039, CA-041 | Fase 1, Fase 3 y Fase 6: Cierre, pago y entrega |
 | N-08 | US-017, US-018 | CA-030, CA-031 | Consulta transversal (no es una tarea del flujo) |
 | N-09 | US-007, US-008, US-019, US-020 | CA-013, CA-014, CA-015, CA-032, CA-033, CA-035, CA-036, CA-046, CA-053, CA-054 | Fase 1, Fase 2 y Fase 5 |
-| N-10 | US-010, US-011 | CA-019, CA-020, CA-021, CA-022 | Fase 4: Gestión de refacciones |
+| N-10 | US-010, US-011 | CA-019, CA-020, CA-021, CA-022, CA-062 | Fase 4: Gestión de refacciones |
 | N-11 | US-014, US-015, US-024 | CA-026, CA-027, CA-041, CA-042, CA-043, CA-058 | Fase 6: Cierre, pago y entrega (y Fase 3 para la entrega sin reparación) |
 | N-12 | US-013 | CA-024, CA-025 | Diagrama 2 (Casos especiales): Retiro anticipado |
 | N-13 | US-021 | CA-037, CA-038 | Consulta transversal (no es una tarea del flujo) |

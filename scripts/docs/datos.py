@@ -31,11 +31,11 @@ TRAZA_NECESIDAD = {
     "N-03": (["US-006"], ["CA-010", "CA-011", "CA-012"], "Fase 3: Autorización"),
     "N-04": (["US-005"], ["CA-007", "CA-008", "CA-009"], "Fase 2: Diagnóstico y cotización"),
     "N-05": (["US-012"], ["CA-023"], "Fase 4: Gestión de refacciones"),
-    "N-06": (["US-009", "US-019"], ["CA-016", "CA-017", "CA-018", "CA-034"], "Fase 5: Reparación y ampliación"),
+    "N-06": (["US-009", "US-019"], ["CA-016", "CA-017", "CA-018", "CA-034", "CA-061"], "Fase 5: Reparación y ampliación"),
     "N-07": (["US-016", "US-022"], ["CA-028", "CA-029", "CA-039", "CA-041"], "Fase 1, Fase 3 y Fase 6: Cierre, pago y entrega"),
     "N-08": (["US-017", "US-018"], ["CA-030", "CA-031"], "Consulta transversal (no es una tarea del flujo)"),
     "N-09": (["US-007", "US-008", "US-019", "US-020"], ["CA-013", "CA-014", "CA-015", "CA-032", "CA-033", "CA-035", "CA-036", "CA-046", "CA-053", "CA-054"], "Fase 1, Fase 2 y Fase 5"),
-    "N-10": (["US-010", "US-011"], ["CA-019", "CA-020", "CA-021", "CA-022"], "Fase 4: Gestión de refacciones"),
+    "N-10": (["US-010", "US-011"], ["CA-019", "CA-020", "CA-021", "CA-022", "CA-062"], "Fase 4: Gestión de refacciones"),
     "N-11": (["US-014", "US-015", "US-024"], ["CA-026", "CA-027", "CA-041", "CA-042", "CA-043", "CA-058"],
              "Fase 6: Cierre, pago y entrega (y Fase 3 para la entrega sin reparación)"),
     "N-12": (["US-013"], ["CA-024", "CA-025"], "Diagrama 2 (Casos especiales): Retiro anticipado"),
@@ -691,6 +691,25 @@ ca("CA-060", "US-004", [
    "POST /api/ordenes/{numero}/cotizaciones (422) · POST /api/ordenes/{numero}/cotizaciones-adicionales (422)", ASE,
    cambio="H-PIA-25", nombre="Cada trabajo de la cotización vale más de $0.00", planeado=True)
 
+ca("CA-061", "US-009", [
+    (D, "que una orden tiene una cotización adicional en «Pendiente de Autorización del Cliente»"),
+    (C, "el asesor intenta generar otra cotización adicional, por ejemplo con un doble clic"),
+    (E, "el sistema no debe generarla"),
+    (Y, "debe indicar que primero se registre la decisión del cliente sobre la cotización adicional pendiente, con su versión"),
+], F5, ["RN-33", "RN-24"], "OrdenDeServicio (adicionales_pendientes), error OperacionDeCotizacionNoPermitida",
+   "ServicioDeCotizacion.generar_adicional", "POST /api/ordenes/{numero}/cotizaciones-adicionales (409)", ASE,
+   cambio="H-PIA-26", nombre="Una sola cotización adicional sin decisión a la vez", planeado=True)
+
+ca("CA-062", "US-010", [
+    (D, "que un trabajo ya tiene una solicitud de compra «Solicitada» de una refacción"),
+    (C, "el técnico vuelve a solicitar la misma refacción para el mismo trabajo, por ejemplo con un doble clic"),
+    (E, "el sistema no debe crear otra solicitud"),
+    (Y, "debe indicar que esa refacción ya está solicitada y que Compras la está gestionando"),
+    (Y, "la refacción debe compararse sin distinguir mayúsculas ni espacios repetidos"),
+], F4, ["RN-34", "RN-09"], "OrdenDeServicio (crear_solicitud_de_compra), SolicitudDeCompra, error SolicitudNoPermitida",
+   "ServicioDeRefacciones.solicitar", "POST /api/ordenes/{numero}/solicitudes-de-compra (409)", TEC,
+   cambio="H-PIA-26", nombre="No se repite la solicitud de una refacción pendiente", planeado=True)
+
 # ----------------------------------------------------------------------------- áreas (archivos .feature)
 AREAS = [
     ("01_recepcion", "Recepción y registro del vehículo",
@@ -754,10 +773,12 @@ REGLAS = {
     "RN-30": ("Caja corrige la forma de pago solo mientras la orden está «Pagada» (antes de la entrega); el monto y la fecha del pago no cambian y queda constancia de la forma anterior.", "Revisión del 09/11/2026 (H-PIA-24); BRD Restricción 9"),
     "RN-31": ("Los datos de captura tienen forma y rango razonables: teléfono con 10 dígitos (se aceptan espacios, guiones y paréntesis), correo con la forma nombre@dominio.algo, año del vehículo hasta el año actual + 1 (America/Monterrey), kilometraje hasta 2,000,000 y textos libres de hasta 1,000 caracteres; un teléfono o un correo con solo espacios cuenta como no capturado.", "Revisión del 09/11/2026 (H-PIA-25); BRD §5"),
     "RN-32": ("Cada trabajo de una cotización vale más de $0.00 (mano de obra más refacciones); el taller no maneja trabajos sin costo.", "Revisión del 09/11/2026 (H-PIA-25); BRD §5 (sin garantías ni promociones)"),
+    "RN-33": ("Una orden tiene a lo más una cotización adicional sin decisión del cliente; la siguiente se genera después de registrar esa decisión.", "Revisión del 09/11/2026 (H-PIA-26); BRD §2 Excepciones"),
+    "RN-34": ("Un trabajo no tiene dos solicitudes «Solicitada» de la misma refacción (misma descripción, sin distinguir mayúsculas ni espacios repetidos); cuando la pieza llega se puede volver a solicitar.", "Revisión del 09/11/2026 (H-PIA-26); BRD Restricción 8"),
 }
 
 # Reglas aprobadas en la Fase 13 que todavía no se construyen (misma idea que `planeado` en los CA).
-REGLAS_PLANEADAS = {"RN-25", "RN-26", "RN-27", "RN-28", "RN-29", "RN-30", "RN-31", "RN-32"}
+REGLAS_PLANEADAS = {"RN-25", "RN-26", "RN-27", "RN-28", "RN-29", "RN-30", "RN-31", "RN-32", "RN-33", "RN-34"}
 
 # ----------------------------------------------------------------------------- pruebas previstas
 # Convención: toda prueba de aceptación se llama test_ca_0XX_<descripcion> para poder

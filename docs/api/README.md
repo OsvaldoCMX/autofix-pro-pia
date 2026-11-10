@@ -56,7 +56,7 @@ Contrato de la API que se implementa con FastAPI (ADR-008). Cuando la API esté 
 | Método | Ruta | Rol | Descripción | Éxito | Errores | Caso de uso | Criterios | Prioridad |
 |---|---|---|---|---|---|---|---|---|
 | POST | `/api/ordenes/{numero}/cotizaciones` | Asesor | Generar la cotización inicial (v.1). | 201 | 401, 403, 404, 409, 422 | `ServicioDeCotizacion.generar_inicial` | CA-005, CA-007, CA-060 | P1 |
-| POST | `/api/ordenes/{numero}/cotizaciones-adicionales` | Asesor | Generar una cotización adicional (v.2, v.3…). | 201 | 401, 403, 404, 409, 422 | `ServicioDeCotizacion.generar_adicional` | CA-016, CA-060 | P1 |
+| POST | `/api/ordenes/{numero}/cotizaciones-adicionales` | Asesor | Generar una cotización adicional (v.2, v.3…). | 201 | 401, 403, 404, 409, 422 | `ServicioDeCotizacion.generar_adicional` | CA-016, CA-060, CA-061 | P1 |
 | GET | `/api/cotizaciones/{id}` | Asesor, Gerente | Detalle de la cotización con su desglose y estado. | 200 | 401, 403, 404 | `ConsultarCotizacion` | CA-005 | P1 |
 | GET | `/api/cotizaciones/{id}/pdf` | Asesor | PDF de la cotización. | 200 | 401, 403, 404 | `ServicioDeCotizacion.generar_pdf` | CA-005 | P2 |
 | POST | `/api/cotizaciones/{id}/presentacion` | Asesor | Marcar como presentada (inicia las 48 h). | 200 | 401, 403, 404, 409 | `ServicioDeCotizacion.presentar` | CA-006, CA-007, CA-051 | P1 |
@@ -84,7 +84,7 @@ Contrato de la API que se implementa con FastAPI (ADR-008). Cuando la API esté 
 
 | Método | Ruta | Rol | Descripción | Éxito | Errores | Caso de uso | Criterios | Prioridad |
 |---|---|---|---|---|---|---|---|---|
-| POST | `/api/ordenes/{numero}/solicitudes-de-compra` | Técnico | Crear solicitud de compra de una refacción no disponible. | 201 | 401, 403, 404, 409, 422 | `ServicioDeRefacciones.solicitar` | CA-019, CA-020 | P1 |
+| POST | `/api/ordenes/{numero}/solicitudes-de-compra` | Técnico | Crear solicitud de compra de una refacción no disponible. | 201 | 401, 403, 404, 409, 422 | `ServicioDeRefacciones.solicitar` | CA-019, CA-020, CA-062 | P1 |
 | GET | `/api/compras/solicitudes-pendientes` | Compras | Solicitudes «Solicitada» con días hábiles transcurridos. | 200 | 401, 403 | `ListarSolicitudesPendientes` | CA-021 | P1 |
 | POST | `/api/ordenes/{numero}/solicitudes-de-compra/{id}/llegada` | Compras | Registrar la llegada de la refacción. | 200 | 401, 403, 404, 409 | `ServicioDeRefacciones.registrar_llegada` | CA-022 | P1 |
 | POST | `/api/ordenes/{numero}/solicitudes-de-compra/{id}/aviso-al-cliente` | Asesor | Registrar que se avisó al cliente del retraso. | 200 | 401, 403, 404, 409 | `ServicioDeRefacciones.registrar_aviso_al_cliente` | CA-023 | P1 |

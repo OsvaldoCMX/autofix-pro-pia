@@ -57,3 +57,10 @@ Característica: Autorización del cliente y cotizaciones adicionales
     Entonces el sistema debe marcar los trabajos adicionales como «No Autorizado»
     Y la orden continúa solo con los trabajos autorizados originalmente
     Y si esos trabajos ya estaban completados, la orden pasa a «Lista para Entrega»
+
+  @US-009 @CA-061 @v3.1
+  Escenario: CA-061 Una sola cotización adicional sin decisión a la vez
+    Dado que una orden tiene una cotización adicional en «Pendiente de Autorización del Cliente»
+    Cuando el asesor intenta generar otra cotización adicional, por ejemplo con un doble clic
+    Entonces el sistema no debe generarla
+    Y debe indicar que primero se registre la decisión del cliente sobre la cotización adicional pendiente, con su versión
