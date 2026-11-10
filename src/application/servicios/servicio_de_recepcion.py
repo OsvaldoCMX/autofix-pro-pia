@@ -37,6 +37,9 @@ class ServicioDeRecepcion:
         self._reloj = reloj
         self._publicador = publicador
 
+    def _anio_actual(self) -> int:
+        return self._reloj.ahora_en_el_taller().year
+
     def registrar_cliente(self, comando: RegistrarCliente) -> ResultadoDeCliente:
         with self._uow as uow:
             cliente = _obtener_o_crear_cliente(uow, comando)
@@ -57,7 +60,7 @@ class ServicioDeRecepcion:
         with self._uow as uow:
             vehiculo = uow.vehiculos.por_placas(Placas(comando.placas))
             vehiculo.actualizar_datos(
-                VIN(comando.vin), comando.marca, comando.modelo, comando.anio
+                VIN(comando.vin), comando.marca, comando.modelo, comando.anio, self._anio_actual()
             )
             uow.vehiculos.guardar(vehiculo)
             uow.confirmar()
@@ -66,7 +69,7 @@ class ServicioDeRecepcion:
         )
 
     def corregir_recepcion(self, comando: CorregirRecepcion) -> ResultadoDeRecepcion:
-        recepcion = EstadoDeRecepcion(comando.kilometraje, comando.nivel_de_combustible)
+        recepcion = EstadoDeRecepcion.capturado(comando.kilometraje, comando.nivel_de_combustible)
         with self._uow as uow:
             orden = uow.ordenes.obtener(NumeroOrden(comando.numero_orden))
             orden.corregir_datos_de_recepcion(
@@ -86,10 +89,10 @@ class ServicioDeRecepcion:
     def registrar_orden(self, comando: RegistrarOrden) -> ResultadoDeOrden:
         ahora = self._reloj.ahora()
         placas = Placas(comando.placas)
-        recepcion = EstadoDeRecepcion(comando.kilometraje, comando.nivel_de_combustible)
+        recepcion = EstadoDeRecepcion.capturado(comando.kilometraje, comando.nivel_de_combustible)
         with self._uow as uow:
             VerificadorDeOrdenUnica().verificar(placas, uow.ordenes.abierta_del_vehiculo(placas))
-            cliente = _preparar_cliente_y_vehiculo(uow, placas, comando)
+            cliente = _preparar_cliente_y_vehiculo(uow, placas, comando, self._anio_actual())
             orden = OrdenDeServicio.registrar(
                 uow.ordenes.siguiente_numero(),
                 cliente.id_cliente,
@@ -113,17 +116,17 @@ class ServicioDeRecepcion:
 
 
 def _preparar_cliente_y_vehiculo(
-    uow: UnidadDeTrabajo, placas: Placas, comando: RegistrarOrden
+    uow: UnidadDeTrabajo, placas: Placas, comando: RegistrarOrden, anio_actual: int
 ) -> Cliente:
     try:
         vehiculo = uow.vehiculos.por_placas(placas)
     except VehiculoNoEncontrado:
-        return _registrar_vehiculo_nuevo(uow, placas, comando)
-    return _reutilizar_vehiculo(uow, vehiculo, comando)
+        return _registrar_vehiculo_nuevo(uow, placas, comando, anio_actual)
+    return _reutilizar_vehiculo(uow, vehiculo, comando, anio_actual)
 
 
 def _reutilizar_vehiculo(
-    uow: UnidadDeTrabajo, vehiculo: Vehiculo, comando: RegistrarOrden
+    uow: UnidadDeTrabajo, vehiculo: Vehiculo, comando: RegistrarOrden, anio_actual: int
 ) -> Cliente:
     """Cliente recurrente (CA-003): se usan sus registros y se actualiza lo que el asesor envió."""
     if comando.id_cliente is not None and comando.id_cliente != vehiculo.id_cliente:
@@ -140,13 +143,14 @@ def _reutilizar_vehiculo(
             comando.vehiculo.marca,
             comando.vehiculo.modelo,
             comando.vehiculo.anio,
+            anio_actual,
         )
         uow.vehiculos.guardar(vehiculo)
     return cliente
 
 
 def _registrar_vehiculo_nuevo(
-    uow: UnidadDeTrabajo, placas: Placas, comando: RegistrarOrden
+    uow: UnidadDeTrabajo, placas: Placas, comando: RegistrarOrden, anio_actual: int
 ) -> Cliente:
     """Placas no registradas (CA-004): se crea el registro desde cero."""
     if comando.vehiculo is None:
@@ -154,7 +158,9 @@ def _registrar_vehiculo_nuevo(
             f"Las placas {placas} no están registradas: capture los datos del vehículo."
         )
     cliente = _cliente_del_vehiculo_nuevo(uow, comando)
-    uow.vehiculos.agregar(_nuevo_vehiculo(placas, comando.vehiculo, cliente.id_cliente))
+    uow.vehiculos.agregar(
+        _nuevo_vehiculo(placas, comando.vehiculo, cliente.id_cliente, anio_actual)
+    )
     return cliente
 
 
@@ -180,7 +186,7 @@ def _obtener_o_crear_cliente(uow: UnidadDeTrabajo, datos: RegistrarCliente) -> C
         existente = uow.clientes.buscar_flotilla(datos.empresa)
         if existente is not None:
             return existente
-    cliente = Cliente(
+    cliente = Cliente.registrar(
         uow.clientes.siguiente_id(),
         datos.nombre,
         datos.tipo,
@@ -196,13 +202,17 @@ def _obtener_o_crear_cliente(uow: UnidadDeTrabajo, datos: RegistrarCliente) -> C
 def _responsable(datos: RegistrarCliente) -> ResponsableDeFlotilla | None:
     if datos.tipo is not TipoCliente.FLOTILLA or datos.responsable_nombre is None:
         return None
-    return ResponsableDeFlotilla(
+    return ResponsableDeFlotilla.capturar(
         datos.responsable_nombre, datos.responsable_telefono or "", datos.responsable_correo or ""
     )
 
 
-def _nuevo_vehiculo(placas: Placas, datos: DatosDeVehiculo, id_cliente: str) -> Vehiculo:
-    return Vehiculo(placas, VIN(datos.vin), datos.marca, datos.modelo, datos.anio, id_cliente)
+def _nuevo_vehiculo(
+    placas: Placas, datos: DatosDeVehiculo, id_cliente: str, anio_actual: int
+) -> Vehiculo:
+    return Vehiculo.registrar(
+        placas, VIN(datos.vin), datos.marca, datos.modelo, datos.anio, id_cliente, anio_actual
+    )
 
 
 def _resultado_de_cliente(cliente: Cliente) -> ResultadoDeCliente:

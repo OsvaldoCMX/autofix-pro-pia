@@ -13,6 +13,9 @@ _IMPORTE_EXCEDIDO = "El importe es mayor al máximo permitido. Revise la cantida
 _LARGO_MAXIMO_DE_PLACAS = 15  # VARCHAR(15) en la base de datos
 _FORMATO_DE_PLACAS = re.compile(r"[A-Z0-9]+")
 _FORMATO_DE_VIN = re.compile(r"[A-HJ-NPR-Z0-9]{17}")
+_CARACTERES_DE_TELEFONO = re.compile(r"[0-9 ()\-]+")
+_DIGITOS_DE_TELEFONO = 10
+_FORMATO_DE_CORREO = re.compile(r"[^@\s]+@[^@\s]+\.[^@\s]+")
 
 
 def texto_requerido(valor: str, mensaje: str) -> str:
@@ -123,3 +126,61 @@ class VIN:
 
     def __str__(self) -> str:
         return self.valor
+
+
+@dataclass(frozen=True)
+class Telefono:
+    """Teléfono capturado: 10 dígitos; se aceptan espacios, guiones y paréntesis (RN-31).
+
+    Se guarda como se capturó, sin espacios en los extremos. Solo se valida al capturar o
+    corregir: los datos que ya están guardados se leen tal cual.
+    """
+
+    valor: str
+    dato: str = "El teléfono"
+
+    def __post_init__(self) -> None:
+        limpio = self.valor.strip()
+        digitos = sum(caracter.isdigit() for caracter in limpio)
+        if not _CARACTERES_DE_TELEFONO.fullmatch(limpio) or digitos != _DIGITOS_DE_TELEFONO:
+            raise ValorInvalido(
+                f"{self.dato} debe tener {_DIGITOS_DE_TELEFONO} dígitos, por ejemplo 81 1234 5678."
+            )
+        object.__setattr__(self, "valor", limpio)
+
+    @classmethod
+    def capturado(cls, valor: str | None, dato: str = "El teléfono") -> str | None:
+        """Un teléfono vacío o con solo espacios cuenta como no capturado."""
+        if valor is None or not valor.strip():
+            return None
+        return cls(valor, dato).valor
+
+    def __str__(self) -> str:
+        return self.valor
+
+
+@dataclass(frozen=True)
+class Correo:
+    """Correo capturado con la forma nombre@dominio.algo, sin espacios (RN-31)."""
+
+    valor: str
+    dato: str = "El correo"
+
+    def __post_init__(self) -> None:
+        limpio = self.valor.strip()
+        if not _FORMATO_DE_CORREO.fullmatch(limpio):
+            raise ValorInvalido(
+                f"{self.dato} debe tener la forma nombre@dominio.com, por ejemplo luis@correo.com."
+            )
+        object.__setattr__(self, "valor", limpio)
+
+    @classmethod
+    def capturado(cls, valor: str | None, dato: str = "El correo") -> str | None:
+        """Un correo vacío o con solo espacios cuenta como no capturado."""
+        if valor is None or not valor.strip():
+            return None
+        return cls(valor, dato).valor
+
+    def __str__(self) -> str:
+        return self.valor
+

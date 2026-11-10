@@ -1357,3 +1357,14 @@ def test_rn_30_entregada_ya_no_se_corrige() -> None:
 def test_rn_30_sin_pago_de_contado_no_hay_que_corregir(constructor: c.Constructor) -> None:
     with pytest.raises(CorreccionNoPermitida, match="no tiene un pago de contado"):
         constructor().corregir_forma_de_pago(FormaDePago.EFECTIVO, DESPUES)
+
+
+# ------------------------------------------------------------------ kilometraje (RN-31)
+def test_rn_31_kilometraje_hasta_2_millones() -> None:
+    assert EstadoDeRecepcion.capturado(2_000_000, NivelDeCombustible.LLENO).kilometraje == 2_000_000
+    with pytest.raises(ValorInvalido, match="2,000,000 km"):
+        EstadoDeRecepcion.capturado(2_000_001, NivelDeCombustible.LLENO)
+
+
+def test_rn_31_reconstruir_no_revisa_el_tope_del_kilometraje() -> None:
+    assert EstadoDeRecepcion(2_000_000_000, NivelDeCombustible.LLENO).kilometraje == 2_000_000_000

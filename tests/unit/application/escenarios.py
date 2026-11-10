@@ -51,15 +51,15 @@ from infrastructure.memoria.unidad_de_trabajo import UnidadDeTrabajoEnMemoria
 
 S = TypeVar("S")
 
-PARTICULAR = RegistrarCliente("Luis Peña", telefono="81-2222", correo="luis@correo.test")
+PARTICULAR = RegistrarCliente("Luis Peña", telefono="81-2222-0000", correo="luis@correo.test")
 FLOTILLA = RegistrarCliente(
     "Transportes Norte SA",
     TipoCliente.FLOTILLA,
-    "81-3333",
+    "81-3333-0000",
     "contacto@norte.test",
     "Transportes Norte",
     "Ana Torres",
-    "81-1111",
+    "81-1111-0000",
     "ana@norte.test",
 )
 TOTAL_DE_DOS_TRABAJOS = Decimal("3000.00")

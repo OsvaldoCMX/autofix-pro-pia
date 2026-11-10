@@ -481,3 +481,19 @@ def test_ca_051_sin_alerta_hasta_volver_a_presentar(cliente: TestClient, reloj: 
     assert sin_presentar["alertas_de_recontacto"] == 0
     assert antes_del_plazo["alertas_de_recontacto"] == 0
     assert despues_del_plazo["alertas_de_recontacto"] == 1
+
+
+# ------------------------------------------------------------------ trabajos de $0.00 (H-PIA-25)
+def test_ca_060_un_trabajo_de_0_responde_422(cliente: TestClient) -> None:
+    numero = diagnosticada(cliente)
+
+    respuesta = exigir(
+        cliente.post(
+            f"/api/ordenes/{numero}/cotizaciones", json=trabajos("100.00", "0.00"), headers=ASESOR
+        ),
+        422,
+    )
+
+    assert respuesta["detalle"] == (
+        "El trabajo 2 («Trabajo 2») vale $0.00: capture su mano de obra o sus refacciones."
+    )

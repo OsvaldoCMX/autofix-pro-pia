@@ -136,7 +136,7 @@ def test_guardar_vehiculo_rechaza_el_vin_de_otro(taller: Taller) -> None:
         uow.vehiculos.agregar(_vehiculo())
         segundo = _vehiculo("ABC2", VIN_2)
         uow.vehiculos.agregar(segundo)
-        segundo.actualizar_datos(VIN(VIN_1), "Nissan", "Versa", 2020)
+        segundo.actualizar_datos(VIN(VIN_1), "Nissan", "Versa", 2020, 2026)
 
         with pytest.raises(ValorInvalido, match="VIN"):
             uow.vehiculos.guardar(segundo)
@@ -165,10 +165,10 @@ def test_guardar_actualiza_lo_que_ya_existe(taller: Taller) -> None:
 
     with taller.uow() as uow:
         cliente = uow.clientes.obtener(ID_CLIENTE)
-        cliente.actualizar_contacto("Luis Peña", "81-2222", "luis@correo.test")
+        cliente.actualizar_contacto("Luis Peña", "81-2222-0000", "luis@correo.test")
         uow.clientes.guardar(cliente)
         vehiculo = uow.vehiculos.por_placas(PLACAS)
-        vehiculo.actualizar_datos(VIN(VIN_2), "Toyota", "Yaris", 2021)
+        vehiculo.actualizar_datos(VIN(VIN_2), "Toyota", "Yaris", 2021, 2026)
         uow.vehiculos.guardar(vehiculo)
         uow.confirmar()
 
@@ -178,7 +178,7 @@ def test_guardar_actualiza_lo_que_ya_existe(taller: Taller) -> None:
 
     assert (cliente.nombre, cliente.telefono, cliente.correo) == (
         "Luis Peña",
-        "81-2222",
+        "81-2222-0000",
         "luis@correo.test",
     )
     assert (str(vehiculo.vin), vehiculo.marca, vehiculo.modelo, vehiculo.anio) == (

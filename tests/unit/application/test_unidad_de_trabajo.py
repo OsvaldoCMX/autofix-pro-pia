@@ -196,7 +196,7 @@ def test_guardar_vehiculo_rechaza_el_vin_de_otro_vehiculo() -> None:
         uow.vehiculos.agregar(_vehiculo("ABC1", VIN_1))
         segundo = _vehiculo("ABC2", VIN_2)
         uow.vehiculos.agregar(segundo)
-        segundo.actualizar_datos(VIN(VIN_1), "Nissan", "Versa", 2020)
+        segundo.actualizar_datos(VIN(VIN_1), "Nissan", "Versa", 2020, 2026)
 
         with pytest.raises(ValorInvalido, match="VIN"):
             uow.vehiculos.guardar(segundo)

@@ -79,6 +79,7 @@ class Cotizacion(RaizDeAgregado):
         fecha: datetime,
         politica: Especificacion[Cotizacion] | None = None,
     ) -> Cotizacion:
+        lineas = _con_importe(lineas)
         cotizacion = cls(id_cotizacion, numero_orden, tipo, version, lineas, fecha)
         cotizacion._registrar(
             ev.CotizacionGenerada(fecha, *cotizacion._claves(), str(version), cotizacion._total())
@@ -144,7 +145,7 @@ class Cotizacion(RaizDeAgregado):
     def ajustar(self, lineas: Iterable[LineaDeCotizacion], fecha: datetime) -> None:
         """La versión ajustada sigue las indicaciones del Gerente y no regresa a revisión."""
         self._exigir_estado(_E.REQUIERE_AJUSTE, "ajustar")
-        self._lineas = self._indexar_lineas(lineas)
+        self._lineas = self._indexar_lineas(_con_importe(lineas))
         self._cambiar_estado(_E.PENDIENTE_DE_AUTORIZACION_DEL_CLIENTE)
         self._registrar(ev.CotizacionAjustada(fecha, *self._claves(), self._total()))
 
@@ -166,7 +167,7 @@ class Cotizacion(RaizDeAgregado):
         motivo_limpio = texto_requerido(
             motivo, "Capture el motivo de la corrección de la cotización."
         )
-        nuevas = self._indexar_lineas(lineas)
+        nuevas = self._indexar_lineas(_con_importe(lineas))
         estado_anterior, total_anterior = self.estado, self.total
         presentacion_anterior = self.fecha_presentacion
         aprobacion_anterior = self.fecha_aprobacion_gerencial
@@ -341,3 +342,19 @@ class Cotizacion(RaizDeAgregado):
         if not indice:
             raise CotizacionSinTrabajos("Una cotización debe incluir al menos un trabajo.")
         return indice
+
+
+def _con_importe(lineas: Iterable[LineaDeCotizacion]) -> list[LineaDeCotizacion]:
+    """RN-32: al capturar, cada trabajo vale más de $0.00 (el taller no maneja trabajos gratis).
+
+    No se revisa al leer de la base: las cotizaciones guardadas se reconstruyen tal cual.
+    """
+    lista = list(lineas)
+    for linea in lista:
+        if linea.subtotal == Dinero.cero():
+            raise ValorInvalido(
+                f"El trabajo {linea.numero} («{linea.descripcion}») vale $0.00: "
+                "capture su mano de obra o sus refacciones."
+            )
+    return lista
+

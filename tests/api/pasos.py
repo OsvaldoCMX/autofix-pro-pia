@@ -35,17 +35,17 @@ ID_OTRO_TECNICO = "EMP-003"
 
 CLIENTE_PARTICULAR = {
     "nombre": "Luis Peña",
-    "telefono": "81-2222",
+    "telefono": "81-2222-0000",
     "correo": "luis@correo.test",
 }
 CLIENTE_DE_FLOTILLA = {
     "nombre": "Transportes Norte SA",
     "tipo": "Flotilla",
-    "telefono": "81-3333",
+    "telefono": "81-3333-0000",
     "correo": "contacto@norte.test",
     "empresa": "Transportes Norte",
     "responsable_nombre": "Ana Torres",
-    "responsable_telefono": "81-1111",
+    "responsable_telefono": "81-1111-0000",
     "responsable_correo": "ana@norte.test",
 }
 

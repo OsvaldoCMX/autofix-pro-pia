@@ -270,5 +270,5 @@ def test_flotilla_conserva_su_responsable(taller_en_base: TallerEnBase) -> None:
         cliente.responsable.nombre,
         cliente.responsable.telefono,
         cliente.responsable.correo,
-    ) == ("Ana Torres", "81-1111", "ana@norte.test")
+    ) == ("Ana Torres", "81-1111-0000", "ana@norte.test")
     assert _orden(taller_en_base, numero).es_cliente_de_flotilla is True

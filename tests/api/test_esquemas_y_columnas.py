@@ -92,12 +92,12 @@ def test_el_patron_de_importe_cabe_en_numeric_12_2() -> None:
 CLIENTE_COMPLETO = {
     "nombre": "n" * 120,
     "tipo": "Flotilla",
-    "telefono": "1" * 20,
-    "correo": "c" * 120,
+    "telefono": "(81)--1234--5678----",
+    "correo": "c" * 110 + "@correo.mx",
     "empresa": "e" * 120,
     "responsable_nombre": "r" * 120,
-    "responsable_telefono": "2" * 20,
-    "responsable_correo": "o" * 120,
+    "responsable_telefono": "(81)--2222--3333----",
+    "responsable_correo": "o" * 110 + "@correo.mx",
 }
 
 
@@ -107,7 +107,7 @@ def test_los_textos_justo_en_el_limite_se_guardan(cliente: TestClient) -> None:
     assert respuesta.status_code == 201
     encontrados = exigir(cliente.get("/api/clientes", params={"tipo": "Flotilla"}, headers=ASESOR), 200)
     assert encontrados[0]["nombre"] == "n" * 120
-    assert encontrados[0]["responsable_telefono"] == "2" * 20
+    assert encontrados[0]["responsable_telefono"] == "(81)--2222--3333----"
 
 
 @pytest.mark.parametrize(

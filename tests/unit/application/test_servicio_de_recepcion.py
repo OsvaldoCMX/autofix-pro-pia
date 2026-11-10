@@ -96,13 +96,13 @@ def test_ca_003_actualiza_cliente_y_vehiculo(taller: Taller) -> None:
     taller.recepcion.registrar_orden(
         _comando(
             vehiculo=DatosDeVehiculo(VIN_1, "Nissan", "Sentra", 2021),
-            cliente=RegistrarCliente("Luis Peña Ruiz", telefono="81-9", correo="nuevo@correo.test"),
+            cliente=RegistrarCliente("Luis Peña Ruiz", telefono="81-9999-0000", correo="nuevo@correo.test"),
         )
     )
 
     cliente = taller.datos.clientes["CLI-0001"]
     vehiculo = taller.datos.vehiculos["ABC123"]
-    assert (cliente.nombre, cliente.telefono) == ("Luis Peña Ruiz", "81-9")
+    assert (cliente.nombre, cliente.telefono) == ("Luis Peña Ruiz", "81-9999-0000")
     assert (vehiculo.modelo, vehiculo.anio) == ("Sentra", 2021)
 
 
@@ -138,7 +138,7 @@ def test_ca_004_cliente_existente_tambien_se_actualiza(taller: Taller) -> None:
         _comando(
             placas="XYZ-999",
             vehiculo=DatosDeVehiculo("2HGCM82633A004353", "Toyota", "Yaris", 2019),
-            cliente=RegistrarCliente("Luis P.", telefono="81-7"),
+            cliente=RegistrarCliente("Luis P.", telefono="81-7777-0000"),
             id_cliente="CLI-0001",
         )
     )

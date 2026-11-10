@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from api.esquemas.comunes import ModeloDeEntrada, ModeloDeSalida, TextoDeIdentificador
+from api.esquemas.comunes import ModeloDeEntrada, ModeloDeSalida, TextoDeIdentificador, TextoLargo
 from api.esquemas.recepcion import TrabajoDeOrden
 
 
@@ -12,12 +12,12 @@ class AsignacionDeDiagnostico(ModeloDeEntrada):
 
 
 class DatosDeDiagnostico(ModeloDeEntrada):
-    fallas: str
-    recomendaciones: str
+    fallas: TextoLargo
+    recomendaciones: TextoLargo
 
 
 class DatosDeFallaAdicional(ModeloDeEntrada):
-    descripcion: str
+    descripcion: TextoLargo
 
 
 class DiagnosticoRegistrado(ModeloDeSalida):

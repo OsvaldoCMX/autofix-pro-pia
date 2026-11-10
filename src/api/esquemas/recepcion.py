@@ -68,7 +68,7 @@ class NuevaOrden(ModeloDeEntrada):
     """Con placas nuevas, `vehiculo` es obligatorio y el cliente se da por id o por sus datos."""
 
     placas: str
-    motivo_de_ingreso: str
+    motivo_de_ingreso: TextoLargo
     kilometraje: EnteroNoNegativo
     nivel_de_combustible: NivelDeCombustible
     vehiculo: NuevoVehiculo | None = None

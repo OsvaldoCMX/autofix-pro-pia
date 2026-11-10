@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from enum import Enum
 
 from domain.compartido.errores import ValorInvalido
-from domain.compartido.valores import texto_requerido
+from domain.compartido.valores import Correo, Telefono, texto_requerido
 
 
 class TipoCliente(Enum):
@@ -28,6 +28,16 @@ class ResponsableDeFlotilla:
             ("correo", "El Responsable de Flotilla debe tener correo."),
         ):
             object.__setattr__(self, campo, texto_requerido(getattr(self, campo), mensaje))
+
+    @classmethod
+    def capturar(cls, nombre: str, telefono: str, correo: str) -> ResponsableDeFlotilla:
+        """Al registrarlo se revisa también la forma del teléfono y del correo (RN-31)."""
+        responsable = cls(nombre, telefono, correo)
+        return cls(
+            responsable.nombre,
+            Telefono(responsable.telefono, "El teléfono del Responsable de Flotilla").valor,
+            Correo(responsable.correo, "El correo del Responsable de Flotilla").valor,
+        )
 
 
 class Cliente:
@@ -55,12 +65,35 @@ class Cliente:
         self.empresa = empresa
         self.responsable = responsable
 
+    @classmethod
+    def registrar(
+        cls,
+        id_cliente: str,
+        nombre: str,
+        tipo: TipoCliente,
+        telefono: str | None = None,
+        correo: str | None = None,
+        empresa: str | None = None,
+        responsable: ResponsableDeFlotilla | None = None,
+    ) -> Cliente:
+        """Cliente nuevo capturado por el asesor: revisa el teléfono y el correo (RN-31)."""
+        return cls(
+            id_cliente,
+            nombre,
+            tipo,
+            Telefono.capturado(telefono),
+            Correo.capturado(correo),
+            empresa,
+            responsable,
+        )
+
     @property
     def es_de_flotilla(self) -> bool:
         return self.tipo is TipoCliente.FLOTILLA
 
     def actualizar_contacto(self, nombre: str, telefono: str | None, correo: str | None) -> None:
-        """El asesor confirma o corrige los datos de un cliente recurrente (CA-003)."""
-        self.nombre = texto_requerido(nombre, "El cliente debe tener nombre.")
-        self.telefono = telefono
-        self.correo = correo
+        """El asesor confirma o corrige los datos de un cliente (CA-003, CA-055, RN-31)."""
+        nombre_limpio = texto_requerido(nombre, "El cliente debe tener nombre.")
+        telefono_limpio = Telefono.capturado(telefono)
+        correo_limpio = Correo.capturado(correo)
+        self.nombre, self.telefono, self.correo = nombre_limpio, telefono_limpio, correo_limpio

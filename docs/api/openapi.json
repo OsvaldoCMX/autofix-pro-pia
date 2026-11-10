@@ -4872,6 +4872,7 @@
         "properties": {
           "motivo": {
             "type": "string",
+            "maxLength": 1000,
             "title": "Motivo"
           }
         },
@@ -4997,10 +4998,12 @@
         "properties": {
           "fallas": {
             "type": "string",
+            "maxLength": 1000,
             "title": "Fallas"
           },
           "recomendaciones": {
             "type": "string",
+            "maxLength": 1000,
             "title": "Recomendaciones"
           }
         },
@@ -5016,6 +5019,7 @@
         "properties": {
           "descripcion": {
             "type": "string",
+            "maxLength": 1000,
             "title": "Descripcion"
           }
         },
@@ -5097,6 +5101,7 @@
           },
           "observaciones": {
             "type": "string",
+            "maxLength": 1000,
             "title": "Observaciones",
             "default": ""
           }
@@ -5817,6 +5822,7 @@
           },
           "motivo_de_ingreso": {
             "type": "string",
+            "maxLength": 1000,
             "title": "Motivo De Ingreso"
           },
           "kilometraje": {
@@ -6034,6 +6040,7 @@
           },
           "descripcion": {
             "type": "string",
+            "maxLength": 1000,
             "title": "Descripcion"
           },
           "mano_de_obra": {

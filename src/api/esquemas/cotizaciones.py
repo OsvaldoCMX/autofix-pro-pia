@@ -28,7 +28,7 @@ class NuevaRefaccion(ModeloDeEntrada):
 
 class NuevoTrabajo(ModeloDeEntrada):
     numero: EnteroPositivo
-    descripcion: str
+    descripcion: TextoLargo
     mano_de_obra: Importe
     refacciones: list[NuevaRefaccion] = []
 
@@ -60,7 +60,7 @@ class DatosDeCorreccion(ModeloDeEntrada):
 
 class DatosDeRevision(ModeloDeEntrada):
     aprobada: bool
-    observaciones: str = ""
+    observaciones: TextoLargo = ""
 
 
 class CotizacionRegistrada(ModeloDeSalida):

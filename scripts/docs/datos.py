@@ -679,7 +679,7 @@ ca("CA-059", "US-001", [
     (Y, "un teléfono o un correo con solo espacios debe tratarse como no capturado"),
 ], F1, ["RN-31"], "Telefono y Correo (VO), Vehiculo (año), EstadoDeRecepcion (kilometraje), textos libres con largo máximo",
    "ServicioDeRecepcion.registrar_orden / registrar_cliente", "POST /api/ordenes (422) · POST /api/clientes (422)", ASE,
-   cambio="H-PIA-25", nombre="Datos de captura con forma y rango razonables", planeado=True)
+   cambio="H-PIA-25", nombre="Datos de captura con forma y rango razonables")
 
 ca("CA-060", "US-004", [
     (D, "que el asesor captura los trabajos de una cotización"),
@@ -689,7 +689,7 @@ ca("CA-060", "US-004", [
 ], F2, ["RN-32", "RN-23"], "LineaDeCotizacion (subtotal), Dinero",
    "ServicioDeCotizacion.generar_inicial / generar_adicional / ajustar / corregir",
    "POST /api/ordenes/{numero}/cotizaciones (422) · POST /api/ordenes/{numero}/cotizaciones-adicionales (422)", ASE,
-   cambio="H-PIA-25", nombre="Cada trabajo de la cotización vale más de $0.00", planeado=True)
+   cambio="H-PIA-25", nombre="Cada trabajo de la cotización vale más de $0.00")
 
 ca("CA-061", "US-009", [
     (D, "que una orden tiene una cotización adicional en «Pendiente de Autorización del Cliente»"),
@@ -817,7 +817,7 @@ REGLAS = {
 }
 
 # Reglas aprobadas en la Fase 13 que todavía no se construyen (misma idea que `planeado` en los CA).
-REGLAS_PLANEADAS = {"RN-31", "RN-32", "RN-33", "RN-34", "RN-35"}
+REGLAS_PLANEADAS = {"RN-33", "RN-34", "RN-35"}
 
 # ----------------------------------------------------------------------------- pruebas previstas
 # Convención: toda prueba de aceptación se llama test_ca_0XX_<descripcion> para poder

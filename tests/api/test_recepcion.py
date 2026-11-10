@@ -93,7 +93,7 @@ def test_ca_003_orden_con_placas_existentes_reutiliza_y_actualiza(cliente: TestC
         ),
         200,
     )
-    actualizado = {**datos["cliente"], "telefono": "81-9999"}
+    actualizado = {**datos["cliente"], "telefono": "81-9999-0000"}
 
     segunda = exigir(
         cliente.post(
@@ -107,7 +107,7 @@ def test_ca_003_orden_con_placas_existentes_reutiliza_y_actualiza(cliente: TestC
     assert segunda["id_cliente"] == primera["id_cliente"]
     assert segunda["numero_orden"] != primera["numero_orden"]
     vehiculo = exigir(cliente.get(f"/api/vehiculos/{datos['placas']}", headers=ASESOR), 200)
-    assert vehiculo["cliente"]["telefono"] == "81-9999"
+    assert vehiculo["cliente"]["telefono"] == "81-9999-0000"
 
 
 def test_ca_004_placas_no_registradas_responde_404_y_permite_crear_desde_cero(
@@ -147,7 +147,7 @@ def test_ca_028_registra_flotilla_con_responsable_y_la_encuentra_por_empresa(
 
     assert registrado["responsable_nombre"] == "Ana Torres"
     assert [c["id_cliente"] for c in encontrados] == [registrado["id_cliente"]]
-    assert encontrados[0]["responsable_telefono"] == "81-1111"
+    assert encontrados[0]["responsable_telefono"] == "81-1111-0000"
     assert encontrados[0]["responsable_correo"] == "ana@norte.test"
 
 
@@ -384,3 +384,57 @@ def test_ca_057_despues_de_cotizar_responde_409(cliente: TestClient) -> None:
     )
 
     assert respuesta["error"] == "CorreccionNoPermitida"
+
+
+# ------------------------------------------------------------------ datos de captura (H-PIA-25)
+def test_ca_059_telefono_sin_10_digitos_responde_422(cliente: TestClient) -> None:
+    datos = datos_de_orden(cliente={**CLIENTE_PARTICULAR, "telefono": "abc"})
+
+    respuesta = exigir(cliente.post("/api/ordenes", json=datos, headers=ASESOR), 422)
+
+    assert respuesta["detalle"] == "El teléfono debe tener 10 dígitos, por ejemplo 81 1234 5678."
+
+
+def test_ca_059_correo_sin_forma_valida_responde_422(cliente: TestClient) -> None:
+    datos = datos_de_orden(cliente={**CLIENTE_PARTICULAR, "correo": "hola"})
+
+    respuesta = exigir(cliente.post("/api/ordenes", json=datos, headers=ASESOR), 422)
+
+    assert "nombre@dominio.com" in respuesta["detalle"]
+
+
+def test_ca_059_telefono_del_responsable_de_flotilla(cliente: TestClient) -> None:
+    cuerpo = {**CLIENTE_DE_FLOTILLA, "empresa": "Otra Empresa", "responsable_telefono": "81-1"}
+
+    respuesta = exigir(cliente.post("/api/clientes", json=cuerpo, headers=ASESOR), 422)
+
+    assert respuesta["detalle"].startswith("El teléfono del Responsable de Flotilla")
+
+
+def test_ca_059_anio_mayor_al_siguiente_responde_422(cliente: TestClient) -> None:
+    datos = datos_de_orden()
+    datos["vehiculo"] = {**datos["vehiculo"], "anio": 2099}
+
+    respuesta = exigir(cliente.post("/api/ordenes", json=datos, headers=ASESOR), 422)
+
+    assert respuesta["detalle"] == (
+        "El año del vehículo no puede ser mayor a 2027. Revise el dato capturado."
+    )
+
+
+def test_ca_059_kilometraje_mayor_a_2_millones_responde_422(cliente: TestClient) -> None:
+    datos = datos_de_orden(kilometraje=2_000_000_000)
+
+    respuesta = exigir(cliente.post("/api/ordenes", json=datos, headers=ASESOR), 422)
+
+    assert "2,000,000 km" in respuesta["detalle"]
+
+
+def test_ca_059_texto_de_mas_de_1000_caracteres_responde_422(cliente: TestClient) -> None:
+    datos = datos_de_orden(motivo_de_ingreso="x" * 1001)
+
+    respuesta = exigir(cliente.post("/api/ordenes", json=datos, headers=ASESOR), 422)
+
+    assert respuesta["detalle"] == (
+        "El dato «motivo de ingreso» no puede tener más de 1000 caracteres."
+    )

@@ -237,3 +237,37 @@ def test_ca_051_cuenta_los_recontactos_posteriores_a_la_nueva_presentacion() -> 
     cotizacion.registrar_recontacto(ASESOR, _horas(60))
 
     assert cotizacion.ultimo_contacto == _horas(60)
+
+
+# ------------------------------------------------------------------ trabajos de $0.00 (RN-32)
+def test_ca_060_no_se_genera_con_un_trabajo_de_0() -> None:
+    with pytest.raises(ValorInvalido, match="El trabajo 2 .* vale \\$0.00"):
+        Cotizacion.generar(
+            "COT-1",
+            NUMERO,
+            TipoCotizacion.INICIAL,
+            VersionCotizacion(1),
+            [_linea("100.00"), _linea("0.00", numero=2)],
+            INICIO,
+        )
+
+
+@pytest.mark.parametrize("accion", ["ajustar", "corregir"])
+def test_rn_32_ajustar_y_corregir_tambien_exigen_importe(accion: str) -> None:
+    cotizacion = _inicial("20000.00")
+    if accion == "ajustar":
+        cotizacion.rechazar_por_gerente("Revise", _horas(1))
+        with pytest.raises(ValorInvalido, match="vale \\$0.00"):
+            cotizacion.ajustar([_linea("0.00")], _horas(2))
+    else:
+        with pytest.raises(ValorInvalido, match="vale \\$0.00"):
+            _corregir(cotizacion, "0.00")
+    assert cotizacion.total == Dinero(Decimal("20000.00"))
+
+
+def test_rn_32_reconstruir_acepta_cotizaciones_guardadas_de_0() -> None:
+    """Las cotizaciones de $0.00 que ya existían se siguen leyendo (condición del equipo)."""
+    cotizacion = Cotizacion("COT-9", NUMERO, TipoCotizacion.INICIAL, VersionCotizacion(1),
+                            [_linea("0.00")], INICIO)
+
+    assert cotizacion.total == Dinero.cero()
