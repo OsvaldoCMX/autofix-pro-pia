@@ -717,7 +717,7 @@ ca("CA-063", "US-006", [
     (Y, "si el nombre se escribe sin acento («Luis Pena»), debe rechazarlo e indicar a nombre de quién se registra la decisión"),
 ], F3, ["RN-07"], "spec AutorizanteValido (AutorizaElCliente, AutorizaSuResponsableDeFlotilla)",
    "ServicioDeAutorizacion.registrar_decision", "POST /api/cotizaciones/{id}/decision", ASE,
-   cambio="H-PIA-27", nombre="El nombre del autorizante con espacios de más", planeado=True)
+   cambio="H-PIA-27", nombre="El nombre del autorizante con espacios de más")
 
 ca("CA-064", "US-016", [
     (D, "que la orden es de un cliente de flotilla de la empresa «Transportes Norte», cuyo Responsable de Flotilla es «Ana Torres»"),
@@ -726,7 +726,7 @@ ca("CA-064", "US-016", [
     (Y, "debe indicar la empresa, el nombre del Responsable de Flotilla y el rol con el que se registra: «Para la flotilla de Transportes Norte, registre la decisión a nombre de su Responsable de Flotilla, Ana Torres, con el rol «Responsable de Flotilla».»"),
 ], F3, ["RN-07"], "VerificadorDeAutorizante, error AutorizanteNoValido",
    "ServicioDeAutorizacion.registrar_decision", "POST /api/cotizaciones/{id}/decision (409)", ASE,
-   cambio="H-PIA-27", nombre="Flotilla: el mensaje dice a nombre de quién y con qué rol", planeado=True)
+   cambio="H-PIA-27", nombre="Flotilla: el mensaje dice a nombre de quién y con qué rol")
 
 ca("CA-065", "US-016", [
     (D, "que la empresa «Transportes Norte» ya está registrada con su Responsable de Flotilla «Ana Torres»"),

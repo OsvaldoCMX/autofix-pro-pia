@@ -212,3 +212,16 @@ def test_ca_061_doble_clic_en_adicional_responde_409(cliente: TestClient) -> Non
         "La cotización adicional v.2 todavía espera la decisión del cliente; "
         "registre esa decisión antes de generar otra."
     )
+
+
+# ------------------------------------------------------------------ nombre del autorizante (H-PIA-27)
+def test_ca_063_el_nombre_con_espacios_de_mas_se_acepta(cliente: TestClient) -> None:
+    _, id_cotizacion = cotizada(cliente)
+    cuerpo = {**decision([1, 2]), "nombre_del_autorizante": "  luis   PEÑA "}
+
+    respuesta = exigir(
+        cliente.post(f"/api/cotizaciones/{id_cotizacion}/decision", json=cuerpo, headers=ASESOR),
+        200,
+    )
+
+    assert respuesta["estado_cotizacion"] == "Autorizada"

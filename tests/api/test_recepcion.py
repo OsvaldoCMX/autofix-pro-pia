@@ -438,3 +438,19 @@ def test_ca_059_texto_de_mas_de_1000_caracteres_responde_422(cliente: TestClient
     assert respuesta["detalle"] == (
         "El dato «motivo de ingreso» no puede tener más de 1000 caracteres."
     )
+
+
+# ------------------------------------------------------------------ flotilla (H-PIA-27)
+def test_ca_064_flotilla_con_rol_de_cliente_dice_el_responsable(cliente: TestClient) -> None:
+    _, id_cotizacion = cotizada(cliente, flotilla=True)
+    cuerpo = {**decision([1, 2], flotilla=True), "rol_del_autorizante": "Cliente"}
+
+    respuesta = exigir(
+        cliente.post(f"/api/cotizaciones/{id_cotizacion}/decision", json=cuerpo, headers=ASESOR),
+        409,
+    )
+
+    assert respuesta["detalle"] == (
+        "Para la flotilla de Transportes Norte, registre la decisión a nombre de su Responsable "
+        "de Flotilla, Ana Torres, con el rol «Responsable de Flotilla»."
+    )
