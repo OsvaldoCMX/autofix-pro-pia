@@ -1,5 +1,5 @@
 // Expediente de la orden, solo para consulta (A-03). Cada puesto le agrega sus botones: el Asesor
-// en la Fase 16; el Técnico, el Gerente y Caja lo reutilizan en la Fase 17 (interfaz-web.md §8).
+// en la Fase 16 y el Técnico en la Fase 17; el Gerente lo ve sin botones (interfaz-web.md §8).
 // Todo lo que se muestra viene del expediente que manda la API; la página no calcula nada.
 
 import { pedir } from "./api.js";
@@ -155,19 +155,20 @@ function cotizaciones(expediente, deCotizacion) {
   );
 }
 
-function trabajos(expediente) {
+function trabajos(expediente, deTrabajo) {
   if (expediente.trabajos.length === 0) {
     return bloque("Trabajos", vacio("Todavía no hay trabajos autorizados."));
   }
   return bloque(
     "Trabajos",
     tabla(
-      ["Trabajo", "Importe", "Estado", "Técnico"],
+      ["Trabajo", "Importe", "Estado", "Técnico", ""],
       expediente.trabajos.map((trabajo) => [
         trabajo.descripcion,
         dinero(trabajo.importe),
         trabajo.estado,
         trabajo.tecnico_nombre ?? trabajo.tecnico ?? "Sin asignar",
+        crear("div", { className: "acciones-en-tabla" }, ...deTrabajo(trabajo)),
       ]),
     ),
   );
@@ -226,11 +227,11 @@ function pagoYEntrega(expediente) {
 /**
  * Todos los bloques del expediente. Opciones: `acciones` (botones de la orden, debajo del
  * encabezado), `zona` (lugar para los formularios que abren esos botones), `deCotizacion` y
- * `deSolicitud` (botones de cada cotización o solicitud).
+ * `deSolicitud` y `deTrabajo` (botones de cada cotización, solicitud o trabajo).
  */
 export function vistaDelExpediente(
   expediente,
-  { acciones = [], zona = null, deCotizacion = () => [], deSolicitud = () => [] } = {},
+  { acciones = [], zona = null, deCotizacion = () => [], deSolicitud = () => [], deTrabajo = () => [] } = {},
 ) {
   return [
     encabezado(expediente, acciones),
@@ -238,7 +239,7 @@ export function vistaDelExpediente(
     recepcion(expediente),
     diagnostico(expediente),
     cotizaciones(expediente, deCotizacion),
-    trabajos(expediente),
+    trabajos(expediente, deTrabajo),
     solicitudes(expediente, deSolicitud),
     fallasAdicionales(expediente),
     pagoYEntrega(expediente),
