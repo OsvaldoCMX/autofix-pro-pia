@@ -10,6 +10,7 @@ import {
   alEnviar,
   areaDeTexto,
   boton,
+  campo,
   confirmar,
   crear,
   datos,
@@ -19,6 +20,7 @@ import {
   formulario,
   limpiarAvisos,
   manejarError,
+  marcarCampo,
   mostrarCargando,
   mostrarExito,
   revisarObligatorios,
@@ -140,6 +142,9 @@ function accionesDeLaOrden(contexto) {
   if (suDiagnostico && expediente.diagnostico_fallas && expediente.cotizaciones.length === 0) {
     acciones.push(secundario("Corregir diagnóstico", () => abrirDiagnostico(contexto, true)));
   }
+  if (expediente.estado === "En Reparación") {
+    acciones.push(secundario("Reportar falla adicional", () => abrirFallaAdicional(contexto)));
+  }
   return acciones;
 }
 
@@ -154,6 +159,10 @@ function accionesDelTrabajo(contexto, trabajo) {
   }
   if (trabajo.estado === "En Progreso") {
     acciones.push(boton("Terminar trabajo", (elemento) => terminarTrabajo(contexto, trabajo, elemento)));
+  }
+  const abierto = trabajo.estado === "Pendiente" || trabajo.estado === "En Progreso";
+  if (abierto && ESTADOS_EN_TRABAJO.includes(contexto.expediente.estado)) {
+    acciones.push(secundario("Solicitar refacción", () => abrirSolicitud(contexto, trabajo)));
   }
   return acciones;
 }
@@ -234,4 +243,84 @@ async function terminarTrabajo(contexto, trabajo, elemento) {
       contexto.recargar();
     },
   );
+}
+
+// Solicitar una refacción que no hay en el taller (CA-019, CA-020, CA-062; AU-28).
+function abrirSolicitud(contexto, trabajo) {
+  const pedirla = crear("button", { type: "submit", className: "boton" }, "Pedir la refacción a Compras");
+  const forma = formulario(
+    `Solicitar refacción para «${trabajo.descripcion}»`,
+    campo("solicitud-refaccion", "Refacción", { maxLength: 200, autocomplete: "off" }),
+    campo("solicitud-cantidad", "Cantidad", { type: "number", min: 1, step: 1, inputMode: "numeric", value: "1" }),
+    crear("div", { className: "acciones" }, pedirla, cerrarLaZona(contexto)),
+  );
+  abrirEnLaZona(contexto, forma);
+  const refaccion = forma.querySelector("#solicitud-refaccion");
+  const cantidad = forma.querySelector("#solicitud-cantidad");
+  alEnviar(forma, async () => {
+    if (!revisarObligatorios([[refaccion, "Escriba la refacción que necesita."]])) {
+      return;
+    }
+    const texto = cantidad.value.trim();
+    if (!/^\d+$/.test(texto) || Number(texto) < 1) {
+      marcarCampo(cantidad, "Escriba una cantidad de 1 o más.");
+      cantidad.focus();
+      return;
+    }
+    marcarCampo(cantidad, null);
+    const cuerpo = { id_trabajo: trabajo.id, refaccion: refaccion.value.trim(), cantidad: Number(texto) };
+    const confirmado = await confirmar({
+      titulo: "¿Solicitar la refacción a Compras?",
+      lineas: [`Orden ${contexto.numero}`, `Trabajo: «${trabajo.descripcion}»`, `Refacción: ${cuerpo.refaccion}`, `Cantidad: ${cuerpo.cantidad}`],
+      verbo: "Solicitar refacción",
+    });
+    if (!confirmado) {
+      return;
+    }
+    await enviar(
+      pedirla,
+      () => pedir("POST", "/api/ordenes/{numero}/solicitudes-de-compra", { enRuta: { numero: contexto.numero }, cuerpo }),
+      (solicitud) => {
+        mostrarExito(`Refacción «${cuerpo.refaccion}» solicitada a Compras. La orden está «${solicitud.estado_orden}».`);
+        contexto.recargar();
+      },
+    );
+  });
+}
+
+// Reportar una falla adicional al asesor (CA-034; AU-29): botón ocupado y confirmación.
+function abrirFallaAdicional(contexto) {
+  const reportar = crear("button", { type: "submit", className: "boton" }, "Reportar falla al asesor");
+  const forma = formulario(
+    "Reportar falla adicional",
+    areaDeTexto("falla-descripcion", "Descripción de la falla", { maxLength: 1000 }),
+    crear("div", { className: "acciones" }, reportar, cerrarLaZona(contexto)),
+  );
+  abrirEnLaZona(contexto, forma);
+  const descripcion = forma.querySelector("#falla-descripcion");
+  alEnviar(forma, async () => {
+    if (!revisarObligatorios([[descripcion, "Describa la falla que encontró."]])) {
+      return;
+    }
+    const confirmado = await confirmar({
+      titulo: "¿Reportar la falla al asesor?",
+      lineas: [`Orden ${contexto.numero}`, { destacado: contexto.expediente.placas }, descripcion.value.trim()],
+      verbo: "Reportar falla",
+    });
+    if (!confirmado) {
+      return;
+    }
+    await enviar(
+      reportar,
+      () =>
+        pedir("POST", "/api/ordenes/{numero}/fallas-adicionales", {
+          enRuta: { numero: contexto.numero },
+          cuerpo: { descripcion: descripcion.value.trim() },
+        }),
+      (falla) => {
+        mostrarExito(`Falla adicional de la orden ${falla.numero_orden} reportada al asesor.`);
+        contexto.recargar();
+      },
+    );
+  });
 }
