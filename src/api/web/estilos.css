@@ -152,6 +152,10 @@ a { color: var(--principal); }
 
 .tarjeta > :first-child { margin-top: 0; }
 
+/* Opción secundaria (por ejemplo, abrir una orden por su número en A-01). */
+.tarjeta-secundaria { background: transparent; box-shadow: none; border-style: dashed; padding: 1rem 1.5rem; }
+.tarjeta-secundaria h2 { font-size: 1.1rem; }
+
 .cargando, .nota { color: var(--texto-suave); }
 
 /* Botones */

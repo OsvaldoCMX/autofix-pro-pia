@@ -67,6 +67,11 @@ const opcional = (texto) => (texto === "" ? null : texto);
 
 // ---------------------------------------------------------------- A-01 Buscar por placas
 
+// Los folios empiezan con «OS-» (órdenes nuevas) o «AUT-» (datos del profesor). Solo ayuda a
+// quien escribió placas en el número de orden (H1); quien busca una orden la sigue buscando la API.
+const pareceFolio = (texto) => /^(OS|AUT)-/.test(texto);
+const PARECEN_PLACAS = "Eso parecen unas placas. Búsquelas arriba, en «Buscar por placas».";
+
 function mostrarBusqueda(pantalla) {
   const botonBuscar = crear("button", { type: "submit", className: "boton" }, "Buscar");
   const porPlacas = crear(
@@ -77,8 +82,11 @@ function mostrarBusqueda(pantalla) {
     campo("buscar-placas", "Placas", { autocomplete: "off", maxLength: 20 }),
     crear("div", { className: "acciones" }, botonBuscar),
   );
-  const porOrden = formulario(
-    "Abrir una orden",
+  // Lo normal es buscar por placas; el número de orden es la opción secundaria (H1, Fase 18).
+  const porOrden = crear(
+    "form",
+    { className: "tarjeta tarjeta-secundaria", noValidate: true },
+    crear("h2", {}, "¿Ya tiene el número de orden?"),
     campo("abrir-orden", "Número de orden", { autocomplete: "off", maxLength: 20, placeholder: "OS-0001" }),
     crear("div", { className: "acciones" }, crear("button", { type: "submit", className: "boton boton-secundario" }, "Abrir expediente")),
   );
@@ -114,9 +122,16 @@ function mostrarBusqueda(pantalla) {
   const orden = porOrden.querySelector("#abrir-orden");
   alEnviar(porOrden, () => {
     limpiarAvisos();
-    if (revisarObligatorios([[orden, "Escriba el número de orden."]])) {
-      irAOrden(orden.value.trim().toUpperCase());
+    if (!revisarObligatorios([[orden, "Escriba el número de orden."]])) {
+      return;
     }
+    const folio = orden.value.replace(/\s+/g, "").toUpperCase();
+    if (!pareceFolio(folio)) {
+      marcarCampo(orden, PARECEN_PLACAS);
+      orden.focus();
+      return;
+    }
+    irAOrden(folio);
   });
   placas.focus();
 }
