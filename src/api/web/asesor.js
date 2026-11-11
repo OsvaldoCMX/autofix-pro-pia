@@ -1260,7 +1260,20 @@ function actualizarTotales(forma, lugarDelTotal) {
   return total;
 }
 
-const MENSAJE_DE_IMPORTE = "Escriba un importe, por ejemplo 1500.00 (sin signo de menos).";
+const EN_PESOS = "Escriba la cantidad en pesos, por ejemplo 1500.00.";
+// El mismo texto que manda la API para un importe negativo (H4, Fase 18).
+const NEGATIVOS = {
+  mano: `La mano de obra no puede ser negativa. ${EN_PESOS}`,
+  precio: `El precio de la refacción no puede ser negativo. ${EN_PESOS}`,
+};
+
+/** Mensaje para un importe que no se entiende, o `null` si está bien. */
+function problemaDelImporte(entrada) {
+  if (aCentavos(entrada.value) !== null) {
+    return null;
+  }
+  return entrada.value.trim().startsWith("-") ? NEGATIVOS[entrada.dataset.parte] : EN_PESOS;
+}
 
 /** Lee y revisa los trabajos: la lista para la API, o `null` si hay que corregir algo. */
 function leerTrabajos(forma) {
@@ -1270,18 +1283,22 @@ function leerTrabajos(forma) {
     marcarCampo(entrada, valido ? null : mensaje);
     primero ??= valido ? null : entrada;
   };
+  const revisarImporte = (entrada) => {
+    const problema = problemaDelImporte(entrada);
+    revisar(entrada, problema === null, problema);
+  };
   const trabajos = bloques.map((bloque, indice) => {
     const descripcion = bloque.querySelector('[data-parte="trabajo"]');
     const mano = bloque.querySelector('[data-parte="mano"]');
     revisar(descripcion, descripcion.value.trim() !== "", "Escriba qué trabajo se hará.");
-    revisar(mano, aCentavos(mano.value) !== null, MENSAJE_DE_IMPORTE);
+    revisarImporte(mano);
     const refacciones = [...bloque.querySelectorAll(".refaccion")].map((fila) => {
       const nombre = fila.querySelector('[data-parte="descripcion"]');
       const cantidad = fila.querySelector('[data-parte="cantidad"]');
       const precio = fila.querySelector('[data-parte="precio"]');
       revisar(nombre, nombre.value.trim() !== "", "Escriba la refacción.");
       revisar(cantidad, /^\d+$/.test(cantidad.value.trim()) && Number(cantidad.value) >= 1, "Escriba una cantidad de 1 o más.");
-      revisar(precio, aCentavos(precio.value) !== null, MENSAJE_DE_IMPORTE);
+      revisarImporte(precio);
       return {
         descripcion: nombre.value.trim(),
         cantidad: Number(cantidad.value),

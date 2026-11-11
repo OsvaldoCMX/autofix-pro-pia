@@ -20,7 +20,7 @@ from api.errores import (
 )
 from api.esquemas.comunes import ENTERO_MAXIMO, EnteroNoNegativo, ModeloDeEntrada, TextoDeNombre
 from domain.compartido.errores import ErrorDeDominio, ValorInvalido
-from tests.api.pasos import ASESOR, COMPRAS, TECNICO
+from tests.api.pasos import ASESOR, CAJA, COMPRAS, TECNICO
 
 MODELO_DE_DOMINIO = Path(__file__).resolve().parents[2] / "docs/architecture/modelo-de-dominio.md"
 MENSAJE_SECRETO = "postgresql://usuario:clave-secreta@servidor/base"
@@ -321,7 +321,37 @@ def test_importe_negativo_dice_que_no_puede_ser_negativo(cliente: TestClient) ->
 
     assert respuesta.status_code == 422
     assert respuesta.json()["detalle"] == (
-        "El dato «mano de obra del trabajo 1» no puede ser negativo. Corríjalo e intente de nuevo."
+        "La mano de obra del trabajo 1 no puede ser negativa. "
+        "Escriba la cantidad en pesos, por ejemplo 1500.00."
+    )
+
+
+def test_precio_de_refaccion_negativo_dice_que_no_puede_ser_negativo(
+    cliente: TestClient,
+) -> None:
+    refaccion = {"descripcion": "Balata", "cantidad": 1, "precio_unitario": "-10.00"}
+    trabajo = {"numero": 1, "descripcion": "Frenos", "mano_de_obra": "100.00"}
+    respuesta = cliente.post(
+        "/api/ordenes/OS-1/cotizaciones",
+        json={"trabajos": [{**trabajo, "refacciones": [refaccion]}]},
+        headers=ASESOR,
+    )
+
+    assert respuesta.status_code == 422
+    assert respuesta.json()["detalle"] == (
+        "El precio unitario de la refacción 1 del trabajo 1 no puede ser negativo. "
+        "Escriba la cantidad en pesos, por ejemplo 1500.00."
+    )
+
+
+def test_monto_negativo_dice_que_no_puede_ser_negativo(cliente: TestClient) -> None:
+    respuesta = cliente.post(
+        "/api/ordenes/OS-1/pago", json={"monto": "-3000.00", "forma": "Tarjeta"}, headers=CAJA
+    )
+
+    assert respuesta.status_code == 422
+    assert respuesta.json()["detalle"] == (
+        "El monto no puede ser negativo. Escriba la cantidad en pesos, por ejemplo 1500.00."
     )
 
 

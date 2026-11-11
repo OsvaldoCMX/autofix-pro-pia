@@ -48,7 +48,15 @@ _IMPORTE_CON_DECIMALES = (
     "El dato «{campo}» debe ser un importe con dos decimales, por ejemplo \"1500.00\"."
 )
 _NUMERO_DEMASIADO_GRANDE = "El número de «{campo}» es demasiado grande. Revise el dato."
-_IMPORTE_NEGATIVO = "El dato «{campo}» no puede ser negativo. Corríjalo e intente de nuevo."
+_IMPORTE_NEGATIVO = (
+    "{articulo} {campo} no puede ser {negativo}. Escriba la cantidad en pesos, por ejemplo 1500.00."
+)
+# Cómo se nombra cada importe en el mensaje de negativo (H4, Fase 18).
+_GENERO_DEL_IMPORTE = {
+    "mano_de_obra": ("La", "negativa"),
+    "precio_unitario": ("El", "negativo"),
+    "monto": ("El", "negativo"),
+}
 # El número que va en la dirección se llama según la ruta (AU-38).
 _NOMBRES_DEL_IDENTIFICADOR = (
     ("/solicitudes-de-compra/", "número de solicitud"),
@@ -196,7 +204,8 @@ def mensaje_de_validacion(error: Mapping[str, Any], ruta: str = "") -> str:
     if "expected" in contexto:
         contexto["expected"] = _opciones_en_espanol(contexto["expected"])
     if _es_importe_negativo(error):
-        return _IMPORTE_NEGATIVO.format(campo=campo)
+        articulo, negativo = _GENERO_DEL_IMPORTE.get(str(ubicacion[-1]), ("El dato", "negativo"))
+        return _IMPORTE_NEGATIVO.format(articulo=articulo, campo=campo, negativo=negativo)
     return _plantilla_de(error["type"], ubicacion, contexto).format(campo=campo, **contexto)
 
 
