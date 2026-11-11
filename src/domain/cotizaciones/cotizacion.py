@@ -353,7 +353,7 @@ def _con_importe(lineas: Iterable[LineaDeCotizacion]) -> list[LineaDeCotizacion]
     for linea in lista:
         if linea.subtotal == Dinero.cero():
             raise ValorInvalido(
-                f"El trabajo {linea.numero} («{linea.descripcion}») vale $0.00: "
+                f"El trabajo {linea.numero} vale $0.00: "
                 "capture su mano de obra o sus refacciones."
             )
     return lista

@@ -495,5 +495,5 @@ def test_ca_060_un_trabajo_de_0_responde_422(cliente: TestClient) -> None:
     )
 
     assert respuesta["detalle"] == (
-        "El trabajo 2 («Trabajo 2») vale $0.00: capture su mano de obra o sus refacciones."
+        "El trabajo 2 vale $0.00: capture su mano de obra o sus refacciones."
     )

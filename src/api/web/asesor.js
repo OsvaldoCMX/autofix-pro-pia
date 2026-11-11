@@ -1359,8 +1359,8 @@ async function guardarCotizacion(contexto, modo, cotizacion, forma, guardar) {
   }
   const total = deCentavos(actualizarTotales(forma, forma.querySelector(".total-preliminar")));
   const enCero = bloques
-    .filter((bloque) => centavosDelTrabajo(bloque) === 0)
-    .map((bloque) => `Atención: el trabajo «${bloque.querySelector('[data-parte="trabajo"]').value.trim()}» vale $0.00.`);
+    .map((bloque, indice) => (centavosDelTrabajo(bloque) === 0 ? `Atención: el trabajo ${indice + 1} vale $0.00.` : null))
+    .filter(Boolean);
   const numeroOrden = contexto.numero;
   const titulos = {
     generar: `¿Guardar la cotización de la orden ${numeroOrden}?`,

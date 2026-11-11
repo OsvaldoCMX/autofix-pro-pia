@@ -241,7 +241,8 @@ def test_ca_051_cuenta_los_recontactos_posteriores_a_la_nueva_presentacion() -> 
 
 # ------------------------------------------------------------------ trabajos de $0.00 (RN-32)
 def test_ca_060_no_se_genera_con_un_trabajo_de_0() -> None:
-    with pytest.raises(ValorInvalido, match="El trabajo 2 .* vale \\$0.00"):
+    mensaje = "^El trabajo 2 vale \\$0.00: capture su mano de obra o sus refacciones.$"
+    with pytest.raises(ValorInvalido, match=mensaje):
         Cotizacion.generar(
             "COT-1",
             NUMERO,
