@@ -25,6 +25,7 @@ from application.consultas.consultas import (
     ManejadorListarCotizacionesPendientesDeAprobacion,
     ManejadorListarOrdenes,
     ManejadorListarSolicitudesPendientes,
+    ManejadorListarTecnicos,
 )
 from application.consultas.lector import LectorDeOrdenes
 from application.manejadores.alertas import ManejadoresDeAlertas
@@ -126,6 +127,9 @@ class Contenedor:
 
     def buscar_clientes(self) -> ManejadorBuscarClientes:
         return ManejadorBuscarClientes(self.lector)
+
+    def listar_tecnicos(self) -> ManejadorListarTecnicos:
+        return ManejadorListarTecnicos(self.lector)
 
     def consultar_panel_del_tecnico(self) -> ManejadorConsultarPanelDelTecnico:
         return ManejadorConsultarPanelDelTecnico(self.lector)

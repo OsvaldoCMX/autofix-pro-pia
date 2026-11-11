@@ -26,3 +26,5 @@ Los seis empleados de demostración (EMP-001 Asesor, EMP-002 y EMP-003 Técnicos
 - (+) Swagger permite probar con el botón *Authorize*.
 - (−) Los tokens no expiran; se cambian modificando la variable. Es una limitación documentada para un entorno de demostración.
 - (−) Nunca se suben tokens reales: `.env.example` solo tiene marcadores.
+
+**Actualización v3.1 (09/11/2026).** La página web (`/` y sus archivos, ADR-017) también es pública: pide la clave de acceso del empleado, que es este mismo token, y la manda a la API como `Authorization: Bearer`. La ruta `GET /api/sesion` devuelve el nombre y el puesto del empleado de la clave.

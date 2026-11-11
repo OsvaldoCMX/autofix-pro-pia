@@ -23,18 +23,22 @@ from sqlalchemy.dialects import postgresql
 
 from application.comandos import (
     AsignarTecnicoParaDiagnostico,
+    CancelarOrden,
     RegistrarDiagnostico,
     RegistrarOrden,
 )
+from domain.compartido.errores import VehiculoConOrdenAbierta
 from domain.compartido.valores import NumeroOrden
-from domain.ordenes.estados import EstadoOrden
+from domain.ordenes.estados import ESTADOS_DE_ORDEN_CERRADA, MAQUINA_DE_ORDEN, EstadoOrden
 from domain.ordenes.valores import NivelDeCombustible
 from infrastructure.base_de_datos.tablas import (
     alertas_internas,
+    correcciones_de_cotizacion,
     fallas_adicionales,
     fotos_de_danos,
     lineas_de_cotizacion,
     metadata,
+    ordenes,
     recontactos,
     refacciones_cotizadas,
     secuencias,
@@ -52,7 +56,7 @@ _TIPOS_EQUIVALENTES = {
     "BIGSERIAL": "BIGINT",
     "NUMERIC(12,2)": "NUMERIC(12, 2)",
 }
-_NOMBRES_DE_LAS_18_TABLAS = {
+_NOMBRES_DE_LAS_19_TABLAS = {
     "empleados",
     "clientes",
     "vehiculos",
@@ -65,6 +69,7 @@ _NOMBRES_DE_LAS_18_TABLAS = {
     "lineas_de_cotizacion",
     "refacciones_cotizadas",
     "recontactos",
+    "correcciones_de_cotizacion",
     "alertas_internas",
     "eventos",
     "secuencias",
@@ -80,12 +85,13 @@ class DefinicionDeTabla:
 
     columnas: dict[str, tuple[str, bool]] = field(default_factory=dict)
     llave_primaria: tuple[str, ...] = ()
-    llaves_foraneas: set[tuple[str, tuple[str, ...], str, tuple[str, ...], str]] = field(
-        default_factory=set
+    llaves_foraneas: set[tuple[str, tuple[str, ...], str, tuple[str, ...], str, str | None]] = (
+        field(default_factory=set)
     )
     unicas: set[tuple[str, tuple[str, ...]]] = field(default_factory=set)
     checks: dict[str, str] = field(default_factory=dict)
     indices: dict[str, tuple[str, ...]] = field(default_factory=dict)
+    indices_unicos: dict[str, tuple[tuple[str, ...], str]] = field(default_factory=dict)
 
 
 def _lista(texto: str) -> tuple[str, ...]:
@@ -104,6 +110,9 @@ def _definicion_desde_el_sql(sql: str, tabla: str) -> DefinicionDeTabla:
         _leer_linea(linea.strip().rstrip(","), definicion)
     for nombre, columnas in re.findall(rf"CREATE INDEX (\w+) ON {tabla} \((.*?)\);", sql):
         definicion.indices[nombre] = _lista(columnas)
+    unicos = re.findall(rf"CREATE UNIQUE INDEX (\w+) ON {tabla} \((.*?)\) WHERE (.*?);", sql)
+    for nombre, columnas, condicion in unicos:
+        definicion.indices_unicos[nombre] = (_lista(columnas), condicion)
     return definicion
 
 
@@ -113,10 +122,11 @@ def _leer_linea(linea: str, definicion: DefinicionDeTabla) -> None:
     elif uq := re.fullmatch(r"CONSTRAINT (\w+) UNIQUE \((.*)\)", linea):
         definicion.unicas.add((uq[1], _lista(uq[2])))
     elif fk := re.fullmatch(
-        r"CONSTRAINT (\w+) FOREIGN KEY \((.*?)\) REFERENCES (\w+) \((.*?)\) ON DELETE ([A-Z ]+)",
+        r"CONSTRAINT (\w+) FOREIGN KEY \((.*?)\) REFERENCES (\w+) \((.*?)\) "
+        r"ON DELETE (RESTRICT|CASCADE|SET NULL)(?: ON UPDATE (CASCADE))?",
         linea,
     ):
-        definicion.llaves_foraneas.add((fk[1], _lista(fk[2]), fk[3], _lista(fk[4]), fk[5]))
+        definicion.llaves_foraneas.add((fk[1], _lista(fk[2]), fk[3], _lista(fk[4]), fk[5], fk[6]))
     elif ck := re.fullmatch(r"CONSTRAINT (\w+) CHECK \((.*)\)", linea):
         definicion.checks[ck[1]] = ck[2]
     else:
@@ -137,6 +147,15 @@ def _definicion_desde_tablas(tabla: Table) -> DefinicionDeTabla:
         indices={
             indice.name: tuple(columna.name for columna in indice.columns)
             for indice in tabla.indexes
+            if not indice.unique
+        },
+        indices_unicos={
+            indice.name: (
+                tuple(columna.name for columna in indice.columns),
+                str(indice.dialect_options["postgresql"]["where"]),
+            )
+            for indice in tabla.indexes
+            if indice.unique
         },
     )
     for restriccion in tabla.constraints:
@@ -148,6 +167,7 @@ def _definicion_desde_tablas(tabla: Table) -> DefinicionDeTabla:
                     restriccion.referred_table.name,
                     tuple(elemento.column.name for elemento in restriccion.elements),
                     restriccion.ondelete,
+                    restriccion.onupdate,
                 )
             )
         elif isinstance(restriccion, UniqueConstraint):
@@ -158,13 +178,13 @@ def _definicion_desde_tablas(tabla: Table) -> DefinicionDeTabla:
     return definicion
 
 
-def test_tablas_tiene_las_18_tablas_del_modelo_de_datos() -> None:
-    assert set(metadata.tables) == _NOMBRES_DE_LAS_18_TABLAS
+def test_tablas_tiene_las_19_tablas_del_modelo_de_datos() -> None:
+    assert set(metadata.tables) == _NOMBRES_DE_LAS_19_TABLAS
     creadas = set(re.findall(r"^CREATE TABLE (\w+) \(", _sql_del_esquema(), re.MULTILINE))
-    assert creadas == _NOMBRES_DE_LAS_18_TABLAS
+    assert creadas == _NOMBRES_DE_LAS_19_TABLAS
 
 
-@pytest.mark.parametrize("nombre", sorted(_NOMBRES_DE_LAS_18_TABLAS))
+@pytest.mark.parametrize("nombre", sorted(_NOMBRES_DE_LAS_19_TABLAS))
 def test_tablas_coincide_con_el_sql(nombre: str) -> None:
     del_sql = _definicion_desde_el_sql(_sql_del_esquema(), nombre)
     de_tablas = _definicion_desde_tablas(metadata.tables[nombre])
@@ -175,6 +195,7 @@ def test_tablas_coincide_con_el_sql(nombre: str) -> None:
     assert de_tablas.unicas == del_sql.unicas
     assert de_tablas.checks == del_sql.checks
     assert de_tablas.indices == del_sql.indices
+    assert de_tablas.indices_unicos == del_sql.indices_unicos
 
 
 def test_los_check_con_expresion_regular_solo_existen_en_postgresql(motor: Engine) -> None:
@@ -186,6 +207,24 @@ def test_los_check_con_expresion_regular_solo_existen_en_postgresql(motor: Engin
     assert "ck_vehiculos_3" in nombres
 
 
+def _estados_de_la_condicion(condicion: str) -> set[str]:
+    lista = re.fullmatch(r"estado NOT IN \((.*)\)", condicion)
+    assert lista, condicion
+    return set(re.findall(r"'([^']*)'", lista[1]))
+
+
+def test_rn_27_el_indice_usa_la_misma_lista_de_estados_cerrados_que_el_dominio() -> None:
+    """«Orden abierta» = cualquier estado distinto de los cerrados, en el dominio y en la base."""
+    del_dominio = {estado.value for estado in ESTADOS_DE_ORDEN_CERRADA}
+    (_, del_sql), = _definicion_desde_el_sql(_sql_del_esquema(), "ordenes").indices_unicos.values()
+    (_, de_tablas), = _definicion_desde_tablas(metadata.tables["ordenes"]).indices_unicos.values()
+
+    assert del_dominio == {"Cerrada", "Cerrada sin Reparación", "Cancelada"}
+    assert _estados_de_la_condicion(del_sql) == del_dominio
+    assert _estados_de_la_condicion(de_tablas) == del_dominio
+    assert {e for e in EstadoOrden if MAQUINA_DE_ORDEN.es_final(e)} == ESTADOS_DE_ORDEN_CERRADA
+
+
 @pytest.fixture
 def base_real(motor_postgresql: Engine | None) -> Engine:
     if motor_postgresql is None:
@@ -193,7 +232,7 @@ def base_real(motor_postgresql: Engine | None) -> Engine:
     return motor_postgresql
 
 
-@pytest.mark.parametrize("nombre", sorted(_NOMBRES_DE_LAS_18_TABLAS))
+@pytest.mark.parametrize("nombre", sorted(_NOMBRES_DE_LAS_19_TABLAS))
 def test_tablas_coincide_con_postgresql_real(base_real: Engine, nombre: str) -> None:
     inspector = inspect(base_real)
     tabla = metadata.tables[nombre]
@@ -226,6 +265,7 @@ _SECUENCIAS_DE_ID = (
     "fotos_de_danos_id_seq",
     "refacciones_cotizadas_id_seq",
     "recontactos_id_seq",
+    "correcciones_de_cotizacion_id_seq",
     "alertas_internas_id_seq",
     "eventos_id_seq",
 )
@@ -276,6 +316,18 @@ def _llenar_todas_las_tablas(motor: Engine) -> None:
         conexion.execute(
             insert(recontactos).values(
                 id_cotizacion=linea.id_cotizacion, asesor=ASESOR, registrado_en=ahora
+            )
+        )
+        conexion.execute(
+            insert(correcciones_de_cotizacion).values(
+                id_cotizacion=linea.id_cotizacion,
+                asesor=ASESOR,
+                registrada_en=ahora,
+                motivo="Importe mal capturado",
+                total_anterior=Decimal("100.00"),
+                total_nuevo=Decimal("90.00"),
+                estado_anterior="Pendiente de Autorización del Cliente",
+                estado_nuevo="Pendiente de Autorización del Cliente",
             )
         )
         conexion.execute(
@@ -356,8 +408,12 @@ def test_orden_del_profesor_avanza_con_los_casos_de_uso(base_con_datos_iniciales
 
 
 def test_el_primer_folio_nuevo_es_os_0001(base_con_datos_iniciales: Engine) -> None:
-    """Un vehículo del profesor que regresa reutiliza sus registros (CA-003)."""
+    """Un vehículo del profesor que regresa reutiliza sus registros (CA-003).
+
+    Por RN-27 solo regresa cuando su orden anterior ya se cerró: aquí se cancela AUT-O001.
+    """
     taller = TallerEnBase(base_con_datos_iniciales)
+    taller.cancelacion.cancelar(CancelarOrden("AUT-O001", "Visita anterior", ASESOR))
 
     resultado = taller.recepcion.registrar_orden(
         RegistrarOrden(ASESOR, "PIA-AUT-001", "Revisión", 1000, NivelDeCombustible.LLENO)
@@ -365,3 +421,32 @@ def test_el_primer_folio_nuevo_es_os_0001(base_con_datos_iniciales: Engine) -> N
 
     assert resultado.numero_orden == "OS-0001"
     assert resultado.id_cliente == "AUT-C014"
+
+
+def test_rn_27_vehiculo_del_profesor_con_su_orden_abierta_no_abre_otra(
+    base_con_datos_iniciales: Engine,
+) -> None:
+    taller = TallerEnBase(base_con_datos_iniciales)
+
+    with pytest.raises(VehiculoConOrdenAbierta, match="AUT-O001"):
+        taller.recepcion.registrar_orden(
+            RegistrarOrden(ASESOR, "PIA-AUT-001", "Revisión", 1000, NivelDeCombustible.LLENO)
+        )
+
+
+def test_datos_iniciales_abren_el_expediente_de_todas_las_ordenes(
+    base_con_datos_iniciales: Engine,
+) -> None:
+    """Condición del equipo (Fase 14): los datos del profesor se leen aunque no cumplan las
+    reglas de captura nuevas, porque esas reglas solo se aplican al capturar o corregir."""
+    lector = TallerEnBase(base_con_datos_iniciales).lector()
+    with base_con_datos_iniciales.connect() as conexion:
+        numeros = conexion.execute(select(ordenes.c.numero).order_by(ordenes.c.numero)).scalars()
+        folios = list(numeros)
+
+    expedientes = [lector.expediente(NumeroOrden(folio)) for folio in folios]
+
+    assert len(folios) == 60
+    assert all(expediente is not None for expediente in expedientes)
+    assert {expediente.vehiculo_marca for expediente in expedientes if expediente} == {"Ficticia"}
+    assert all(expediente and expediente.cliente_nombre for expediente in expedientes)

@@ -32,7 +32,7 @@ EMPLEADOS = [("EMP-001", "Laura Méndez", "Asesor"), ("EMP-002", "Carlos Ruiz", 
              ("EMP-005", "Jorge Treviño", "Compras"), ("EMP-006", "Sofía Leal", "Caja")]
 
 o = ["-- =============================================================================",
-     "-- AutoFix Pro · Datos iniciales (PIA v3.0)",
+     "-- AutoFix Pro · Datos iniciales (PIA v3.1)",
      "-- Generado por scripts/db/generar_datos_iniciales.py desde datos/profesor/*.csv",
      "-- (paquete 06_AutoFix_Pro/01_Alumno, datos FICTICIOS). Ejecutar después de 01_esquema.sql.",
      "-- Solo el estado inicial: las 60 órdenes quedan «Recibida»; los cambios de estado se hacen con la API.",

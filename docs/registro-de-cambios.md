@@ -1,4 +1,4 @@
-# Registro de cambios y hallazgos del PIA (v3.0)
+# Registro de cambios y hallazgos del PIA (v3.0 y v3.1)
 
 Antes de empezar la implementación del PIA se revisaron juntos el BRD, las User Stories, el Glosario y el BPMN (U2), la arquitectura (U3), el código y las pruebas (U5), los requisitos del PIA y el paquete de datos del profesor. Esta tabla registra cada hallazgo, la decisión del equipo y los archivos que cambiaron. Ningún hallazgo cambia el objetivo del sistema ni el flujo principal del BPMN.
 
@@ -37,17 +37,17 @@ Antes de empezar la implementación del PIA se revisaron juntos el BRD, las User
 
 ## 3. Conteos finales
 
-| Elemento | U3 | PIA v3.0 |
-|---|---|---|
-| Necesidades | 14 | 15 |
-| User Stories | 24 | 25 |
-| Criterios de aceptación | 43 | 46 |
-| Estados (orden / cotización / trabajo / solicitud) | 24 (12/6/4/2) | 25 (13/6/4/2) |
-| Reglas de negocio trazadas | — | 24 (RN-01 a RN-24) |
-| Specifications | 0 (1 política) | 8 (E1–E8) |
-| ADR | 5 | 16 |
-| Domain Events | 15 | 26 |
-| Rutas de la API | — | 43 |
+| Elemento | U3 | PIA v3.0 | v3.1 (Fase 14) |
+|---|---|---|---|
+| Necesidades | 14 | 15 | 16 |
+| User Stories | 24 | 25 | 27 |
+| Criterios de aceptación | 43 | 46 | 66 |
+| Estados (orden / cotización / trabajo / solicitud) | 24 (12/6/4/2) | 25 (13/6/4/2) | 25 (sin cambios; 1 transición nueva en la cotización) |
+| Reglas de negocio trazadas | — | 24 (RN-01 a RN-24) | 35 (RN-01 a RN-35) |
+| Specifications | 0 (1 política) | 8 (E1–E8) | 8 (E2 y E8 se precisan) |
+| ADR | 5 | 16 | 18 |
+| Domain Events | 15 | 26 | 31 |
+| Rutas de la API | — | 43 | 51 (`GET /api/sesion` se construye en la Fase 15) |
 
 ## 4. Decisiones confirmadas por el equipo (04/11/2026)
 
@@ -59,3 +59,33 @@ Antes de empezar la implementación del PIA se revisaron juntos el BRD, las User
 ## 5. Decisiones durante la implementación
 
 1. **06/11/2026:** se omite la Fase 10 (P2: PDF y fotos de daños) por falta de tiempo antes de la entrega. Las 4 rutas P2 siguen respondiendo 501: CA-027 queda sin implementar y CA-002, CA-005 y CA-024 quedan sin sus fotos o su PDF.
+
+## 6. Revisión del 09/11/2026 (v3.1)
+
+En la revisión del 09/11/2026 el profesor evaluó el sistema **como un usuario del taller**: buscó datos mal capturados que no se pueden corregir, acciones repetidas y mensajes que no entiende alguien que no sabe de computadoras. La Fase 12 hizo la auditoría (`auditoria-errores-de-usuario.md`, AU-01 a AU-39) y el equipo decidió qué se hace. Esta tabla registra los hallazgos que pasaron a `docs/` en la Fase 13. Los criterios, reglas y rutas nuevos llevan la marca **«Planeado»** en la matriz y en el contrato de la API hasta que la Fase 14 los construya.
+
+| ID | Hallazgo | Origen | Decisión del equipo | Archivos afectados |
+|---|---|---|---|---|
+| H-PIA-21 | Una cotización con un importe o una descripción mal capturados no se puede corregir: `ajustar` solo funciona en «Requiere Ajuste», un estado al que solo la lleva el Gerente. | Revisión del 09/11/2026 · AU-17 | Nuevo método `Cotizacion.corregir` (solo el Asesor, con motivo, en «Pendiente de Aprobación Gerencial» y «Pendiente de Autorización del Cliente»), historial `correcciones_de_cotizacion`, nueva transición «Pendiente de Autorización del Cliente» → «Pendiente de Aprobación Gerencial», nueva presentación y plazo de 48 h desde ella; `fecha_aprobacion_gerencial` se borra si regresa al Gerente. Una cotización ajustada que se corrige y sigue arriba de $15,000 regresa al Gerente (RN-05 solo protege el ajuste que él pidió). N-16, US-026, CA-047 a CA-051, RN-25, RN-26, ADR-018, ruta `POST /api/cotizaciones/{id}/correcciones`. | `scripts/docs/` (datos, rutas, ADR), User Stories, `03_cotizacion.feature`, matriz, `api/README.md`, ADR-018, BRD (N-16, restricción 11), Glosario, modelo de dominio §2.2, §4, §5.2, §6 y §7, `bpmn/README.md` |
+| H-PIA-22 | Un doble clic en «Registrar orden» abre dos órdenes «Recibida» del mismo vehículo; nada revisa si el vehículo ya tiene una orden abierta. | Revisión del 09/11/2026 · AU-06 | Regla nueva RN-27 (restricción 12 del BRD): un vehículo tiene a lo más una orden abierta. `VerificadorDeOrdenUnica` + `RepositorioDeOrdenes.abierta_del_vehiculo` y, como respaldo, un índice único parcial en `ordenes(placas)`; si la base lo rechaza, el mismo 409 `VehiculoConOrdenAbierta` (con prueba de integración). CA-052. `POST /api/ordenes` agrega el 409. Con los datos iniciales, los 60 vehículos del profesor ya tienen una orden «Recibida»: para abrirles otra, primero se cierra o se cancela la suya (los 120 casos y las 20 transiciones no cambian; decisión del equipo, 09/11/2026). | `scripts/docs/` (datos, rutas), User Stories, `01_recepcion.feature`, matriz, `api/README.md`, BRD (restricción 12), Glosario, modelo de dominio §1, §2.1, §2.4 y §7 |
+| H-PIA-23 | Ninguna ruta lista a los técnicos (el asesor tendría que saber de memoria la clave `EMP-002`) y el técnico de diagnóstico equivocado no se puede cambiar. | Revisión del 09/11/2026 · AU-13, AU-12 | Consulta `ListarTecnicos` y ruta `GET /api/tecnicos` (Asesor). `asignar_tecnico_para_diagnostico` también cambia el técnico mientras la orden esté «En Diagnóstico» sin diagnóstico (sin cambiar de estado, evento `TecnicoDeDiagnosticoReasignado`); con diagnóstico, `CorreccionNoPermitida` (409). Misma ruta `asignacion-diagnostico`. CA-053, CA-054, RN-28. | `scripts/docs/` (datos, rutas, ADR-003), User Stories, `02_diagnostico.feature`, matriz, `api/README.md`, modelo de dominio §2.1, §5.1, §6 y §7 |
+| H-PIA-24 | Los datos del cliente, del vehículo y de la recepción mal capturados solo se corregían abriendo **otra** orden, y la forma de pago equivocada nunca. | Revisión del 09/11/2026 · AU-02, AU-03, AU-05, AU-34 | US-027 y rutas `PUT /api/clientes/{id}` (usa `Cliente.actualizar_contacto`), `PUT /api/vehiculos/{placas}` (`Vehiculo.actualizar_datos`, sin repetir un VIN), `PUT /api/ordenes/{numero}/recepcion` (`corregir_datos_de_recepcion`, solo «Recibida» o «En Diagnóstico») y `PUT /api/ordenes/{numero}/pago` (Caja, `corregir_forma_de_pago`, solo «Pagada»). Eventos `DatosDeRecepcionCorregidos` y `FormaDePagoCorregida` en la bitácora. CA-055 a CA-058, RN-29, RN-30. | `scripts/docs/`, User Stories, `01_recepcion.feature`, `06_caja_y_entrega.feature`, matriz, `api/README.md`, Glosario, modelo de dominio §2 a §7, `decisiones-tecnicas.md` §5 |
+| H-PIA-25 | Se aceptan teléfonos y correos sin sentido («abc», «hola»), un vehículo del año 2099, 2,000,000,000 km, textos de 100,000 caracteres y cotizaciones de $0.00. | Revisión del 09/11/2026 · AU-08, AU-09, AU-10, AU-11, AU-18 | RN-31: teléfono de 10 dígitos, correo `nombre@dominio.algo`, año hasta el actual + 1, kilometraje hasta 2,000,000 y textos libres de hasta 1,000 caracteres (en el dominio y en los esquemas). RN-32: cada trabajo vale más de $0.00 (no hay trabajos sin costo). CA-059, CA-060. Los datos del profesor ya cumplen (teléfonos `81-0000-00NN`, correos `aut-c0NN@ejemplo.test`, año 2020). | `scripts/docs/`, User Stories, `01_recepcion.feature`, `03_cotizacion.feature`, matriz, modelo de dominio §2.4 y §3 |
+| H-PIA-26 | Un doble clic en «Generar cotización adicional» crea dos adicionales pendientes, y uno en «Solicitar refacción» crea dos solicitudes que Compras ve repetidas (una solicitud no se puede cancelar). | Revisión del 09/11/2026 · AU-20, AU-28 (a) | RN-33: una sola cotización adicional sin decisión a la vez. RN-34: no se repite una solicitud «Solicitada» de la misma refacción para el mismo trabajo. CA-061, CA-062. Cancelar una solicitud (AU-28 b) **no** se hace. | `scripts/docs/`, User Stories, `04_autorizacion.feature`, `05_reparacion_y_refacciones.feature`, matriz, modelo de dominio §2.1 y §5.1 |
+| H-PIA-27 | Con el nombre del cliente escrito con dos espacios, la decisión se rechaza aunque los nombres se vean iguales; en flotillas, el mensaje habla del conductor y no dice a nombre de quién registrar. | Revisión del 09/11/2026 · AU-15, AU-16 | E2 ignora mayúsculas y espacios repetidos o en los extremos; los acentos sí cuentan (CA-063). El mensaje de flotilla dice la empresa, el Responsable de Flotilla y el rol (CA-064). El texto de CA-029 no cambia, pero su prueba tendrá que revisar el mensaje nuevo. Sin reglas nuevas (RN-07). | `scripts/docs/`, User Stories, `04_autorizacion.feature`, `01_recepcion.feature`, matriz, modelo de dominio §4 |
+| H-PIA-28 | Mensajes y detalles que confunden: una empresa de flotilla repetida ignora sin avisar los datos nuevos del responsable; un importe negativo recibe el mensaje de formato; el número en la dirección se llama «número de registro»; el 403 habla de «rol» y de «área encargada»; la API exige `recomendaciones` aunque el dominio las acepta vacías. | Revisión del 09/11/2026 · AU-04 (a), AU-19, AU-38, AU-39, AU-27 | `EmpresaYaRegistrada` (409) con el nombre y el teléfono del responsable registrado (CA-065; `POST /api/clientes` agrega el 409, anotado como planeado hasta la Fase 14). Mensajes nuevos en `api/errores.py` para negativos, número de trabajo o de solicitud y función de otro puesto; `recomendaciones` opcional. AU-04 (b) (cambiar al responsable) no se hace. | `scripts/docs/`, User Stories, `01_recepcion.feature`, matriz, `api/README.md`, modelo de dominio §2.3 y §7, `decisiones-tecnicas.md` §4 |
+| H-PIA-29 | Unas placas mal capturadas no se corrigen nunca: el VIN queda ocupado y el cliente no puede consultar con sus placas reales. | Revisión del 09/11/2026 · AU-01, AU-36 | Corrección de placas como **P2**: solo con la orden «Recibida» o «En Diagnóstico», cambia el vehículo y sus órdenes a la vez (RN-35, CA-066, `PUT /api/ordenes/{numero}/placas`). Sí alcanzó el tiempo: se construyó al final de la Fase 14 con `RepositorioDeVehiculos.cambiar_placas` y la llave foránea `fk_ordenes_placas` con `ON UPDATE CASCADE`; ya no responde 501 y aparece en la página. | `scripts/docs/`, User Stories, `01_recepcion.feature`, matriz, `api/README.md`, modelo de dominio §2.1 y §2.4, `decisiones-tecnicas.md` §8 |
+
+**Lo que no cambia en la v3.1:** el objetivo, el alcance y el flujo principal del BPMN; los 25 estados y sus nombres; RN-01 a RN-24 (RN-05 sigue igual: solo protege el ajuste que pidió el Gerente); el texto de los 46 criterios de la v3.0 (CA-029 conserva su texto; su mensaje cambia con CA-064). Las propuestas que se resuelven **solo con la página** (AU-07, AU-14, AU-21 a AU-26, AU-29 a AU-33, AU-35 y AU-37) están en `interfaz-web.md` §6, y las que **no se hacen** son AU-28 (b) y AU-04 (b).
+
+**Cómo se marca lo planeado.** En `scripts/docs/datos.py` (`planeado=True` y `REGLAS_PLANEADAS`), en `scripts/docs/rutas.py` (`P1_PLANEADA`, `P2_PLANEADA` y las descripciones con «*Planeado (H-PIA-xx):*» de las rutas que ya existen) y en la tabla de errores del modelo de dominio («409 · Planeado»). `tests/test_trazabilidad.py`, `tests/api/test_contrato.py` y `tests/api/test_errores_http.py` no exigen prueba, ruta ni error a lo planeado, pero fallan si ya existe: así la Fase 14 tiene que quitar la marca al construir cada cosa.
+
+## 7. Revisión de la interfaz (Fase 18, 10/11/2026)
+
+Al revisar la página como usuario del taller (`evidencias/revision-interfaz.md`), el equipo encontró un hueco en una regla. Los demás hallazgos de la Fase 18 (H1 a H4) solo cambian mensajes y están en esa lista.
+
+| ID | Hallazgo | Origen | Decisión del equipo | Archivos afectados |
+|---|---|---|---|---|
+| H-PIA-30 | Después de que el Gerente rechaza una cotización, el asesor puede guardar la versión ajustada **subiendo** el total y la cotización va al cliente sin que el Gerente vea ese monto (RN-05 decía que la ajustada nunca regresa a revisión). | Revisión de la interfaz, Fase 18 (H5) | RN-05 se precisa: la ajustada no regresa al Gerente si su total es igual o menor al que él rechazó; si es mayor, regresa a «Pendiente de Aprobación Gerencial» y se emite `AprobacionGerencialRequerida` (alerta al Gerente). No se guarda ningún dato nuevo: en «Requiere Ajuste» las líneas son las rechazadas. Criterio nuevo CA-067; la máquina de la cotización gana la transición «Requiere Ajuste» → «Pendiente de Aprobación Gerencial». | `scripts/docs/` (RN-05, CA-009, CA-067, rutas), User Stories, `03_cotizacion.feature`, matriz, `api/README.md`, ADR-018 (nota), BRD (versión 3.2 y restricción 13), Glosario §2, modelo de dominio §2.2 y §5.2, `interfaz-web.md` A-05 |
+
+**Conteos después de la Fase 18:** 67 criterios de aceptación (CA-001 a CA-067); 35 reglas (RN-05 se precisa, no se agrega otra); 51 rutas (ninguna nueva); 25 estados (sin cambios); la máquina de la cotización tiene 2 transiciones nuevas desde la v3.0. El BPMN en PDF (Lucidchart) no se modificó: el ajuste que regresa al Gerente se documenta en el modelo de dominio §5.2.

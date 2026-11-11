@@ -26,6 +26,45 @@ class RegistrarCliente:
 
 
 @dataclass(frozen=True)
+class CorregirCliente:
+    """Corrige el nombre, el teléfono o el correo mal capturados (CA-055, H-PIA-24)."""
+
+    id_cliente: str
+    nombre: str
+    telefono: str | None = None
+    correo: str | None = None
+
+
+@dataclass(frozen=True)
+class CorregirRecepcion:
+    """Corrige el kilometraje, el combustible o el motivo antes de la cotización (CA-057)."""
+
+    numero_orden: str
+    kilometraje: int
+    nivel_de_combustible: NivelDeCombustible
+    motivo_de_ingreso: str
+
+
+@dataclass(frozen=True)
+class CorregirPlacas:
+    """Corrige las placas mal capturadas antes de la cotización (CA-066)."""
+
+    numero_orden: str
+    placas: str
+
+
+@dataclass(frozen=True)
+class CorregirVehiculo:
+    """Corrige el VIN, la marca, el modelo o el año; las placas no cambian (CA-056)."""
+
+    placas: str
+    vin: str
+    marca: str
+    modelo: str
+    anio: int
+
+
+@dataclass(frozen=True)
 class DatosDeVehiculo:
     vin: str
     marca: str
@@ -108,6 +147,16 @@ class PresentarCotizacion:
 class AjustarCotizacion:
     id_cotizacion: str
     trabajos: tuple[TrabajoPropuesto, ...]
+
+
+@dataclass(frozen=True)
+class CorregirCotizacion:
+    """El asesor corrige una cotización antes de la decisión del cliente (H-PIA-21)."""
+
+    id_cotizacion: str
+    trabajos: tuple[TrabajoPropuesto, ...]
+    motivo: str
+    asesor: str
 
 
 @dataclass(frozen=True)
@@ -196,6 +245,14 @@ class ReactivarOrden:
 class RegistrarPago:
     numero_orden: str
     monto: Decimal
+    forma: FormaDePago
+
+
+@dataclass(frozen=True)
+class CorregirFormaDePago:
+    """Caja corrige la forma de pago antes de la entrega (CA-058)."""
+
+    numero_orden: str
     forma: FormaDePago
 
 

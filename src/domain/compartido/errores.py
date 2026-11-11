@@ -86,6 +86,18 @@ class CancelacionNoPermitida(ErrorDeDominio):
     )
 
 
+class VehiculoConOrdenAbierta(ErrorDeDominio):
+    """RN-27: el vehículo ya tiene una orden abierta (H-PIA-22)."""
+
+
+class EmpresaYaRegistrada(ErrorDeDominio):
+    """CA-065: la empresa de flotilla ya existe con otro Responsable (H-PIA-28)."""
+
+
+class CorreccionNoPermitida(ErrorDeDominio):
+    """Una corrección de la orden fuera del estado que la permite (H-PIA-23 y H-PIA-24)."""
+
+
 class OrdenNoEncontrada(ErrorDeDominio):
     mensaje_por_defecto = "No se encontró la orden de servicio."
 

@@ -27,6 +27,31 @@ class TecnicoAsignadoParaDiagnostico(EventoDeOrden):
 
 
 @dataclass(frozen=True)
+class DatosDeRecepcionCorregidos(EventoDeOrden):
+    """El asesor corrigió el kilometraje, el combustible o el motivo (RN-29, H-PIA-24)."""
+
+    kilometraje: int
+    nivel_de_combustible: str
+    motivo_de_ingreso: str
+
+
+@dataclass(frozen=True)
+class PlacasCorregidas(EventoDeOrden):
+    """El asesor corrigió las placas mal capturadas (RN-35, H-PIA-29)."""
+
+    placas_anteriores: str
+    placas: str
+
+
+@dataclass(frozen=True)
+class TecnicoDeDiagnosticoReasignado(EventoDeOrden):
+    """El asesor cambió al técnico antes del diagnóstico (RN-28, H-PIA-23)."""
+
+    tecnico_anterior: str
+    tecnico: str
+
+
+@dataclass(frozen=True)
 class DiagnosticoRegistrado(EventoDeOrden):
     tecnico: str
     asesor: str
@@ -94,6 +119,14 @@ class OrdenListaParaEntrega(EventoDeOrden):
 @dataclass(frozen=True)
 class PagoRegistrado(EventoDeOrden):
     monto: str
+    forma: str
+
+
+@dataclass(frozen=True)
+class FormaDePagoCorregida(EventoDeOrden):
+    """Caja corrigió la forma de pago antes de la entrega (RN-30, H-PIA-24)."""
+
+    forma_anterior: str
     forma: str
 
 

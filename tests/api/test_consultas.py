@@ -12,8 +12,10 @@ from tests.api.pasos import (
     GERENTE,
     SISTEMA,
     TECNICO,
+    asignada,
     datos_de_orden,
     exigir,
+    expediente_de,
     lista,
     pagar,
     por_cobrar,
@@ -181,3 +183,34 @@ def test_la_revision_de_plazos_solo_acepta_al_sistema(cliente: TestClient) -> No
     assert cliente.post("/api/revisiones/plazos").status_code == 401
     assert cliente.post("/api/revisiones/plazos", headers=TECNICO).status_code == 403
     assert cliente.post("/api/revisiones/plazos", headers=SISTEMA).status_code == 200
+
+
+# ------------------------------------------------------------------ expediente completo (Fase 14)
+def test_expediente_trae_cliente_vehiculo_y_nombres_de_tecnicos(cliente: TestClient) -> None:
+    numero = asignada(cliente)
+
+    expediente = expediente_de(cliente, numero)
+
+    assert (expediente["cliente_nombre"], expediente["cliente_tipo"]) == ("Luis Peña", "Particular")
+    assert expediente["empresa"] is None
+    assert expediente["responsable_nombre"] is None
+    assert expediente["vehiculo_marca"] == "Nissan"
+    assert expediente["vehiculo_modelo"] == "Versa"
+    assert expediente["vehiculo_anio"] == 2020
+    assert expediente["tecnico_de_diagnostico_nombre"] == "Carlos Ruiz"
+    assert {t["tecnico_nombre"] for t in expediente["trabajos"]} == {"Carlos Ruiz"}
+
+
+def test_expediente_de_flotilla_trae_empresa_y_solo_el_nombre_del_responsable(
+    cliente: TestClient,
+) -> None:
+    numero = recibida(cliente, flotilla=True)
+
+    expediente = expediente_de(cliente, numero)
+
+    assert expediente["cliente_tipo"] == "Flotilla"
+    assert expediente["empresa"] == "Transportes Norte"
+    assert expediente["responsable_nombre"] == "Ana Torres"
+    assert "responsable_telefono" not in expediente
+    assert "responsable_correo" not in expediente
+    assert expediente["tecnico_de_diagnostico_nombre"] is None

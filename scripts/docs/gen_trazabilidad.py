@@ -7,7 +7,19 @@ from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
 from rutas import RUTAS, validar_rutas
 
-from datos import AREA_DE_PRUEBA, CA, NECESIDADES, REGLAS, TRAZA_NECESIDAD, US, area_de, validar
+from datos import (
+    AREA_DE_PRUEBA,
+    CA,
+    NECESIDADES,
+    PLANEADO,
+    REGLAS,
+    REGLAS_PLANEADAS,
+    TRAZA_NECESIDAD,
+    US,
+    area_de,
+    prioridad_de,
+    validar,
+)
 
 DOCS = Path(sys.argv[1])
 validar()
@@ -38,18 +50,29 @@ RN_COMPONENTE = {
     "RN-22": ("`MaquinaDeEstados` (Orden, Cotización, Trabajo, Solicitud)", "ADR-007"),
     "RN-23": ("Value Objects `Dinero`, `RefaccionCotizada`; validación Pydantic (422); restricciones `CHECK` de la base", "ADR-008, ADR-013"),
     "RN-24": ("`Cotizacion.generar` (`TipoCotizacion.ADICIONAL`, `VersionCotizacion`)", "ADR-001"),
+    "RN-25": ("`Cotizacion.corregir` + `CorreccionDeCotizacion` (historial) + `requiere_rol(ASESOR)`", "ADR-018"),
+    "RN-26": ("`Cotizacion.corregir` + Specification E1 + `MAQUINA_DE_COTIZACION` + `Cotizacion.ultimo_contacto` (E8)", "ADR-005, ADR-018"),
+    "RN-27": ("`VerificadorDeOrdenUnica` + `RepositorioDeOrdenes.abierta_del_vehiculo` + índice único parcial de `ordenes(placas)`", "ADR-002, ADR-009"),
+    "RN-28": ("`OrdenDeServicio.asignar_tecnico_para_diagnostico` + consulta `ListarTecnicos`", "ADR-003, ADR-007"),
+    "RN-29": ("`Cliente.actualizar_contacto`, `Vehiculo.actualizar_datos`, `OrdenDeServicio.corregir_datos_de_recepcion`", "ADR-001"),
+    "RN-30": ("`OrdenDeServicio.corregir_forma_de_pago`, `Pago`, evento `FormaDePagoCorregida`", "ADR-001, ADR-016"),
+    "RN-31": ("Value Objects `Telefono` y `Correo`; `Vehiculo`, `EstadoDeRecepcion` y textos con largo máximo; esquemas Pydantic (422)", "ADR-008"),
+    "RN-32": ("`LineaDeCotizacion` (subtotal mayor a cero)", "ADR-001"),
+    "RN-33": ("`OrdenDeServicio.registrar_cotizacion_adicional_pendiente` (adicional sin decisión)", "ADR-002"),
+    "RN-34": ("`OrdenDeServicio.crear_solicitud_de_compra` → `SolicitudNoPermitida`", "ADR-001"),
+    "RN-35": ("`ServicioDeRecepcion.corregir_placas` (vehículo y órdenes en la misma Unidad de Trabajo)", "ADR-002"),
 }
 assert set(RN_COMPONENTE) == set(REGLAS)
 
 ESPECS = [
-    ("E1", "RequiereAprobacionGerencial", "EsCotizacionInicial AND TotalMayorAlUmbral($15,000)", "AND", "RN-04", "CA-005, CA-007, CA-016"),
-    ("E2", "AutorizanteValido", "(EsClienteParticular AND AutorizaElCliente) OR (EsClienteDeFlotilla AND AutorizaSuResponsableDeFlotilla)", "AND, OR", "RN-07", "CA-010, CA-029"),
+    ("E1", "RequiereAprobacionGerencial", "EsCotizacionInicial AND TotalMayorAlUmbral($15,000)", "AND", "RN-04", "CA-005, CA-007, CA-016, CA-048, CA-049"),
+    ("E2", "AutorizanteValido", "(EsClienteParticular AND AutorizaElCliente) OR (EsClienteDeFlotilla AND AutorizaSuResponsableDeFlotilla)", "AND, OR", "RN-07", "CA-010, CA-029, CA-063, CA-064"),
     ("E3", "PuedeEntregarse", "EstaPagada OR EstaPorCobrarACredito OR (EstaCotizada AND TieneRechazoTotal)", "OR, AND", "RN-18", "CA-041, CA-042, CA-043"),
     ("E4", "PuedeCancelarse", "EstaRecibida OR EstaEnDiagnostico", "OR", "RN-19", "CA-044, CA-045"),
     ("E5", "PuedeIniciarTrabajo", "TrabajoPendiente AND AsignadoAlTecnico AND NOT OrdenPausadaPorRetiro", "AND, NOT", "RN-14", "CA-014, CA-046"),
     ("E6", "PuedeSolicitarRefaccion", "TrabajoAutorizado AND (OrdenAutorizada OR OrdenEnReparacion OR OrdenEnEsperaDeRefaccion)", "AND, OR", "RN-09", "CA-019, CA-020"),
     ("E7", "RequiereAlertaDeRefaccion", "SolicitudPendiente AND MasDeDiasHabiles(3) AND NOT ClienteYaAvisado", "AND, NOT", "RN-11", "CA-023"),
-    ("E8", "RequiereRecontacto", "PendienteDeAutorizacion AND FuePresentada AND MasDeHorasDesdeElUltimoContacto(48)", "AND", "RN-12", "CA-040"),
+    ("E8", "RequiereRecontacto", "PendienteDeAutorizacion AND FuePresentada AND MasDeHorasDesdeElUltimoContacto(48)", "AND", "RN-12", "CA-040, CA-051"),
 ]
 
 
@@ -73,14 +96,17 @@ filas_ca = []
 for c in CA.values():
     filas_ca.append([c["id"], c["nombre"], c["us"], ", ".join(necesidades_de(c["id"])), c["bpmn"],
                      ", ".join(c["reglas"]), c["dominio"], c["servicio"], c["ruta"], c["rol"],
-                     prueba_de(c), c["prioridad"], c["cambio"] or ""])
+                     prueba_de(c), prioridad_de(c), c["cambio"] or ""])
 CAB_CA = ["CA", "Criterio", "US", "Necesidad", "BPMN", "Regla(s)", "Componentes del dominio",
           "Servicio / consulta", "Ruta API", "Rol", "Prueba prevista", "Prioridad", "Hallazgo v3.0"]
 
 filas_rn = []
 for rn, (texto, fuente) in REGLAS.items():
     comp, adr = RN_COMPONENTE[rn]
-    filas_rn.append([rn, texto, fuente, ", ".join(cas_de_regla(rn)), comp, adr, f"tests/**/test_rn_{rn_num(rn)}_*"])
+    prueba = f"tests/**/test_rn_{rn_num(rn)}_*"
+    if rn in REGLAS_PLANEADAS:
+        prueba = f"{PLANEADO} · {prueba}"
+    filas_rn.append([rn, texto, fuente, ", ".join(cas_de_regla(rn)), comp, adr, prueba])
 CAB_RN = ["RN", "Regla de negocio", "Fuente (BRD)", "Criterios", "Componente", "ADR", "Prueba prevista"]
 
 # ============================================================================ markdown
@@ -95,7 +121,8 @@ def tabla(cab, filas):
     return out
 
 
-p1 = sum(1 for c in CA.values() if c["prioridad"] == "P1")
+p1 = sum(1 for c in CA.values() if c["prioridad"] == "P1" and not c["planeado"])
+planeados = [c["id"] for c in CA.values() if c["planeado"]]
 md = ["# Matriz de trazabilidad — AutoFix Pro (PIA v3.0)\n",
       "Relaciona **BRD → regla de negocio → componente → prueba**, como pide el paquete del profesor, y cada criterio de aceptación con su User Story, necesidad, fase del BPMN, ruta de la API y rol. Se genera con los scripts de `scripts/docs/` desde la misma fuente que `user-stories.md` y los `.feature`, así que los textos y conteos coinciden.\n",
       f"**Conteos:** {len(NECESIDADES)} necesidades · {len(US)} User Stories · {len(CA)} criterios · {len(REGLAS)} reglas de negocio · {len(ESPECS)} Specifications · {len(RUTAS)} rutas de API.\n",
@@ -112,7 +139,9 @@ md += tabla(["#", "Specification", "Composición", "Operadores", "Regla", "Crite
 md += ["", "Operadores cubiertos: **AND** (E1, E2, E3, E5, E6, E7, E8), **OR** (E2, E3, E4, E6) y **NOT** (E5, E7).", "",
        "## 4. Matriz por criterio de aceptación\n"]
 md += tabla(CAB_CA, filas_ca)
-md += ["", f"**Prioridad:** {p1} criterios son P1 completos; la parte P2 (PDF y fotos) se omitió por decisión del equipo y sus rutas responden 501 (ver `architecture/decisiones-tecnicas.md` §8). CA-027 no está implementado; CA-002, CA-005 y CA-024 están implementados, salvo sus fotos o su PDF.\n"]
+md += ["", f"**Prioridad:** {p1} criterios son P1 completos; la parte P2 (PDF y fotos) se omitió por decisión del equipo y sus rutas responden 501 (ver `architecture/decisiones-tecnicas.md` §8). CA-027 no está implementado; CA-002, CA-005 y CA-024 están implementados, salvo sus fotos o su PDF.\n",
+       f"**{PLANEADO}:** criterio o regla aprobados en la Fase 13 (revisión del 09/11/2026) que todavía no se construyen; la Fase 14 quita la marca al construir cada uno y lo que se recorte queda documentado como planeado. "
+       + (f"Hoy: {len(planeados)} criterios ({planeados[0]} a {planeados[-1]}) y {len(REGLAS_PLANEADAS)} reglas.\n" if planeados else "Hoy no hay ninguno.\n")]
 (T / "matriz-trazabilidad.md").write_text("\n".join(md) + "\n", encoding="utf-8")
 
 # ============================================================================ xlsx
@@ -169,7 +198,8 @@ api = ["# API REST — contrato planeado (PIA)\n",
        "- Errores con el formato `{\"error\": \"<TipoDeError>\", \"detalle\": \"<mensaje para el usuario>\", \"codigo\": <http>}`.",
        "- **201** crea · **200** acción o consulta · **400** JSON mal formado · **401** sin token o token inválido · **403** rol no permitido o trabajo de otro técnico · **404** no existe · **409** regla o transición violada · **422** dato inválido · **501** función P2 aún no implementada.",
        "- Además de los errores que lista cada ruta, cualquier ruta con cuerpo JSON responde **400** si está mal formado, y cualquier ruta que reciba datos (cuerpo, ruta o parámetros) responde **422** si uno es inválido. FastAPI lee el JSON antes de revisar el token: un JSON mal formado responde 400 aunque falte el token.",
-       "- Importes como texto con dos decimales (`\"1500.00\"`); fechas ISO 8601 con zona horaria.\n",
+       "- Importes como texto con dos decimales (`\"1500.00\"`); fechas ISO 8601 con zona horaria.",
+       f"- **{PLANEADO}** en la columna Prioridad: la ruta está aprobada (Fase 13, revisión del 09/11/2026) y todavía no existe en la API; la Fase 14 quita la marca al construirla (`tests/api/test_contrato.py` comprueba que una ruta planeada aún no exista).\n",
        f"## Rutas ({len(RUTAS)})\n"]
 areas = []
 for r in RUTAS:

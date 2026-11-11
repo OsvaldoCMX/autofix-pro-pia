@@ -9,6 +9,7 @@ import pytest
 
 from domain.compartido.errores import (
     CancelacionNoPermitida,
+    CorreccionNoPermitida,
     DiagnosticoNoModificable,
     DiagnosticoRequerido,
     EntregaNoPermitida,
@@ -22,7 +23,7 @@ from domain.compartido.errores import (
     TransicionDeEstadoNoPermitida,
     ValorInvalido,
 )
-from domain.compartido.valores import Dinero
+from domain.compartido.valores import Dinero, Placas
 from domain.ordenes import eventos as ev
 from domain.ordenes.especificaciones import RequiereAlertaDeRefaccion
 from domain.ordenes.estados import EstadoOrden, EstadoSolicitud, EstadoTrabajo
@@ -1248,3 +1249,173 @@ def test_rn_22_recorre_el_flujo_completo_de_una_orden_particular() -> None:
 def test_valores_de_recepcion_son_inmutables() -> None:
     with pytest.raises(FrozenInstanceError):
         c.RECEPCION.kilometraje = 1  # type: ignore[misc]
+
+
+# ------------------------------------------------------------------ cambio de técnico (H-PIA-23)
+def test_ca_054_cambia_el_tecnico_sin_cambiar_el_estado() -> None:
+    orden = c.sin_eventos(c.en_diagnostico())
+
+    orden.asignar_tecnico_para_diagnostico(c.OTRO_TECNICO, DESPUES)
+
+    assert orden.estado is _O.EN_DIAGNOSTICO
+    assert orden.tecnico_de_diagnostico == c.OTRO_TECNICO
+    eventos = orden.extraer_eventos()
+    assert [type(evento) for evento in eventos] == [ev.TecnicoDeDiagnosticoReasignado]
+    assert (eventos[0].tecnico_anterior, eventos[0].tecnico) == (c.TECNICO, c.OTRO_TECNICO)
+
+
+def test_ca_054_con_diagnostico_ya_no_se_cambia() -> None:
+    orden = c.diagnosticada()
+
+    with pytest.raises(CorreccionNoPermitida, match="ya está registrado"):
+        orden.asignar_tecnico_para_diagnostico(c.OTRO_TECNICO, DESPUES)
+
+    assert orden.tecnico_de_diagnostico == c.TECNICO
+
+
+def test_rn_28_asignar_al_mismo_tecnico_no_registra_nada() -> None:
+    orden = c.sin_eventos(c.en_diagnostico())
+
+    orden.asignar_tecnico_para_diagnostico(c.TECNICO, DESPUES)
+
+    assert orden.extraer_eventos() == []
+
+
+def test_rn_28_despues_de_cotizar_el_mensaje_dice_cuando_si_se_puede() -> None:
+    orden = c.cotizada()
+
+    with pytest.raises(TransicionDeEstadoNoPermitida, match="antes del diagnóstico"):
+        orden.asignar_tecnico_para_diagnostico(c.OTRO_TECNICO, DESPUES)
+
+
+# ------------------------------------------------------------------ corrección de recepción (H-PIA-24)
+@pytest.mark.parametrize("constructor", [c.recibida, c.en_diagnostico])
+def test_ca_057_corrige_la_recepcion_sin_cambiar_el_estado(constructor: c.Constructor) -> None:
+    orden = c.sin_eventos(constructor())
+    estado = orden.estado
+    nueva = EstadoDeRecepcion(46000, NivelDeCombustible.LLENO)
+
+    orden.corregir_datos_de_recepcion(nueva, "  Ruido al frenar y vibración  ", DESPUES)
+
+    assert orden.estado is estado
+    assert orden.estado_de_recepcion == nueva
+    assert orden.motivo_de_ingreso == "Ruido al frenar y vibración"
+    assert [type(e) for e in orden.extraer_eventos()] == [ev.DatosDeRecepcionCorregidos]
+
+
+@pytest.mark.parametrize("constructor", [c.cotizada, c.autorizada, c.cancelada])
+def test_rn_29_recepcion_no_se_corrige_despues_de_cotizar(constructor: c.Constructor) -> None:
+    orden = constructor()
+    anterior = orden.estado_de_recepcion
+
+    with pytest.raises(CorreccionNoPermitida, match="antes de la cotización"):
+        orden.corregir_datos_de_recepcion(
+            EstadoDeRecepcion(1, NivelDeCombustible.RESERVA), "Otro", DESPUES
+        )
+
+    assert orden.estado_de_recepcion == anterior
+
+
+def test_rn_29_motivo_vacio_no_se_corrige() -> None:
+    orden = c.recibida()
+
+    with pytest.raises(ValorInvalido):
+        orden.corregir_datos_de_recepcion(c.RECEPCION, "   ", DESPUES)
+
+
+# ------------------------------------------------------------------ corrección de la forma de pago
+def test_ca_058_corrige_la_forma_de_pago_de_una_orden_pagada() -> None:
+    orden = c.sin_eventos(c.pagada())
+    pago = orden.pago
+    assert pago is not None
+
+    orden.corregir_forma_de_pago(FormaDePago.TRANSFERENCIA, DESPUES)
+
+    assert orden.estado is _O.PAGADA
+    assert orden.pago == Pago(pago.monto, FormaDePago.TRANSFERENCIA, pago.registrado_en)
+    (evento,) = orden.extraer_eventos()
+    assert isinstance(evento, ev.FormaDePagoCorregida)
+    assert (evento.forma_anterior, evento.forma) == ("Efectivo", "Transferencia")
+
+
+def test_rn_30_la_misma_forma_no_registra_nada() -> None:
+    orden = c.sin_eventos(c.pagada())
+
+    orden.corregir_forma_de_pago(FormaDePago.EFECTIVO, DESPUES)
+
+    assert orden.extraer_eventos() == []
+
+
+def test_rn_30_entregada_ya_no_se_corrige() -> None:
+    orden = c.cerrada()
+
+    with pytest.raises(CorreccionNoPermitida, match="ya se entregó"):
+        orden.corregir_forma_de_pago(FormaDePago.EFECTIVO, DESPUES)
+
+
+@pytest.mark.parametrize("constructor", [c.lista, c.por_cobrar])
+def test_rn_30_sin_pago_de_contado_no_hay_que_corregir(constructor: c.Constructor) -> None:
+    with pytest.raises(CorreccionNoPermitida, match="no tiene un pago de contado"):
+        constructor().corregir_forma_de_pago(FormaDePago.EFECTIVO, DESPUES)
+
+
+# ------------------------------------------------------------------ kilometraje (RN-31)
+def test_rn_31_kilometraje_hasta_2_millones() -> None:
+    assert EstadoDeRecepcion.capturado(2_000_000, NivelDeCombustible.LLENO).kilometraje == 2_000_000
+    with pytest.raises(ValorInvalido, match="2,000,000 km"):
+        EstadoDeRecepcion.capturado(2_000_001, NivelDeCombustible.LLENO)
+
+
+def test_rn_31_reconstruir_no_revisa_el_tope_del_kilometraje() -> None:
+    assert EstadoDeRecepcion(2_000_000_000, NivelDeCombustible.LLENO).kilometraje == 2_000_000_000
+
+
+# ------------------------------------------------------------------ refacciones repetidas (RN-34)
+def test_ca_062_no_se_repite_la_solicitud_pendiente_de_la_misma_refaccion() -> None:
+    orden = c.autorizada()
+    orden.crear_solicitud_de_compra(1, "Balata delantera", 2, DESPUES)
+
+    with pytest.raises(SolicitudNoPermitida, match="ya está solicitada"):
+        orden.crear_solicitud_de_compra(1, "  balata   DELANTERA ", 1, DESPUES)
+
+    assert len(orden.solicitudes) == 1
+
+
+def test_rn_34_otra_refaccion_u_otro_trabajo_si_se_solicitan() -> None:
+    orden = c.autorizada(trabajos=2)
+    orden.crear_solicitud_de_compra(1, "Balata", 1, DESPUES)
+
+    orden.crear_solicitud_de_compra(1, "Disco", 1, DESPUES)
+    orden.crear_solicitud_de_compra(2, "Balata", 1, DESPUES)
+
+    assert len(orden.solicitudes) == 3
+
+
+def test_rn_34_cuando_la_pieza_llega_se_puede_volver_a_solicitar() -> None:
+    orden = c.autorizada()
+    solicitud = orden.crear_solicitud_de_compra(1, "Balata", 1, DESPUES)
+    orden.registrar_llegada_de_refaccion(solicitud.id, DESPUES)
+
+    orden.crear_solicitud_de_compra(1, "Balata", 1, DESPUES)
+
+    assert len(orden.solicitudes) == 2
+
+
+# ------------------------------------------------------------------ corrección de placas (RN-35)
+@pytest.mark.parametrize("constructor", [c.recibida, c.en_diagnostico])
+def test_ca_066_la_orden_toma_las_placas_corregidas(constructor: c.Constructor) -> None:
+    orden = c.sin_eventos(constructor())
+    anteriores = orden.placas
+
+    orden.corregir_placas(Placas("XYZ998"), DESPUES)
+
+    assert orden.placas == Placas("XYZ998")
+    (evento,) = orden.extraer_eventos()
+    assert isinstance(evento, ev.PlacasCorregidas)
+    assert (evento.placas_anteriores, evento.placas) == (str(anteriores), "XYZ998")
+
+
+@pytest.mark.parametrize("constructor", [c.cotizada, c.cancelada])
+def test_rn_35_despues_de_cotizar_las_placas_no_se_corrigen(constructor: c.Constructor) -> None:
+    with pytest.raises(CorreccionNoPermitida, match="solo se corrigen antes de la cotización"):
+        constructor().corregir_placas(Placas("XYZ998"), DESPUES)

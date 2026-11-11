@@ -1,19 +1,20 @@
 # User Stories y Criterios de Aceptación — AutoFix Pro
 
 **Materia:** Componentes de Lógica de Negocio · FIME UANL · **Equipo 6**  
-**Versión:** 3.0 (PIA, 04/11/2026)
+**Versión:** 3.1 (revisión del 09/11/2026)
 
 | Versión | Fecha | Cambios |
 |---|---|---|
 | 1.0 | 03/09/2026 | Unidad 2: 18 User Stories y sus criterios. |
 | 2.0 | 10/2026 | Unidad 3: hallazgos H-U2-01 a H-U2-03 (se agregaron US-019 a US-024); 24 User Stories y 43 criterios. |
 | 3.0 | 04/11/2026 | PIA: US-025 (cancelación), CA-044 a CA-046, crédito desde la entrega y precisiones en CA-015, CA-018, CA-022, CA-023, CA-025, CA-027, CA-039, CA-040 y CA-041. Los criterios ahora también están en Gherkin formal (`gherkin/*.feature`). Detalle en `registro-de-cambios.md`. |
+| 3.1 | 09/11/2026 | Revisión del profesor como usuario del taller: correcciones de datos mal capturados y prevención de registros repetidos (H-PIA-21 en adelante, necesidad N-16, desde US-026 y CA-047). Los criterios marcados **(v3.1)** son nuevos; los que tienen la marca «Planeado» en la matriz de trazabilidad todavía no se construyen. |
 
 Este documento contiene las User Stories derivadas del levantamiento de requerimientos del sistema de gestión de taller AutoFix Pro. Cada historia representa una funcionalidad que el sistema debe proporcionar a un rol específico para resolver los problemas de la operación actual (AS-IS), como la falta de evidencia en las autorizaciones o la falta de visibilidad del estado de las reparaciones.
 
 Las historias siguen el formato *Como… quiero… para…* y cada criterio de aceptación está escrito en Gherkin (*Dado / Cuando / Entonces / Y*). Los mismos criterios, palabra por palabra, están en los archivos `docs/gherkin/*.feature` con las etiquetas `@US-xxx` y `@CA-xxx`, para que cada escenario se pueda relacionar con su prueba automatizada (convención `test_ca_0XX_…`). Los nombres de estados, roles y términos son los del [Glosario del Dominio](glosario.md).
 
-**Resumen:** 15 necesidades · 25 User Stories · 46 criterios de aceptación · 8 archivos `.feature`.
+**Resumen:** 16 necesidades · 27 User Stories · 67 criterios de aceptación · 8 archivos `.feature`.
 
 ## 1. Trazabilidad con el BRD
 
@@ -34,6 +35,7 @@ Las historias siguen el formato *Como… quiero… para…* y cada criterio de a
 | N-13 | Permitir al cliente consultar el estado de su vehículo sin llamar al taller. | US-021 |
 | N-14 | (Implícita) Dar seguimiento a las cotizaciones que lleven más de 48 horas sin respuesta. | US-023 |
 | N-15 | (Implícita, v3.0) Cancelar la orden cuando el cliente desiste antes de que se genere la cotización. | US-025 |
+| N-16 | (Implícita, v3.1) Corregir los datos mal capturados dejando constancia y evitar registros repetidos (revisión del 09/11/2026). | US-026, US-020, US-027, US-014 |
 
 ## 2. Listado de User Stories
 
@@ -64,10 +66,12 @@ Las historias siguen el formato *Como… quiero… para…* y cada criterio de a
 | US-023 | Asesor de Servicio | Como Asesor de Servicio, quiero recibir una alerta cuando una cotización presentada lleve más de 48 horas sin respuesta, para volver a contactar al cliente o al Responsable de Flotilla. | `03_cotizacion.feature` |
 | US-024 | Asesor de Servicio | Como Asesor de Servicio, quiero registrar la entrega del vehículo al cliente, para cerrar la orden de servicio y dejar constancia de cuándo salió el vehículo del taller. | `06_caja_y_entrega.feature` |
 | US-025 | Asesor de Servicio | Como Asesor de Servicio, quiero cancelar una orden cuando el cliente desiste del servicio antes de que se genere la cotización, para cerrar el expediente sin cobro y dejar registrado el motivo. | `08_cancelacion.feature` |
+| US-026 | Asesor de Servicio | Como Asesor de Servicio, quiero corregir una cotización con un importe o una descripción mal capturados mientras espera la revisión del Gerente o la decisión del cliente, indicando el motivo, para presentar un documento correcto sin perder el historial de lo que cambió. | `03_cotizacion.feature` |
+| US-027 | Asesor de Servicio | Como Asesor de Servicio, quiero corregir los datos del cliente, del vehículo y del estado de recepción que capturé mal, para que el expediente quede correcto sin tener que abrir otra orden. | `01_recepcion.feature` |
 
 ## 3. Criterios de aceptación en Gherkin
 
-Los criterios marcados con **(v3.0)** se agregaron o se precisaron en el PIA; el hallazgo que lo justifica se indica entre paréntesis.
+Los criterios marcados con **(v3.0)** se agregaron o se precisaron en el PIA y los marcados con **(v3.1)** salen de la revisión del 09/11/2026; el hallazgo que lo justifica se indica entre paréntesis.
 
 ### US-001
 
@@ -76,6 +80,8 @@ Los criterios marcados con **(v3.0)** se agregaron o se precisaron en el PIA; el
 | ID | Criterio de aceptación |
 |---|---|
 | **CA-001**<br>Registrar un vehículo nuevo y abrir su orden | **Dado** que un vehículo llega al taller y el asesor abre la pantalla «Nueva Orden»<br>**Cuando** el asesor ingresa los datos del cliente (nombre, teléfono y correo), los del vehículo (marca, modelo, año, placas y VIN) y el motivo de ingreso<br>**Entonces** el sistema debe guardar la información<br>**Y** debe generar un número de orden de servicio único<br>**Y** debe asignarle el estado «Recibida»<br>**Y** debe mostrar un mensaje de éxito |
+| **CA-052**<br>No se abre una segunda orden del mismo vehículo **(v3.1, H-PIA-22)** | **Dado** que el vehículo con placas XYZ998 ya tiene una orden abierta (en un estado distinto de «Cerrada», «Cerrada sin Reparación» y «Cancelada»)<br>**Cuando** el asesor intenta registrar otra orden para ese vehículo, por ejemplo con un doble clic en «Registrar»<br>**Entonces** el sistema no debe abrir una segunda orden<br>**Y** debe mostrar el mensaje «El vehículo con placas XYZ998 ya tiene abierta la orden OS-0001 (estado «Recibida»). Ábrala en lugar de registrar otra.»<br>**Y** aunque las dos solicitudes lleguen al mismo tiempo, solo una orden debe quedar registrada y la otra debe recibir el mismo mensaje |
+| **CA-059**<br>Datos de captura con forma y rango razonables **(v3.1, H-PIA-25)** | **Dado** que el asesor captura los datos del cliente, del Responsable de Flotilla, del vehículo y del estado de recepción<br>**Cuando** escribe un teléfono que no tiene 10 dígitos, un correo sin la forma nombre@dominio.algo, un año mayor al año actual + 1, un kilometraje mayor a 2,000,000 o un texto de más de 1,000 caracteres<br>**Entonces** el sistema no debe guardar el registro<br>**Y** debe indicar qué dato está mal y cómo debe capturarse, por ejemplo «El teléfono debe tener 10 dígitos; usted escribió 7.» o «El teléfono solo puede llevar números. Escriba los 10 dígitos, sin letras.»<br>**Y** un teléfono o un correo con solo espacios debe tratarse como no capturado |
 
 ### US-002
 
@@ -102,6 +108,7 @@ Los criterios marcados con **(v3.0)** se agregaron o se precisaron en el PIA; el
 |---|---|
 | **CA-005**<br>Generar la cotización inicial | **Dado** que la orden tiene un diagnóstico registrado por el técnico<br>**Cuando** el asesor agrega los trabajos (mano de obra) y las refacciones con sus costos y guarda la cotización<br>**Entonces** el sistema debe generarla con número único, versión 1, fecha, desglose y costo total<br>**Y** debe generar su PDF<br>**Y** debe cambiar la orden a «Cotizada»<br>**Y** si el total es menor o igual a $15,000 MXN, debe asignar a la cotización el estado «Pendiente de Autorización del Cliente» |
 | **CA-006**<br>Marcar la cotización como presentada | **Dado** que una cotización está en «Pendiente de Autorización del Cliente»<br>**Cuando** el asesor la marca como presentada (al cliente o, si es flotilla, al Responsable de Flotilla)<br>**Entonces** el sistema debe registrar la fecha y hora de presentación, a partir de la cual corre el plazo de 48 horas |
+| **CA-060**<br>Cada trabajo de la cotización vale más de $0.00 **(v3.1, H-PIA-25)** | **Dado** que el asesor captura los trabajos de una cotización<br>**Cuando** un trabajo suma $0.00 entre su mano de obra y sus refacciones<br>**Entonces** el sistema no debe guardar la cotización<br>**Y** debe indicar qué trabajo vale $0.00 y pedir que capture su importe |
 
 ### US-005
 
@@ -111,7 +118,8 @@ Los criterios marcados con **(v3.0)** se agregaron o se precisaron en el PIA; el
 |---|---|
 | **CA-007**<br>Cotización inicial mayor a $15,000 MXN | **Dado** que el asesor guarda una cotización inicial con un total mayor a $15,000 MXN<br>**Cuando** el sistema la genera<br>**Entonces** debe asignarle el estado «Pendiente de Aprobación Gerencial»<br>**Y** debe impedir que se marque como presentada<br>**Y** debe enviar una alerta al panel del Gerente |
 | **CA-008**<br>El Gerente aprueba la cotización | **Dado** que la cotización está en «Pendiente de Aprobación Gerencial»<br>**Cuando** el Gerente la revisa y la aprueba<br>**Entonces** el sistema debe cambiar su estado a «Pendiente de Autorización del Cliente»<br>**Y** debe registrar la fecha de aprobación<br>**Y** debe notificar al asesor para que pueda presentarla |
-| **CA-009**<br>El Gerente rechaza la cotización con observaciones | **Dado** que la cotización está en «Pendiente de Aprobación Gerencial»<br>**Cuando** el Gerente la rechaza capturando sus observaciones<br>**Entonces** el sistema debe cambiar su estado a «Requiere Ajuste»<br>**Y** debe notificar al asesor<br>**Cuando** el asesor guarda la cotización ajustada<br>**Entonces** su estado pasa a «Pendiente de Autorización del Cliente» sin volver a revisión gerencial |
+| **CA-009**<br>El Gerente rechaza la cotización con observaciones | **Dado** que la cotización está en «Pendiente de Aprobación Gerencial»<br>**Cuando** el Gerente la rechaza capturando sus observaciones<br>**Entonces** el sistema debe cambiar su estado a «Requiere Ajuste»<br>**Y** debe notificar al asesor<br>**Cuando** el asesor guarda la cotización ajustada<br>**Entonces** si su total es igual o menor al que rechazó el Gerente, su estado pasa a «Pendiente de Autorización del Cliente» sin volver a revisión gerencial (si es mayor, ver CA-067) |
+| **CA-067**<br>El ajuste sube el total que rechazó el Gerente **(v3.1, H-PIA-30)** | **Dado** que el Gerente rechazó con observaciones una cotización de $20,000.00 y está en «Requiere Ajuste»<br>**Cuando** el asesor guarda la cotización ajustada con un total mayor, por ejemplo $21,000.00<br>**Entonces** su estado debe regresar a «Pendiente de Aprobación Gerencial»<br>**Y** el sistema debe notificar al Gerente para que revise el monto nuevo<br>**Y** la cotización no se puede presentar al cliente hasta que el Gerente la apruebe |
 
 ### US-006
 
@@ -122,6 +130,7 @@ Los criterios marcados con **(v3.0)** se agregaron o se precisaron en el PIA; el
 | **CA-010**<br>Registrar la autorización total o parcial | **Dado** que el cliente (o el Responsable de Flotilla) revisó la cotización<br>**Cuando** el asesor selecciona los trabajos autorizados y guarda la decisión<br>**Entonces** el sistema debe cambiar la cotización a «Autorizada» o «Autorizada Parcialmente»<br>**Y** debe cambiar la orden a «Autorizada»<br>**Y** debe registrar la fecha, la hora y el nombre de quien autorizó<br>**Y** debe marcar los trabajos no aceptados como «No Autorizado» |
 | **CA-011**<br>Solo se asignan los trabajos autorizados | **Dado** que el cliente autorizó parcialmente la cotización<br>**Cuando** el asesor asigna los trabajos a un técnico<br>**Entonces** el sistema solo debe permitir seleccionar los trabajos autorizados |
 | **CA-012**<br>Registrar el rechazo total | **Dado** que el cliente no acepta ningún trabajo de la cotización<br>**Cuando** el asesor registra el rechazo total<br>**Entonces** el sistema debe cambiar la cotización a «Rechazada»<br>**Y** debe impedir la asignación de trabajos<br>**Y** debe habilitar la opción «Entregar sin reparación» |
+| **CA-063**<br>El nombre del autorizante con espacios de más **(v3.1, H-PIA-27)** | **Dado** que el cliente particular se llama «Luis Peña»<br>**Cuando** el asesor registra la decisión a nombre de «Luis  Peña» (con dos espacios), « luis peña » o «LUIS PEÑA»<br>**Entonces** el sistema debe aceptar el nombre como el mismo<br>**Y** si el nombre se escribe sin acento («Luis Pena»), debe rechazarlo e indicar a nombre de quién se registra la decisión |
 
 ### US-007
 
@@ -150,6 +159,7 @@ Los criterios marcados con **(v3.0)** se agregaron o se precisaron en el PIA; el
 | **CA-016**<br>Crear una cotización adicional | **Dado** que el técnico reportó una falla adicional en una orden «En Reparación»<br>**Cuando** el asesor crea una nueva cotización vinculada a esa orden<br>**Entonces** el sistema debe etiquetarla como «Cotización Adicional»<br>**Y** debe asignarle la siguiente versión (v.2, v.3…)<br>**Y** debe dejarla en «Pendiente de Autorización del Cliente» sin importar su monto<br>**Y** debe mantener sin cambios la cotización original |
 | **CA-017**<br>El cliente autoriza la cotización adicional | **Dado** que el cliente autoriza la cotización adicional<br>**Cuando** el asesor registra la decisión<br>**Entonces** los trabajos adicionales se agregan a la orden en estado «Pendiente»<br>**Y** el sistema debe notificar al técnico |
 | **CA-018**<br>El cliente rechaza la cotización adicional **(v3.0, H-PIA-12)** | **Dado** que el cliente rechaza la cotización adicional<br>**Cuando** el asesor registra la decisión<br>**Entonces** el sistema debe marcar los trabajos adicionales como «No Autorizado»<br>**Y** la orden continúa solo con los trabajos autorizados originalmente<br>**Y** si esos trabajos ya estaban completados, la orden pasa a «Lista para Entrega» |
+| **CA-061**<br>Una sola cotización adicional sin decisión a la vez **(v3.1, H-PIA-26)** | **Dado** que una orden tiene una cotización adicional en «Pendiente de Autorización del Cliente»<br>**Cuando** el asesor intenta generar otra cotización adicional, por ejemplo con un doble clic<br>**Entonces** el sistema no debe generarla<br>**Y** debe indicar que primero se registre la decisión del cliente sobre la cotización adicional pendiente, con su versión |
 
 ### US-010
 
@@ -159,6 +169,7 @@ Los criterios marcados con **(v3.0)** se agregaron o se precisaron en el PIA; el
 |---|---|
 | **CA-019**<br>Solicitar una refacción no disponible | **Dado** que el técnico verificó en el almacén que una refacción de un trabajo autorizado no está disponible<br>**Cuando** la marca como «No disponible» y captura la descripción y la cantidad<br>**Entonces** el sistema debe crear una «Solicitud de Compra» en estado «Solicitada» con su fecha<br>**Y** debe mostrarla en la lista de Compras<br>**Y** debe cambiar la orden a «En Espera de Refacción» |
 | **CA-020**<br>No se piden refacciones de trabajos no autorizados | **Dado** que un trabajo no ha sido autorizado por el cliente<br>**Cuando** el técnico intenta crear una solicitud de compra para ese trabajo<br>**Entonces** el sistema no debe permitirlo |
+| **CA-062**<br>No se repite la solicitud de una refacción pendiente **(v3.1, H-PIA-26)** | **Dado** que un trabajo ya tiene una solicitud de compra «Solicitada» de una refacción<br>**Cuando** el técnico vuelve a solicitar la misma refacción para el mismo trabajo, por ejemplo con un doble clic<br>**Entonces** el sistema no debe crear otra solicitud<br>**Y** debe indicar que esa refacción ya está solicitada y que Compras la está gestionando<br>**Y** la refacción debe compararse sin distinguir mayúsculas ni espacios repetidos |
 
 ### US-011
 
@@ -193,6 +204,7 @@ Los criterios marcados con **(v3.0)** se agregaron o se precisaron en el PIA; el
 | ID | Criterio de aceptación |
 |---|---|
 | **CA-026**<br>Registrar el pago de contado | **Dado** que una orden de cliente particular está en estado «Lista para Entrega»<br>**Cuando** Caja registra el pago del total y la forma de pago (efectivo, tarjeta o transferencia)<br>**Entonces** el sistema debe cambiar el estado de la orden a «Pagada»<br>**Y** debe impedir que se modifiquen los costos |
+| **CA-058**<br>Corregir la forma de pago antes de la entrega **(v3.1, H-PIA-24)** | **Dado** que Caja registró el pago de una orden con la forma de pago equivocada y la orden sigue «Pagada»<br>**Cuando** Caja corrige la forma de pago<br>**Entonces** el sistema debe guardar la forma de pago correcta sin cambiar el monto, la fecha del pago ni el estado de la orden<br>**Y** debe dejar constancia de la forma de pago anterior y de la nueva<br>**Y** si el vehículo ya se entregó, no debe permitir el cambio |
 
 ### US-015
 
@@ -210,6 +222,8 @@ Los criterios marcados con **(v3.0)** se agregaron o se precisaron en el PIA; el
 |---|---|
 | **CA-028**<br>Registrar un cliente de flotilla | **Dado** que el asesor registra una orden para un vehículo de empresa<br>**Cuando** selecciona el tipo de cliente «Flotilla»<br>**Entonces** el sistema debe pedir la empresa<br>**Y** debe mostrar los datos de su Responsable de Flotilla (nombre, teléfono y correo)<br>**Y** debe permitir registrarlos si la empresa es nueva |
 | **CA-029**<br>En flotillas solo autoriza el Responsable de Flotilla | **Dado** que la orden es de un cliente de flotilla<br>**Cuando** el asesor registra la decisión sobre una cotización (inicial o adicional)<br>**Entonces** el sistema debe registrarla a nombre del Responsable de Flotilla<br>**Y** no debe permitir registrar al conductor como autorizante |
+| **CA-064**<br>Flotilla: el mensaje dice a nombre de quién y con qué rol **(v3.1, H-PIA-27)** | **Dado** que la orden es de un cliente de flotilla de la empresa «Transportes Norte», cuyo Responsable de Flotilla es «Ana Torres»<br>**Cuando** el asesor registra la decisión con el rol «Cliente» o a nombre de otra persona<br>**Entonces** el sistema no debe registrarla<br>**Y** debe indicar la empresa, el nombre del Responsable de Flotilla y el rol con el que se registra: «Para la flotilla de Transportes Norte, registre la decisión a nombre de su Responsable de Flotilla, Ana Torres, con el rol «Responsable de Flotilla».» |
+| **CA-065**<br>La empresa de flotilla ya está registrada **(v3.1, H-PIA-28)** | **Dado** que la empresa «Transportes Norte» ya está registrada con su Responsable de Flotilla «Ana Torres»<br>**Cuando** el asesor registra la misma empresa con datos distintos del responsable<br>**Entonces** el sistema no debe crear otra empresa ni cambiar en silencio al responsable registrado<br>**Y** debe indicar que la empresa ya está registrada, con el nombre y el teléfono de su Responsable de Flotilla, para que use ese registro<br>**Y** si los datos del responsable son los mismos, debe devolver la empresa registrada, como hasta ahora |
 
 ### US-017
 
@@ -245,6 +259,8 @@ Los criterios marcados con **(v3.0)** se agregaron o se precisaron en el PIA; el
 |---|---|
 | **CA-035**<br>Asignar técnico para el diagnóstico | **Dado** que una orden está en estado «Recibida»<br>**Cuando** el asesor le asigna un técnico<br>**Entonces** el sistema debe cambiar la orden a «En Diagnóstico»<br>**Y** debe mostrarla en el panel de ese técnico |
 | **CA-036**<br>Asignar los trabajos autorizados | **Dado** que una orden tiene trabajos autorizados sin asignar<br>**Cuando** el asesor los asigna a un técnico<br>**Entonces** el sistema debe mostrarlos en el panel de ese técnico en estado «Pendiente» |
+| **CA-053**<br>Lista de técnicos para asignar **(v3.1, H-PIA-23)** | **Dado** que el asesor va a asignar un técnico para el diagnóstico o para los trabajos autorizados<br>**Cuando** consulta la lista de técnicos<br>**Entonces** el sistema debe mostrar la clave y el nombre de cada empleado con rol Técnico<br>**Y** no debe mostrar empleados de otros puestos |
+| **CA-054**<br>Cambiar el técnico de diagnóstico **(v3.1, H-PIA-23)** | **Dado** que una orden está en «En Diagnóstico» y el técnico asignado todavía no registra el diagnóstico<br>**Cuando** el asesor asigna a otro técnico<br>**Entonces** el sistema debe cambiar el técnico de la orden sin cambiar su estado<br>**Y** la orden debe salir del panel del técnico anterior y aparecer en el del nuevo<br>**Y** si el diagnóstico ya está registrado, no debe permitir el cambio e indicar que el diagnóstico ya está registrado |
 
 ### US-021
 
@@ -290,25 +306,49 @@ Los criterios marcados con **(v3.0)** se agregaron o se precisaron en el PIA; el
 | **CA-044**<br>Cancelar la orden antes de la cotización **(v3.0, H-PIA-01)** | **Dado** que una orden está en «Recibida» o «En Diagnóstico»<br>**Y** el cliente decide no continuar con el servicio<br>**Cuando** el asesor registra la cancelación indicando el motivo<br>**Entonces** el sistema debe cambiar la orden a «Cancelada»<br>**Y** debe guardar la fecha, la hora y el motivo<br>**Y** debe quitarla del panel del técnico asignado, si tenía uno<br>**Y** no debe generar ningún cobro |
 | **CA-045**<br>No se cancela una orden que ya tiene cotización **(v3.0, H-PIA-01)** | **Dado** que una orden ya tiene una cotización generada («Cotizada» o un estado posterior)<br>**Cuando** el asesor intenta cancelarla<br>**Entonces** el sistema no debe permitirlo<br>**Y** debe indicar que la orden no se puede cancelar<br>**Y** si la orden está «Cotizada» y el cliente aún no decide, debe indicar que, si no desea la reparación, se registra el rechazo total de la cotización |
 
+### US-026
+
+> Como Asesor de Servicio, quiero corregir una cotización con un importe o una descripción mal capturados mientras espera la revisión del Gerente o la decisión del cliente, indicando el motivo, para presentar un documento correcto sin perder el historial de lo que cambió.
+
+| ID | Criterio de aceptación |
+|---|---|
+| **CA-047**<br>Corregir una cotización que espera la decisión del cliente **(v3.1, H-PIA-21)** | **Dado** que una cotización está en «Pendiente de Autorización del Cliente» con un importe o una descripción mal capturados<br>**Cuando** el asesor la corrige capturando los trabajos correctos y el motivo de la corrección<br>**Entonces** el sistema debe guardar los trabajos corregidos conservando el número y la versión de la cotización<br>**Y** debe guardar en el historial de correcciones al asesor, la fecha y hora, el motivo, el total anterior y el total nuevo<br>**Y** si la cotización no requiere aprobación gerencial, debe dejarla en «Pendiente de Autorización del Cliente» como no presentada, para que el asesor la presente otra vez |
+| **CA-048**<br>La corrección sube la cotización inicial arriba de $15,000 MXN **(v3.1, H-PIA-21)** | **Dado** que una cotización inicial está en «Pendiente de Autorización del Cliente», aunque el Gerente ya la haya aprobado o se haya ajustado según sus observaciones<br>**Cuando** el asesor la corrige y el total nuevo es mayor a $15,000 MXN<br>**Entonces** el sistema debe cambiarla a «Pendiente de Aprobación Gerencial»<br>**Y** debe borrar la fecha de aprobación gerencial, que queda guardada en el historial de la corrección<br>**Y** debe enviar una alerta al panel del Gerente<br>**Y** debe impedir que se presente al cliente hasta que el Gerente la apruebe |
+| **CA-049**<br>Corregir una cotización que espera al Gerente **(v3.1, H-PIA-21)** | **Dado** que una cotización está en «Pendiente de Aprobación Gerencial»<br>**Cuando** el asesor la corrige capturando el motivo<br>**Entonces** si el total nuevo sigue siendo mayor a $15,000 MXN, la cotización debe quedarse en «Pendiente de Aprobación Gerencial» con los trabajos corregidos<br>**Y** si el total nuevo es menor o igual a $15,000 MXN, debe cambiarla a «Pendiente de Autorización del Cliente» como no presentada<br>**Y** en los dos casos debe guardar la corrección en el historial |
+| **CA-050**<br>No se corrige sin motivo ni una cotización por ajustar o ya decidida **(v3.1, H-PIA-21)** | **Dado** que el asesor intenta corregir una cotización<br>**Cuando** la cotización está en «Requiere Ajuste», «Autorizada», «Autorizada Parcialmente» o «Rechazada», o el asesor no captura el motivo<br>**Entonces** el sistema no debe permitirlo<br>**Y** si falta el motivo, debe pedir que lo capture<br>**Y** si está en «Requiere Ajuste», debe indicar que se guarde la cotización ajustada según las observaciones del Gerente<br>**Y** si ya tiene la decisión del cliente, debe indicar que ya no se corrige y que los trabajos nuevos se cotizan con una cotización adicional |
+| **CA-051**<br>El plazo de 48 horas después de una corrección **(v3.1, H-PIA-21)** | **Dado** que una cotización presentada, con recontactos registrados, se corrigió y quedó en «Pendiente de Autorización del Cliente»<br>**Cuando** el sistema ejecuta su revisión de plazos antes de que el asesor la presente otra vez<br>**Entonces** no debe generar la alerta de 48 horas<br>**Y** debe conservar los recontactos anteriores como historial<br>**Cuando** el asesor la presenta otra vez<br>**Entonces** el plazo de 48 horas debe contar solo desde la nueva presentación y los recontactos posteriores a ella |
+
+### US-027
+
+> Como Asesor de Servicio, quiero corregir los datos del cliente, del vehículo y del estado de recepción que capturé mal, para que el expediente quede correcto sin tener que abrir otra orden.
+
+| ID | Criterio de aceptación |
+|---|---|
+| **CA-055**<br>Corregir los datos del cliente **(v3.1, H-PIA-24)** | **Dado** que el nombre, el teléfono o el correo de un cliente se capturaron mal<br>**Cuando** el asesor los corrige<br>**Entonces** el sistema debe guardar los datos corregidos sin cambiar las órdenes ni las cotizaciones del cliente<br>**Y** las decisiones que se registren después deben compararse con el nombre corregido |
+| **CA-056**<br>Corregir los datos del vehículo **(v3.1, H-PIA-24)** | **Dado** que el VIN, la marca, el modelo o el año de un vehículo se capturaron mal<br>**Cuando** el asesor los corrige<br>**Entonces** el sistema debe guardar los datos corregidos sin cambiar las placas<br>**Y** si el VIN corregido ya pertenece a otro vehículo, no debe permitirlo e indicar que revise el dato |
+| **CA-057**<br>Corregir el estado de recepción **(v3.1, H-PIA-24)** | **Dado** que una orden está en «Recibida» o «En Diagnóstico»<br>**Cuando** el asesor corrige el kilometraje, el nivel de combustible o el motivo de ingreso<br>**Entonces** el sistema debe guardar los datos corregidos sin cambiar el estado de la orden<br>**Y** si la orden ya tiene cotización, no debe permitirlo e indicar que esos datos solo se corrigen antes de la cotización |
+| **CA-066**<br>Corregir las placas mal capturadas **(v3.1, H-PIA-29)** | **Dado** que una orden está en «Recibida» o «En Diagnóstico» y las placas de su vehículo se capturaron mal<br>**Cuando** el asesor corrige las placas<br>**Entonces** el sistema debe cambiar las placas del vehículo y de sus órdenes<br>**Y** el cliente debe poder consultar el estado de su orden con las placas correctas<br>**Y** si las placas nuevas ya pertenecen a otro vehículo, o la orden está en otro estado, no debe permitirlo e indicar el motivo |
+
 ## 4. Validación y trazabilidad
 
 | ID Necesidad | User Stories relacionadas | Criterios de aceptación | Proceso modelado en BPMN |
 |---|---|---|---|
-| N-01 | US-001, US-002, US-003 | CA-001, CA-002, CA-003, CA-004 | Fase 1: Recepción y registro |
-| N-02 | US-004 | CA-005, CA-006 | Fase 2: Diagnóstico y cotización; Fase 3: Autorización |
-| N-03 | US-006 | CA-010, CA-011, CA-012 | Fase 3: Autorización |
-| N-04 | US-005 | CA-007, CA-008, CA-009 | Fase 2: Diagnóstico y cotización |
+| N-01 | US-001, US-002, US-003 | CA-001, CA-002, CA-003, CA-004, CA-052, CA-059 | Fase 1: Recepción y registro |
+| N-02 | US-004 | CA-005, CA-006, CA-060 | Fase 2: Diagnóstico y cotización; Fase 3: Autorización |
+| N-03 | US-006 | CA-010, CA-011, CA-012, CA-063 | Fase 3: Autorización |
+| N-04 | US-005 | CA-007, CA-008, CA-009, CA-067 | Fase 2: Diagnóstico y cotización |
 | N-05 | US-012 | CA-023 | Fase 4: Gestión de refacciones |
-| N-06 | US-009, US-019 | CA-016, CA-017, CA-018, CA-034 | Fase 5: Reparación y ampliación |
-| N-07 | US-016, US-022 | CA-028, CA-029, CA-039, CA-041 | Fase 1, Fase 3 y Fase 6: Cierre, pago y entrega |
+| N-06 | US-009, US-019 | CA-016, CA-017, CA-018, CA-034, CA-061 | Fase 5: Reparación y ampliación |
+| N-07 | US-016, US-022 | CA-028, CA-029, CA-039, CA-041, CA-064, CA-065 | Fase 1, Fase 3 y Fase 6: Cierre, pago y entrega |
 | N-08 | US-017, US-018 | CA-030, CA-031 | Consulta transversal (no es una tarea del flujo) |
-| N-09 | US-007, US-008, US-019, US-020 | CA-013, CA-014, CA-015, CA-032, CA-033, CA-035, CA-036, CA-046 | Fase 1, Fase 2 y Fase 5 |
-| N-10 | US-010, US-011 | CA-019, CA-020, CA-021, CA-022 | Fase 4: Gestión de refacciones |
-| N-11 | US-014, US-015, US-024 | CA-026, CA-027, CA-041, CA-042, CA-043 | Fase 6: Cierre, pago y entrega (y Fase 3 para la entrega sin reparación) |
+| N-09 | US-007, US-008, US-019, US-020 | CA-013, CA-014, CA-015, CA-032, CA-033, CA-035, CA-036, CA-046, CA-053, CA-054 | Fase 1, Fase 2 y Fase 5 |
+| N-10 | US-010, US-011 | CA-019, CA-020, CA-021, CA-022, CA-062 | Fase 4: Gestión de refacciones |
+| N-11 | US-014, US-015, US-024 | CA-026, CA-027, CA-041, CA-042, CA-043, CA-058 | Fase 6: Cierre, pago y entrega (y Fase 3 para la entrega sin reparación) |
 | N-12 | US-013 | CA-024, CA-025 | Diagrama 2 (Casos especiales): Retiro anticipado |
 | N-13 | US-021 | CA-037, CA-038 | Consulta transversal (no es una tarea del flujo) |
 | N-14 | US-023 | CA-040 | Fase 3: Autorización (temporizador de 48 h) |
 | N-15 | US-025 | CA-044, CA-045 | Diagrama 2 (Casos especiales): Cliente desiste antes de la cotización |
+| N-16 | US-026, US-020, US-027, US-014 | CA-047, CA-048, CA-049, CA-050, CA-051, CA-054, CA-055, CA-056, CA-057, CA-058, CA-066 | Fase 2 y Fase 3: corrección de la cotización (v3.1) |
 
 La trazabilidad completa de cada criterio hasta la regla de negocio, el componente, la ruta de la API y la prueba está en [trazabilidad/matriz-trazabilidad.md](trazabilidad/matriz-trazabilidad.md).
 

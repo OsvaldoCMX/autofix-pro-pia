@@ -20,6 +20,7 @@ from api.errores import (
 )
 from api.esquemas.comunes import ENTERO_MAXIMO, EnteroNoNegativo, ModeloDeEntrada, TextoDeNombre
 from domain.compartido.errores import ErrorDeDominio, ValorInvalido
+from tests.api.pasos import ASESOR, CAJA, COMPRAS, TECNICO
 
 MODELO_DE_DOMINIO = Path(__file__).resolve().parents[2] / "docs/architecture/modelo-de-dominio.md"
 MENSAJE_SECRETO = "postgresql://usuario:clave-secreta@servidor/base"
@@ -308,3 +309,74 @@ def test_el_caracter_nulo_en_los_parametros_responde_422(cliente: TestClient) ->
 
     assert respuesta.status_code == 422
     assert respuesta.json()["error"] == "ValorInvalido"
+
+
+# ------------------------------------------------------------------ mensajes revisados (H-PIA-28)
+def test_importe_negativo_dice_que_no_puede_ser_negativo(cliente: TestClient) -> None:
+    respuesta = cliente.post(
+        "/api/ordenes/OS-1/cotizaciones",
+        json={"trabajos": [{"numero": 1, "descripcion": "Frenos", "mano_de_obra": "-1500.00"}]},
+        headers=ASESOR,
+    )
+
+    assert respuesta.status_code == 422
+    assert respuesta.json()["detalle"] == (
+        "La mano de obra del trabajo 1 no puede ser negativa. "
+        "Escriba la cantidad en pesos, por ejemplo 1500.00."
+    )
+
+
+def test_precio_de_refaccion_negativo_dice_que_no_puede_ser_negativo(
+    cliente: TestClient,
+) -> None:
+    refaccion = {"descripcion": "Balata", "cantidad": 1, "precio_unitario": "-10.00"}
+    trabajo = {"numero": 1, "descripcion": "Frenos", "mano_de_obra": "100.00"}
+    respuesta = cliente.post(
+        "/api/ordenes/OS-1/cotizaciones",
+        json={"trabajos": [{**trabajo, "refacciones": [refaccion]}]},
+        headers=ASESOR,
+    )
+
+    assert respuesta.status_code == 422
+    assert respuesta.json()["detalle"] == (
+        "El precio unitario de la refacción 1 del trabajo 1 no puede ser negativo. "
+        "Escriba la cantidad en pesos, por ejemplo 1500.00."
+    )
+
+
+def test_monto_negativo_dice_que_no_puede_ser_negativo(cliente: TestClient) -> None:
+    respuesta = cliente.post(
+        "/api/ordenes/OS-1/pago", json={"monto": "-3000.00", "forma": "Tarjeta"}, headers=CAJA
+    )
+
+    assert respuesta.status_code == 422
+    assert respuesta.json()["detalle"] == (
+        "El monto no puede ser negativo. Escriba la cantidad en pesos, por ejemplo 1500.00."
+    )
+
+
+@pytest.mark.parametrize(
+    ("ruta", "encabezados", "nombre"),
+    [
+        ("/api/ordenes/OS-1/trabajos/abc/inicio", TECNICO, "número de trabajo"),
+        ("/api/ordenes/OS-1/solicitudes-de-compra/abc/llegada", COMPRAS, "número de solicitud"),
+    ],
+)
+def test_el_numero_de_la_direccion_se_llama_segun_la_ruta(
+    cliente: TestClient, ruta: str, encabezados: dict[str, str], nombre: str
+) -> None:
+    respuesta = cliente.post(ruta, headers=encabezados)
+
+    assert respuesta.status_code == 422
+    assert respuesta.json()["detalle"] == f"El dato «{nombre}» debe ser un número entero."
+
+
+def test_la_funcion_de_otro_puesto_lo_dice_sin_palabras_tecnicas(
+    cliente: TestClient,
+) -> None:
+    respuesta = cliente.get("/api/gerencia/ordenes", headers=TECNICO)
+
+    assert respuesta.status_code == 403
+    assert respuesta.json()["detalle"] == (
+        "Esta función es de otro puesto del taller. Pida a la persona encargada que la realice."
+    )

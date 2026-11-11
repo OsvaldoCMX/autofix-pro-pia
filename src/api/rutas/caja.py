@@ -7,10 +7,10 @@ from fastapi import APIRouter, status
 
 from api.dependencias import ContenedorDeLaApp
 from api.errores import FuncionNoImplementada
-from api.esquemas.caja import CargoRegistrado, DatosDePago, PagoRegistrado
+from api.esquemas.caja import CargoRegistrado, DatosDeFormaDePago, DatosDePago, PagoRegistrado
 from api.esquemas.comunes import errores
 from api.seguridad import SOLO_CAJA
-from application.comandos import RegistrarCargoACredito, RegistrarPago
+from application.comandos import CorregirFormaDePago, RegistrarCargoACredito, RegistrarPago
 from application.resultados import ResultadoDeCargoACredito, ResultadoDePago
 
 router = APIRouter(prefix="/api", tags=["Caja"], dependencies=[SOLO_CAJA])
@@ -28,6 +28,18 @@ def registrar_pago(
 ) -> ResultadoDePago:
     comando = RegistrarPago(numero, Decimal(datos.monto), datos.forma)
     return contenedor.caja().registrar_pago(comando)
+
+
+@router.put(
+    "/ordenes/{numero}/pago",
+    response_model=PagoRegistrado,
+    summary="Corregir la forma de pago mientras la orden está «Pagada»",
+    responses=errores(400, 401, 403, 404, 409, 422),
+)
+def corregir_forma_de_pago(
+    numero: str, datos: DatosDeFormaDePago, contenedor: ContenedorDeLaApp
+) -> ResultadoDePago:
+    return contenedor.caja().corregir_forma_de_pago(CorregirFormaDePago(numero, datos.forma))
 
 
 @router.get(

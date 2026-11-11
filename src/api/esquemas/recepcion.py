@@ -16,6 +16,7 @@ from api.esquemas.comunes import (
     TextoDeNombre,
     TextoDeTelefono,
     TextoDeVin,
+    TextoLargo,
 )
 from api.esquemas.cotizaciones import CotizacionDetallada
 from application.comandos import DatosDeVehiculo, RegistrarCliente, RegistrarOrden
@@ -37,6 +38,28 @@ class NuevoCliente(ModeloDeEntrada):
         return RegistrarCliente(**self.model_dump())
 
 
+class DatosDeContacto(ModeloDeEntrada):
+    """Corrección de los datos del cliente (CA-055)."""
+
+    nombre: TextoDeNombre
+    telefono: TextoDeTelefono | None = None
+    correo: TextoDeNombre | None = None
+
+
+class DatosDeRecepcion(ModeloDeEntrada):
+    """Corrección del estado de recepción (CA-057)."""
+
+    kilometraje: EnteroNoNegativo
+    nivel_de_combustible: NivelDeCombustible
+    motivo_de_ingreso: TextoLargo
+
+
+class DatosDePlacas(ModeloDeEntrada):
+    """Corrección de las placas (CA-066); el dominio las normaliza y valida."""
+
+    placas: str
+
+
 class NuevoVehiculo(ModeloDeEntrada):
     vin: TextoDeVin
     marca: TextoDeMarca
@@ -51,7 +74,7 @@ class NuevaOrden(ModeloDeEntrada):
     """Con placas nuevas, `vehiculo` es obligatorio y el cliente se da por id o por sus datos."""
 
     placas: str
-    motivo_de_ingreso: str
+    motivo_de_ingreso: TextoLargo
     kilometraje: EnteroNoNegativo
     nivel_de_combustible: NivelDeCombustible
     vehiculo: NuevoVehiculo | None = None
@@ -79,6 +102,36 @@ class ClienteRegistrado(ModeloDeSalida):
     responsable_nombre: str | None
 
 
+class ClienteCorregido(ModeloDeSalida):
+    id_cliente: str
+    nombre: str
+    tipo: str
+    telefono: str | None
+    correo: str | None
+
+
+class RecepcionCorregida(ModeloDeSalida):
+    numero_orden: str
+    estado: str
+    kilometraje: int
+    nivel_de_combustible: str
+    motivo_de_ingreso: str
+
+
+class PlacasCorregidas(ModeloDeSalida):
+    numero_orden: str
+    estado: str
+    placas: str
+
+
+class VehiculoCorregido(ModeloDeSalida):
+    placas: str
+    vin: str
+    marca: str
+    modelo: str
+    anio: int
+
+
 class OrdenRegistrada(ModeloDeSalida):
     numero_orden: str
     estado: str
@@ -100,13 +153,21 @@ class ClienteEncontrado(ModeloDeSalida):
     responsable_correo: str | None
 
 
+class OrdenAbierta(ModeloDeSalida):
+    numero_orden: str
+    estado: str
+
+
 class VehiculoEncontrado(ModeloDeSalida):
+    """`orden_abierta` es `null` si el vehículo no tiene una orden abierta (A-01)."""
+
     placas: str
     vin: str
     marca: str
     modelo: str
     anio: int
     cliente: ClienteEncontrado
+    orden_abierta: OrdenAbierta | None
 
 
 class TrabajoDeOrden(ModeloDeSalida):
@@ -115,6 +176,10 @@ class TrabajoDeOrden(ModeloDeSalida):
     importe: str
     estado: str
     tecnico: str | None
+
+
+class TrabajoDelExpediente(TrabajoDeOrden):
+    tecnico_nombre: str | None
 
 
 class SolicitudDeOrden(ModeloDeSalida):
@@ -162,6 +227,14 @@ class ExpedienteDeOrden(ModeloDeSalida):
     fecha_entrega: datetime | None
     cancelacion_motivo: str | None
     cotizaciones: list[CotizacionDetallada]
-    trabajos: list[TrabajoDeOrden]
+    trabajos: list[TrabajoDelExpediente]
     solicitudes: list[SolicitudDeOrden]
     fallas_adicionales: list[FallaDeOrden]
+    cliente_nombre: str | None
+    cliente_tipo: str | None
+    empresa: str | None
+    responsable_nombre: str | None
+    vehiculo_marca: str | None
+    vehiculo_modelo: str | None
+    vehiculo_anio: int | None
+    tecnico_de_diagnostico_nombre: str | None

@@ -9,15 +9,29 @@ from api.dependencias import ContenedorDeLaApp
 from api.errores import FuncionNoImplementada
 from api.esquemas.comunes import errores
 from api.esquemas.recepcion import (
+    ClienteCorregido,
     ClienteEncontrado,
     ClienteRegistrado,
+    DatosDeContacto,
+    DatosDePlacas,
+    DatosDeRecepcion,
     ExpedienteDeOrden,
     NuevaOrden,
     NuevoCliente,
+    NuevoVehiculo,
     OrdenRegistrada,
+    PlacasCorregidas,
+    RecepcionCorregida,
+    VehiculoCorregido,
     VehiculoEncontrado,
 )
 from api.seguridad import SOLO_ASESOR, Asesor, requiere_rol
+from application.comandos import (
+    CorregirCliente,
+    CorregirPlacas,
+    CorregirRecepcion,
+    CorregirVehiculo,
+)
 from application.consultas.consultas import (
     BuscarClientes,
     BuscarVehiculoPorPlacas,
@@ -28,7 +42,12 @@ from application.consultas.vistas import (
     ExpedienteDeOrdenVista,
     VehiculoConClienteVista,
 )
-from application.resultados import ResultadoDeCliente
+from application.resultados import (
+    ResultadoDeCliente,
+    ResultadoDeOrden,
+    ResultadoDeRecepcion,
+    ResultadoDeVehiculo,
+)
 from domain.clientes.cliente import TipoCliente
 from domain.empleados.empleado import RolDeEmpleado
 
@@ -52,6 +71,20 @@ def buscar_vehiculo(placas: str, contenedor: ContenedorDeLaApp) -> VehiculoConCl
     return contenedor.buscar_vehiculo_por_placas().ejecutar(BuscarVehiculoPorPlacas(placas))
 
 
+@router.put(
+    "/vehiculos/{placas}",
+    response_model=VehiculoCorregido,
+    summary="Corregir el VIN, la marca, el modelo o el año del vehículo",
+    dependencies=[SOLO_ASESOR],
+    responses=errores(400, 401, 403, 404, 422),
+)
+def corregir_vehiculo(
+    placas: str, datos: NuevoVehiculo, contenedor: ContenedorDeLaApp
+) -> ResultadoDeVehiculo:
+    comando = CorregirVehiculo(placas, datos.vin, datos.marca, datos.modelo, datos.anio)
+    return contenedor.recepcion().corregir_vehiculo(comando)
+
+
 @router.get(
     "/clientes",
     response_model=list[ClienteEncontrado],
@@ -71,17 +104,31 @@ def buscar_clientes(
     status_code=status.HTTP_201_CREATED,
     summary="Registrar cliente particular o de flotilla",
     dependencies=[SOLO_ASESOR],
-    responses=errores(400, 401, 403, 422),
+    responses=errores(400, 401, 403, 409, 422),
 )
 def registrar_cliente(datos: NuevoCliente, contenedor: ContenedorDeLaApp) -> ResultadoDeCliente:
     return contenedor.recepcion().registrar_cliente(datos.a_comando())
+
+
+@router.put(
+    "/clientes/{id}",
+    response_model=ClienteCorregido,
+    summary="Corregir el nombre, el teléfono o el correo del cliente",
+    dependencies=[SOLO_ASESOR],
+    responses=errores(400, 401, 403, 404, 422),
+)
+def corregir_cliente(
+    id: str, datos: DatosDeContacto, contenedor: ContenedorDeLaApp
+) -> ResultadoDeCliente:
+    comando = CorregirCliente(id, datos.nombre, datos.telefono, datos.correo)
+    return contenedor.recepcion().corregir_cliente(comando)
 
 
 @router.post(
     "/ordenes",
     status_code=status.HTTP_201_CREATED,
     summary="Registrar la orden de servicio",
-    responses=errores(400, 401, 403, 404, 422),
+    responses=errores(400, 401, 403, 404, 409, 422),
 )
 def registrar_orden(
     datos: NuevaOrden, asesor: Asesor, contenedor: ContenedorDeLaApp
@@ -113,3 +160,33 @@ def adjuntar_foto(numero: str, archivo: UploadFile) -> None:
 )
 def consultar_expediente(numero: str, contenedor: ContenedorDeLaApp) -> ExpedienteDeOrdenVista:
     return contenedor.consultar_expediente().ejecutar(ConsultarExpedienteDeOrden(numero))
+
+
+@router.put(
+    "/ordenes/{numero}/recepcion",
+    response_model=RecepcionCorregida,
+    summary="Corregir el kilometraje, el combustible o el motivo de ingreso",
+    dependencies=[SOLO_ASESOR],
+    responses=errores(400, 401, 403, 404, 409, 422),
+)
+def corregir_recepcion(
+    numero: str, datos: DatosDeRecepcion, contenedor: ContenedorDeLaApp
+) -> ResultadoDeRecepcion:
+    comando = CorregirRecepcion(
+        numero, datos.kilometraje, datos.nivel_de_combustible, datos.motivo_de_ingreso
+    )
+    return contenedor.recepcion().corregir_recepcion(comando)
+
+
+@router.put(
+    "/ordenes/{numero}/placas",
+    response_model=PlacasCorregidas,
+    summary="Corregir las placas mal capturadas",
+    dependencies=[SOLO_ASESOR],
+    responses=errores(400, 401, 403, 404, 409, 422),
+)
+def corregir_placas(
+    numero: str, datos: DatosDePlacas, contenedor: ContenedorDeLaApp
+) -> ResultadoDeOrden:
+    return contenedor.recepcion().corregir_placas(CorregirPlacas(numero, datos.placas))
+

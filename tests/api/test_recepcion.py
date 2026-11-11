@@ -4,6 +4,7 @@ from __future__ import annotations
 import pytest
 from fastapi.testclient import TestClient
 
+from domain.servicios.verificador_de_orden_unica import VerificadorDeOrdenUnica
 from tests.api.pasos import (
     ASESOR,
     CAJA,
@@ -16,6 +17,7 @@ from tests.api.pasos import (
     datos_de_orden,
     decision,
     exigir,
+    expediente_de,
     recibida,
 )
 
@@ -80,10 +82,44 @@ def test_ca_003_encuentra_cliente_recurrente_por_placas(cliente: TestClient) -> 
     assert vehiculo["cliente"]["correo"] == CLIENTE_PARTICULAR["correo"]
 
 
+def test_ca_003_busqueda_por_placas_trae_la_orden_abierta(cliente: TestClient) -> None:
+    datos = datos_de_orden()
+    orden = exigir(cliente.post("/api/ordenes", json=datos, headers=ASESOR), 201)
+
+    vehiculo = exigir(cliente.get(f"/api/vehiculos/{datos['placas']}", headers=ASESOR), 200)
+
+    assert vehiculo["orden_abierta"] == {"numero_orden": orden["numero_orden"], "estado": "Recibida"}
+
+
+def test_ca_003_busqueda_por_placas_sin_orden_abierta(cliente: TestClient) -> None:
+    datos = datos_de_orden()
+    orden = exigir(cliente.post("/api/ordenes", json=datos, headers=ASESOR), 201)
+    exigir(
+        cliente.post(
+            f"/api/ordenes/{orden['numero_orden']}/cancelacion",
+            json={"motivo": "El cliente desiste"},
+            headers=ASESOR,
+        ),
+        200,
+    )
+
+    vehiculo = exigir(cliente.get(f"/api/vehiculos/{datos['placas']}", headers=ASESOR), 200)
+
+    assert vehiculo["orden_abierta"] is None
+
+
 def test_ca_003_orden_con_placas_existentes_reutiliza_y_actualiza(cliente: TestClient) -> None:
     datos = datos_de_orden()
     primera = exigir(cliente.post("/api/ordenes", json=datos, headers=ASESOR), 201)
-    actualizado = {**datos["cliente"], "telefono": "81-9999"}
+    # Cliente recurrente: su visita anterior ya terminó (RN-27).
+    cancelacion = {"motivo": "Visita anterior"}
+    exigir(
+        cliente.post(
+            f"/api/ordenes/{primera['numero_orden']}/cancelacion", json=cancelacion, headers=ASESOR
+        ),
+        200,
+    )
+    actualizado = {**datos["cliente"], "telefono": "81-9999-0000"}
 
     segunda = exigir(
         cliente.post(
@@ -97,7 +133,7 @@ def test_ca_003_orden_con_placas_existentes_reutiliza_y_actualiza(cliente: TestC
     assert segunda["id_cliente"] == primera["id_cliente"]
     assert segunda["numero_orden"] != primera["numero_orden"]
     vehiculo = exigir(cliente.get(f"/api/vehiculos/{datos['placas']}", headers=ASESOR), 200)
-    assert vehiculo["cliente"]["telefono"] == "81-9999"
+    assert vehiculo["cliente"]["telefono"] == "81-9999-0000"
 
 
 def test_ca_004_placas_no_registradas_responde_404_y_permite_crear_desde_cero(
@@ -137,7 +173,7 @@ def test_ca_028_registra_flotilla_con_responsable_y_la_encuentra_por_empresa(
 
     assert registrado["responsable_nombre"] == "Ana Torres"
     assert [c["id_cliente"] for c in encontrados] == [registrado["id_cliente"]]
-    assert encontrados[0]["responsable_telefono"] == "81-1111"
+    assert encontrados[0]["responsable_telefono"] == "81-1111-0000"
     assert encontrados[0]["responsable_correo"] == "ana@norte.test"
 
 
@@ -271,3 +307,252 @@ def test_roles_que_leen_el_expediente(
     numero = recibida(cliente)
 
     assert cliente.get(f"/api/ordenes/{numero}", headers=encabezados).status_code == 200
+
+
+def test_ca_052_no_abre_segunda_orden_del_mismo_vehiculo(cliente: TestClient) -> None:
+    datos = datos_de_orden()
+    primera = exigir(cliente.post("/api/ordenes", json=datos, headers=ASESOR), 201)
+
+    segunda = exigir(cliente.post("/api/ordenes", json=datos, headers=ASESOR), 409)
+
+    assert segunda["error"] == "VehiculoConOrdenAbierta"
+    assert segunda["detalle"] == (
+        f"El vehículo con placas {primera['placas']} ya tiene abierta la orden "
+        f"{primera['numero_orden']} (estado «Recibida»). Ábrala en lugar de registrar otra."
+    )
+
+
+def test_rn_27_si_la_base_rechaza_la_segunda_orden_responde_el_mismo_409(
+    cliente: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Dos clics al mismo tiempo: los dos pasan la revisión y la base rechaza el segundo."""
+    datos = datos_de_orden()
+    primera = exigir(cliente.post("/api/ordenes", json=datos, headers=ASESOR), 201)
+    monkeypatch.setattr(VerificadorDeOrdenUnica, "verificar", lambda *_: None)
+
+    segunda = exigir(cliente.post("/api/ordenes", json=datos, headers=ASESOR), 409)
+
+    assert segunda["error"] == "VehiculoConOrdenAbierta"
+    assert primera["numero_orden"] in segunda["detalle"]
+    assert "Ábrala en lugar de registrar otra." in segunda["detalle"]
+
+
+# ------------------------------------------------------------------ correcciones (H-PIA-24)
+def test_ca_055_corrige_el_cliente_y_la_decision_usa_el_nombre_nuevo(cliente: TestClient) -> None:
+    numero, id_cotizacion = cotizada(cliente)
+    id_cliente = expediente_de(cliente, numero)["id_cliente"]
+    contacto = {"nombre": "Luis Peña Ruiz", "telefono": "81 1234 5678", "correo": "l@correo.test"}
+
+    corregido = exigir(cliente.put(f"/api/clientes/{id_cliente}", json=contacto, headers=ASESOR), 200)
+    autorizacion = {**decision([1, 2]), "nombre_del_autorizante": "Luis Peña Ruiz"}
+
+    assert corregido == {"id_cliente": id_cliente, "tipo": "Particular", **contacto}
+    exigir(
+        cliente.post(
+            f"/api/cotizaciones/{id_cotizacion}/decision", json=autorizacion, headers=ASESOR
+        ),
+        200,
+    )
+
+
+def test_ca_055_cliente_inexistente_responde_404(cliente: TestClient) -> None:
+    respuesta = cliente.put("/api/clientes/CLI-9999", json={"nombre": "Nadie"}, headers=ASESOR)
+
+    assert respuesta.status_code == 404
+
+
+def test_ca_056_corrige_el_vehiculo_por_sus_placas(cliente: TestClient) -> None:
+    datos = datos_de_orden()
+    exigir(cliente.post("/api/ordenes", json=datos, headers=ASESOR), 201)
+    correccion = {"vin": "5YJSA1E26HF000001", "marca": "Nissan", "modelo": "Sentra", "anio": 2021}
+
+    respuesta = exigir(
+        cliente.put(f"/api/vehiculos/{datos['placas']}", json=correccion, headers=ASESOR), 200
+    )
+
+    assert respuesta == {"placas": datos["placas"], **correccion}
+
+
+def test_ca_056_vin_de_otro_vehiculo_responde_422(cliente: TestClient) -> None:
+    primero, segundo = datos_de_orden(), datos_de_orden()
+    for datos in (primero, segundo):
+        exigir(cliente.post("/api/ordenes", json=datos, headers=ASESOR), 201)
+
+    respuesta = exigir(
+        cliente.put(
+            f"/api/vehiculos/{segundo['placas']}", json=primero["vehiculo"], headers=ASESOR
+        ),
+        422,
+    )
+
+    assert "Ya existe un vehículo con el VIN" in respuesta["detalle"]
+
+
+def test_ca_057_corrige_la_recepcion_de_una_orden_recibida(cliente: TestClient) -> None:
+    numero = recibida(cliente)
+    datos = {"kilometraje": 46000, "nivel_de_combustible": "Lleno", "motivo_de_ingreso": "Frenos"}
+
+    respuesta = exigir(
+        cliente.put(f"/api/ordenes/{numero}/recepcion", json=datos, headers=ASESOR), 200
+    )
+
+    assert respuesta == {"numero_orden": numero, "estado": "Recibida", **datos}
+    expediente = expediente_de(cliente, numero)
+    assert (expediente["kilometraje"], expediente["motivo_de_ingreso"]) == (46000, "Frenos")
+
+
+def test_ca_057_despues_de_cotizar_responde_409(cliente: TestClient) -> None:
+    numero, _ = cotizada(cliente)
+    datos = {"kilometraje": 1, "nivel_de_combustible": "Lleno", "motivo_de_ingreso": "Frenos"}
+
+    respuesta = exigir(
+        cliente.put(f"/api/ordenes/{numero}/recepcion", json=datos, headers=ASESOR), 409
+    )
+
+    assert respuesta["error"] == "CorreccionNoPermitida"
+
+
+# ------------------------------------------------------------------ datos de captura (H-PIA-25)
+def test_ca_059_telefono_con_letras_responde_422(cliente: TestClient) -> None:
+    datos = datos_de_orden(cliente={**CLIENTE_PARTICULAR, "telefono": "abc"})
+
+    respuesta = exigir(cliente.post("/api/ordenes", json=datos, headers=ASESOR), 422)
+
+    assert respuesta["detalle"] == (
+        "El teléfono solo puede llevar números. Escriba los 10 dígitos, sin letras."
+    )
+
+
+def test_ca_059_telefono_sin_10_digitos_responde_422(cliente: TestClient) -> None:
+    datos = datos_de_orden(cliente={**CLIENTE_PARTICULAR, "telefono": "81 1234 567"})
+
+    respuesta = exigir(cliente.post("/api/ordenes", json=datos, headers=ASESOR), 422)
+
+    assert respuesta["detalle"] == "El teléfono debe tener 10 dígitos; usted escribió 9."
+
+
+def test_ca_059_correo_sin_forma_valida_responde_422(cliente: TestClient) -> None:
+    datos = datos_de_orden(cliente={**CLIENTE_PARTICULAR, "correo": "hola"})
+
+    respuesta = exigir(cliente.post("/api/ordenes", json=datos, headers=ASESOR), 422)
+
+    assert "nombre@dominio.com" in respuesta["detalle"]
+
+
+def test_ca_059_telefono_del_responsable_de_flotilla(cliente: TestClient) -> None:
+    cuerpo = {**CLIENTE_DE_FLOTILLA, "empresa": "Otra Empresa", "responsable_telefono": "81-1"}
+
+    respuesta = exigir(cliente.post("/api/clientes", json=cuerpo, headers=ASESOR), 422)
+
+    assert respuesta["detalle"].startswith("El teléfono del Responsable de Flotilla")
+
+
+def test_ca_059_anio_mayor_al_siguiente_responde_422(cliente: TestClient) -> None:
+    datos = datos_de_orden()
+    datos["vehiculo"] = {**datos["vehiculo"], "anio": 2099}
+
+    respuesta = exigir(cliente.post("/api/ordenes", json=datos, headers=ASESOR), 422)
+
+    assert respuesta["detalle"] == (
+        "El año del vehículo no puede ser mayor a 2027. Revise el dato capturado."
+    )
+
+
+def test_ca_059_kilometraje_mayor_a_2_millones_responde_422(cliente: TestClient) -> None:
+    datos = datos_de_orden(kilometraje=2_000_000_000)
+
+    respuesta = exigir(cliente.post("/api/ordenes", json=datos, headers=ASESOR), 422)
+
+    assert "2,000,000 km" in respuesta["detalle"]
+
+
+def test_ca_059_texto_de_mas_de_1000_caracteres_responde_422(cliente: TestClient) -> None:
+    datos = datos_de_orden(motivo_de_ingreso="x" * 1001)
+
+    respuesta = exigir(cliente.post("/api/ordenes", json=datos, headers=ASESOR), 422)
+
+    assert respuesta["detalle"] == (
+        "El dato «motivo de ingreso» no puede tener más de 1000 caracteres."
+    )
+
+
+# ------------------------------------------------------------------ flotilla (H-PIA-27)
+def test_ca_064_flotilla_con_rol_de_cliente_dice_el_responsable(cliente: TestClient) -> None:
+    _, id_cotizacion = cotizada(cliente, flotilla=True)
+    cuerpo = {**decision([1, 2], flotilla=True), "rol_del_autorizante": "Cliente"}
+
+    respuesta = exigir(
+        cliente.post(f"/api/cotizaciones/{id_cotizacion}/decision", json=cuerpo, headers=ASESOR),
+        409,
+    )
+
+    assert respuesta["detalle"] == (
+        "Para la flotilla de Transportes Norte, registre la decisión a nombre de su Responsable "
+        "de Flotilla, Ana Torres, con el rol «Responsable de Flotilla»."
+    )
+
+
+# ------------------------------------------------------------------ empresa ya registrada (H-PIA-28)
+def test_ca_065_empresa_con_otro_responsable_responde_409(cliente: TestClient) -> None:
+    exigir(cliente.post("/api/clientes", json=CLIENTE_DE_FLOTILLA, headers=ASESOR), 201)
+    otro = {**CLIENTE_DE_FLOTILLA, "responsable_nombre": "Ana Torres Ruiz"}
+
+    respuesta = exigir(cliente.post("/api/clientes", json=otro, headers=ASESOR), 409)
+
+    assert respuesta["error"] == "EmpresaYaRegistrada"
+    assert respuesta["detalle"] == (
+        "La empresa «Transportes Norte» ya está registrada con su Responsable de Flotilla "
+        f"Ana Torres (teléfono {CLIENTE_DE_FLOTILLA['responsable_telefono']}). Use ese registro."
+    )
+
+
+def test_ca_065_con_los_mismos_datos_devuelve_la_empresa_registrada(cliente: TestClient) -> None:
+    primera = exigir(cliente.post("/api/clientes", json=CLIENTE_DE_FLOTILLA, headers=ASESOR), 201)
+    igual = {**CLIENTE_DE_FLOTILLA, "responsable_nombre": "  ana   TORRES "}
+
+    segunda = exigir(cliente.post("/api/clientes", json=igual, headers=ASESOR), 201)
+
+    assert segunda["id_cliente"] == primera["id_cliente"]
+
+
+# ------------------------------------------------------------------ corrección de placas (H-PIA-29)
+def test_ca_066_corrige_las_placas_y_el_cliente_consulta_con_las_nuevas(
+    cliente: TestClient,
+) -> None:
+    numero = recibida(cliente)
+
+    respuesta = exigir(
+        cliente.put(f"/api/ordenes/{numero}/placas", json={"placas": "xyz-998"}, headers=ASESOR),
+        200,
+    )
+
+    assert respuesta == {"numero_orden": numero, "estado": "Recibida", "placas": "XYZ998"}
+    consulta = cliente.get("/api/consulta-de-estado", params={"orden": numero, "placas": "XYZ998"})
+    assert consulta.status_code == 200
+    assert exigir(cliente.get("/api/vehiculos/XYZ998", headers=ASESOR), 200)["placas"] == "XYZ998"
+
+
+def test_ca_066_despues_de_cotizar_responde_409(cliente: TestClient) -> None:
+    numero, _ = cotizada(cliente)
+
+    respuesta = exigir(
+        cliente.put(f"/api/ordenes/{numero}/placas", json={"placas": "XYZ998"}, headers=ASESOR),
+        409,
+    )
+
+    assert respuesta["error"] == "CorreccionNoPermitida"
+
+
+def test_ca_066_placas_de_otro_vehiculo_responde_409(cliente: TestClient) -> None:
+    numero = recibida(cliente)
+    otra = datos_de_orden()
+    exigir(cliente.post("/api/ordenes", json=otra, headers=ASESOR), 201)
+
+    respuesta = exigir(
+        cliente.put(
+            f"/api/ordenes/{numero}/placas", json={"placas": otra["placas"]}, headers=ASESOR
+        ),
+        409,
+    )
+
+    assert "ya pertenecen a otro vehículo" in respuesta["detalle"]

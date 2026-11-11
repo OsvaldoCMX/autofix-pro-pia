@@ -27,6 +27,52 @@
         }
       }
     },
+    "/api/sesion": {
+      "get": {
+        "tags": [
+          "Sesión"
+        ],
+        "summary": "Nombre y puesto del empleado de la clave de acceso",
+        "operationId": "consultar_sesion_api_sesion_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SesionDelEmpleado"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Falta el token o no es válido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o trabajo de otro técnico.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "TokenDeEmpleado": []
+          }
+        ]
+      }
+    },
     "/api/revisiones/plazos": {
       "post": {
         "tags": [
@@ -103,6 +149,101 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/VehiculoEncontrado"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Falta el token o no es válido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o trabajo de otro técnico.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Un dato es inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Recepción"
+        ],
+        "summary": "Corregir el VIN, la marca, el modelo o el año del vehículo",
+        "operationId": "corregir_vehiculo_api_vehiculos__placas__put",
+        "security": [
+          {
+            "TokenDeEmpleado": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "placas",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Placas"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NuevoVehiculo"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VehiculoCorregido"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "JSON mal formado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
                 }
               }
             }
@@ -305,6 +446,113 @@
               }
             }
           },
+          "409": {
+            "description": "Viola una regla o transición del negocio.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Un dato es inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/clientes/{id}": {
+      "put": {
+        "tags": [
+          "Recepción"
+        ],
+        "summary": "Corregir el nombre, el teléfono o el correo del cliente",
+        "operationId": "corregir_cliente_api_clientes__id__put",
+        "security": [
+          {
+            "TokenDeEmpleado": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DatosDeContacto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClienteCorregido"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "JSON mal formado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Falta el token o no es válido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o trabajo de otro técnico.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Un dato es inválido.",
             "content": {
@@ -378,6 +626,16 @@
           },
           "404": {
             "description": "No existe.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Viola una regla o transición del negocio.",
             "content": {
               "application/json": {
                 "schema": {
@@ -555,6 +813,220 @@
           },
           "404": {
             "description": "No existe.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Un dato es inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ordenes/{numero}/recepcion": {
+      "put": {
+        "tags": [
+          "Recepción"
+        ],
+        "summary": "Corregir el kilometraje, el combustible o el motivo de ingreso",
+        "operationId": "corregir_recepcion_api_ordenes__numero__recepcion_put",
+        "security": [
+          {
+            "TokenDeEmpleado": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "numero",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Numero"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DatosDeRecepcion"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecepcionCorregida"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "JSON mal formado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Falta el token o no es válido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o trabajo de otro técnico.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Viola una regla o transición del negocio.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Un dato es inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ordenes/{numero}/placas": {
+      "put": {
+        "tags": [
+          "Recepción"
+        ],
+        "summary": "Corregir las placas mal capturadas",
+        "operationId": "corregir_placas_api_ordenes__numero__placas_put",
+        "security": [
+          {
+            "TokenDeEmpleado": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "numero",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Numero"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DatosDePlacas"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlacasCorregidas"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "JSON mal formado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Falta el token o no es válido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o trabajo de otro técnico.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Viola una regla o transición del negocio.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1002,6 +1474,56 @@
             }
           }
         }
+      }
+    },
+    "/api/tecnicos": {
+      "get": {
+        "tags": [
+          "Diagnóstico"
+        ],
+        "summary": "Técnicos del taller (clave y nombre) para asignarlos",
+        "operationId": "listar_tecnicos_api_tecnicos_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TecnicoDelTaller"
+                  },
+                  "type": "array",
+                  "title": "Response Listar Tecnicos Api Tecnicos Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Falta el token o no es válido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o trabajo de otro técnico.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "TokenDeEmpleado": []
+          }
+        ]
       }
     },
     "/api/tecnicos/me/panel": {
@@ -1659,6 +2181,113 @@
         },
         "responses": {
           "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CotizacionRegistrada"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "JSON mal formado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Falta el token o no es válido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o trabajo de otro técnico.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Viola una regla o transición del negocio.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Un dato es inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/cotizaciones/{id}/correcciones": {
+      "post": {
+        "tags": [
+          "Cotización"
+        ],
+        "summary": "Corregir una cotización que espera al Gerente o al cliente",
+        "operationId": "corregir_api_cotizaciones__id__correcciones_post",
+        "security": [
+          {
+            "TokenDeEmpleado": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DatosDeCorreccion"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
             "description": "Successful Response",
             "content": {
               "application/json": {
@@ -3092,6 +3721,111 @@
             }
           }
         }
+      },
+      "put": {
+        "tags": [
+          "Caja"
+        ],
+        "summary": "Corregir la forma de pago mientras la orden está «Pagada»",
+        "operationId": "corregir_forma_de_pago_api_ordenes__numero__pago_put",
+        "security": [
+          {
+            "TokenDeEmpleado": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "numero",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Numero"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DatosDeFormaDePago"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagoRegistrado"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "JSON mal formado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Falta el token o no es válido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Rol no permitido o trabajo de otro técnico.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No existe.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Viola una regla o transición del negocio.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Un dato es inválido.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaDeError"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/ordenes/{numero}/recibo/pdf": {
@@ -3824,6 +4558,53 @@
         ],
         "title": "CargoRegistrado"
       },
+      "ClienteCorregido": {
+        "properties": {
+          "id_cliente": {
+            "type": "string",
+            "title": "Id Cliente"
+          },
+          "nombre": {
+            "type": "string",
+            "title": "Nombre"
+          },
+          "tipo": {
+            "type": "string",
+            "title": "Tipo"
+          },
+          "telefono": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Telefono"
+          },
+          "correo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Correo"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id_cliente",
+          "nombre",
+          "tipo",
+          "telefono",
+          "correo"
+        ],
+        "title": "ClienteCorregido"
+      },
       "ClienteEncontrado": {
         "properties": {
           "id_cliente": {
@@ -3966,6 +4747,76 @@
         ],
         "title": "ClienteRegistrado"
       },
+      "CorreccionDeCotizacion": {
+        "properties": {
+          "asesor": {
+            "type": "string",
+            "title": "Asesor"
+          },
+          "registrada_en": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Registrada En"
+          },
+          "motivo": {
+            "type": "string",
+            "title": "Motivo"
+          },
+          "total_anterior": {
+            "type": "string",
+            "title": "Total Anterior"
+          },
+          "total_nuevo": {
+            "type": "string",
+            "title": "Total Nuevo"
+          },
+          "estado_anterior": {
+            "type": "string",
+            "title": "Estado Anterior"
+          },
+          "estado_nuevo": {
+            "type": "string",
+            "title": "Estado Nuevo"
+          },
+          "fecha_presentacion_anterior": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fecha Presentacion Anterior"
+          },
+          "fecha_aprobacion_gerencial_anterior": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fecha Aprobacion Gerencial Anterior"
+          }
+        },
+        "type": "object",
+        "required": [
+          "asesor",
+          "registrada_en",
+          "motivo",
+          "total_anterior",
+          "total_nuevo",
+          "estado_anterior",
+          "estado_nuevo",
+          "fecha_presentacion_anterior",
+          "fecha_aprobacion_gerencial_anterior"
+        ],
+        "title": "CorreccionDeCotizacion"
+      },
       "CotizacionDetallada": {
         "properties": {
           "id": {
@@ -4061,6 +4912,13 @@
             },
             "type": "array",
             "title": "Lineas"
+          },
+          "correcciones": {
+            "items": {
+              "$ref": "#/components/schemas/CorreccionDeCotizacion"
+            },
+            "type": "array",
+            "title": "Correcciones"
           }
         },
         "type": "object",
@@ -4077,7 +4935,8 @@
           "fecha_presentacion",
           "autorizante",
           "fecha_decision",
-          "lineas"
+          "lineas",
+          "correcciones"
         ],
         "title": "CotizacionDetallada"
       },
@@ -4176,6 +5035,7 @@
         "properties": {
           "motivo": {
             "type": "string",
+            "maxLength": 1000,
             "title": "Motivo"
           }
         },
@@ -4185,6 +5045,70 @@
           "motivo"
         ],
         "title": "DatosDeCancelacion"
+      },
+      "DatosDeContacto": {
+        "properties": {
+          "nombre": {
+            "type": "string",
+            "maxLength": 120,
+            "title": "Nombre"
+          },
+          "telefono": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 20
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Telefono"
+          },
+          "correo": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 120
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Correo"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "nombre"
+        ],
+        "title": "DatosDeContacto",
+        "description": "Corrección de los datos del cliente (CA-055)."
+      },
+      "DatosDeCorreccion": {
+        "properties": {
+          "trabajos": {
+            "items": {
+              "$ref": "#/components/schemas/NuevoTrabajo"
+            },
+            "type": "array",
+            "title": "Trabajos"
+          },
+          "motivo": {
+            "type": "string",
+            "maxLength": 1000,
+            "title": "Motivo"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "trabajos",
+          "motivo"
+        ],
+        "title": "DatosDeCorreccion",
+        "description": "Los trabajos correctos y el motivo; el asesor sale de su clave de acceso (H-PIA-21)."
       },
       "DatosDeCotizacion": {
         "properties": {
@@ -4237,18 +5161,20 @@
         "properties": {
           "fallas": {
             "type": "string",
+            "maxLength": 1000,
             "title": "Fallas"
           },
           "recomendaciones": {
             "type": "string",
-            "title": "Recomendaciones"
+            "maxLength": 1000,
+            "title": "Recomendaciones",
+            "default": ""
           }
         },
         "additionalProperties": false,
         "type": "object",
         "required": [
-          "fallas",
-          "recomendaciones"
+          "fallas"
         ],
         "title": "DatosDeDiagnostico"
       },
@@ -4256,6 +5182,7 @@
         "properties": {
           "descripcion": {
             "type": "string",
+            "maxLength": 1000,
             "title": "Descripcion"
           }
         },
@@ -4265,6 +5192,19 @@
           "descripcion"
         ],
         "title": "DatosDeFallaAdicional"
+      },
+      "DatosDeFormaDePago": {
+        "properties": {
+          "forma": {
+            "$ref": "#/components/schemas/FormaDePago"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "forma"
+        ],
+        "title": "DatosDeFormaDePago"
       },
       "DatosDePago": {
         "properties": {
@@ -4289,6 +5229,48 @@
         ],
         "title": "DatosDePago"
       },
+      "DatosDePlacas": {
+        "properties": {
+          "placas": {
+            "type": "string",
+            "title": "Placas"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "placas"
+        ],
+        "title": "DatosDePlacas",
+        "description": "Corrección de las placas (CA-066); el dominio las normaliza y valida."
+      },
+      "DatosDeRecepcion": {
+        "properties": {
+          "kilometraje": {
+            "type": "integer",
+            "maximum": 2147483647.0,
+            "minimum": 0.0,
+            "title": "Kilometraje"
+          },
+          "nivel_de_combustible": {
+            "$ref": "#/components/schemas/NivelDeCombustible"
+          },
+          "motivo_de_ingreso": {
+            "type": "string",
+            "maxLength": 1000,
+            "title": "Motivo De Ingreso"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "kilometraje",
+          "nivel_de_combustible",
+          "motivo_de_ingreso"
+        ],
+        "title": "DatosDeRecepcion",
+        "description": "Corrección del estado de recepción (CA-057)."
+      },
       "DatosDeRevision": {
         "properties": {
           "aprobada": {
@@ -4297,6 +5279,7 @@
           },
           "observaciones": {
             "type": "string",
+            "maxLength": 1000,
             "title": "Observaciones",
             "default": ""
           }
@@ -4686,7 +5669,7 @@
           },
           "trabajos": {
             "items": {
-              "$ref": "#/components/schemas/TrabajoDeOrden"
+              "$ref": "#/components/schemas/TrabajoDelExpediente"
             },
             "type": "array",
             "title": "Trabajos"
@@ -4704,6 +5687,94 @@
             },
             "type": "array",
             "title": "Fallas Adicionales"
+          },
+          "cliente_nombre": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cliente Nombre"
+          },
+          "cliente_tipo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cliente Tipo"
+          },
+          "empresa": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Empresa"
+          },
+          "responsable_nombre": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Responsable Nombre"
+          },
+          "vehiculo_marca": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vehiculo Marca"
+          },
+          "vehiculo_modelo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vehiculo Modelo"
+          },
+          "vehiculo_anio": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vehiculo Anio"
+          },
+          "tecnico_de_diagnostico_nombre": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tecnico De Diagnostico Nombre"
           }
         },
         "type": "object",
@@ -4735,7 +5806,15 @@
           "cotizaciones",
           "trabajos",
           "solicitudes",
-          "fallas_adicionales"
+          "fallas_adicionales",
+          "cliente_nombre",
+          "cliente_tipo",
+          "empresa",
+          "responsable_nombre",
+          "vehiculo_marca",
+          "vehiculo_modelo",
+          "vehiculo_anio",
+          "tecnico_de_diagnostico_nombre"
         ],
         "title": "ExpedienteDeOrden"
       },
@@ -4921,6 +6000,7 @@
           },
           "motivo_de_ingreso": {
             "type": "string",
+            "maxLength": 1000,
             "title": "Motivo De Ingreso"
           },
           "kilometraje": {
@@ -5138,6 +6218,7 @@
           },
           "descripcion": {
             "type": "string",
+            "maxLength": 1000,
             "title": "Descripcion"
           },
           "mano_de_obra": {
@@ -5200,6 +6281,24 @@
           "anio"
         ],
         "title": "NuevoVehiculo"
+      },
+      "OrdenAbierta": {
+        "properties": {
+          "numero_orden": {
+            "type": "string",
+            "title": "Numero Orden"
+          },
+          "estado": {
+            "type": "string",
+            "title": "Estado"
+          }
+        },
+        "type": "object",
+        "required": [
+          "numero_orden",
+          "estado"
+        ],
+        "title": "OrdenAbierta"
       },
       "OrdenDelPanel": {
         "properties": {
@@ -5366,6 +6465,62 @@
         ],
         "title": "PagoRegistrado"
       },
+      "PlacasCorregidas": {
+        "properties": {
+          "numero_orden": {
+            "type": "string",
+            "title": "Numero Orden"
+          },
+          "estado": {
+            "type": "string",
+            "title": "Estado"
+          },
+          "placas": {
+            "type": "string",
+            "title": "Placas"
+          }
+        },
+        "type": "object",
+        "required": [
+          "numero_orden",
+          "estado",
+          "placas"
+        ],
+        "title": "PlacasCorregidas"
+      },
+      "RecepcionCorregida": {
+        "properties": {
+          "numero_orden": {
+            "type": "string",
+            "title": "Numero Orden"
+          },
+          "estado": {
+            "type": "string",
+            "title": "Estado"
+          },
+          "kilometraje": {
+            "type": "integer",
+            "title": "Kilometraje"
+          },
+          "nivel_de_combustible": {
+            "type": "string",
+            "title": "Nivel De Combustible"
+          },
+          "motivo_de_ingreso": {
+            "type": "string",
+            "title": "Motivo De Ingreso"
+          }
+        },
+        "type": "object",
+        "required": [
+          "numero_orden",
+          "estado",
+          "kilometraje",
+          "nivel_de_combustible",
+          "motivo_de_ingreso"
+        ],
+        "title": "RecepcionCorregida"
+      },
       "RecontactoRegistrado": {
         "properties": {
           "id_cotizacion": {
@@ -5480,6 +6635,34 @@
           "Responsable de Flotilla"
         ],
         "title": "RolDeAutorizante"
+      },
+      "SesionDelEmpleado": {
+        "properties": {
+          "id_empleado": {
+            "type": "string",
+            "title": "Id Empleado"
+          },
+          "nombre": {
+            "type": "string",
+            "title": "Nombre"
+          },
+          "rol": {
+            "type": "string",
+            "title": "Rol"
+          },
+          "puesto": {
+            "type": "string",
+            "title": "Puesto"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id_empleado",
+          "nombre",
+          "rol",
+          "puesto"
+        ],
+        "title": "SesionDelEmpleado"
       },
       "SolicitudActualizada": {
         "properties": {
@@ -5618,6 +6801,24 @@
         ],
         "title": "SolicitudPendiente"
       },
+      "TecnicoDelTaller": {
+        "properties": {
+          "id_empleado": {
+            "type": "string",
+            "title": "Id Empleado"
+          },
+          "nombre": {
+            "type": "string",
+            "title": "Nombre"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id_empleado",
+          "nombre"
+        ],
+        "title": "TecnicoDelTaller"
+      },
       "TipoCliente": {
         "type": "string",
         "enum": [
@@ -5694,6 +6895,58 @@
         ],
         "title": "TrabajoDeOrden"
       },
+      "TrabajoDelExpediente": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "descripcion": {
+            "type": "string",
+            "title": "Descripcion"
+          },
+          "importe": {
+            "type": "string",
+            "title": "Importe"
+          },
+          "estado": {
+            "type": "string",
+            "title": "Estado"
+          },
+          "tecnico": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tecnico"
+          },
+          "tecnico_nombre": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tecnico Nombre"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "descripcion",
+          "importe",
+          "estado",
+          "tecnico",
+          "tecnico_nombre"
+        ],
+        "title": "TrabajoDelExpediente"
+      },
       "TrabajosAsignados": {
         "properties": {
           "numero_orden": {
@@ -5725,6 +6978,39 @@
         ],
         "title": "TrabajosAsignados"
       },
+      "VehiculoCorregido": {
+        "properties": {
+          "placas": {
+            "type": "string",
+            "title": "Placas"
+          },
+          "vin": {
+            "type": "string",
+            "title": "Vin"
+          },
+          "marca": {
+            "type": "string",
+            "title": "Marca"
+          },
+          "modelo": {
+            "type": "string",
+            "title": "Modelo"
+          },
+          "anio": {
+            "type": "integer",
+            "title": "Anio"
+          }
+        },
+        "type": "object",
+        "required": [
+          "placas",
+          "vin",
+          "marca",
+          "modelo",
+          "anio"
+        ],
+        "title": "VehiculoCorregido"
+      },
       "VehiculoEncontrado": {
         "properties": {
           "placas": {
@@ -5749,6 +7035,16 @@
           },
           "cliente": {
             "$ref": "#/components/schemas/ClienteEncontrado"
+          },
+          "orden_abierta": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OrdenAbierta"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "type": "object",
@@ -5758,9 +7054,11 @@
           "marca",
           "modelo",
           "anio",
-          "cliente"
+          "cliente",
+          "orden_abierta"
         ],
-        "title": "VehiculoEncontrado"
+        "title": "VehiculoEncontrado",
+        "description": "`orden_abierta` es `null` si el vehículo no tiene una orden abierta (A-01)."
       }
     },
     "securitySchemes": {

@@ -350,3 +350,17 @@ def test_asignar_a_otro_tecnico_lo_cambia_de_panel(cliente: TestClient) -> None:
 
     assert panel_de(cliente, TECNICO) == []
     assert [orden["numero_orden"] for orden in panel_de(cliente, OTRO_TECNICO)] == [numero]
+
+
+# ------------------------------------------------------------------ refacción repetida (H-PIA-26)
+def test_ca_062_doble_clic_en_solicitar_refaccion_responde_409(cliente: TestClient) -> None:
+    numero = asignada(cliente)
+    cuerpo = {"id_trabajo": 1, "refaccion": "Balata", "cantidad": 1}
+    url = f"/api/ordenes/{numero}/solicitudes-de-compra"
+    exigir(cliente.post(url, json=cuerpo, headers=TECNICO), 201)
+
+    respuesta = exigir(cliente.post(url, json=cuerpo, headers=TECNICO), 409)
+
+    assert "ya está solicitada y Compras la está gestionando" in respuesta["detalle"]
+    pendientes = exigir(cliente.get("/api/compras/solicitudes-pendientes", headers=COMPRAS), 200)
+    assert [s["numero_orden"] for s in pendientes].count(numero) == 1

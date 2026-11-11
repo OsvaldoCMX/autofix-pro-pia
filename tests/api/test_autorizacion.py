@@ -15,6 +15,7 @@ from tests.api.pasos import (
     cotizada,
     decidir,
     decision,
+    en_reparacion,
     exigir,
     expediente_de,
     iniciar,
@@ -171,7 +172,8 @@ def test_rn_08_trabajo_no_autorizado_no_se_inicia(cliente: TestClient) -> None:
 
 
 def test_rn_24_segunda_adicional_es_v3(cliente: TestClient) -> None:
-    numero, _ = con_adicional(cliente)
+    numero, id_adicional = con_adicional(cliente)
+    decidir(cliente, id_adicional, [1])  # RN-33: la v.2 ya tiene decisión
 
     respuesta = cliente.post(
         f"/api/ordenes/{numero}/cotizaciones-adicionales",
@@ -196,3 +198,30 @@ def test_rol_de_autorizante_desconocido_responde_422(cliente: TestClient) -> Non
     )
 
     assert respuesta.status_code == 422
+
+
+# ------------------------------------------------------------------ una adicional a la vez (H-PIA-26)
+def test_ca_061_doble_clic_en_adicional_responde_409(cliente: TestClient) -> None:
+    numero = en_reparacion(cliente)
+    url = f"/api/ordenes/{numero}/cotizaciones-adicionales"
+    exigir(cliente.post(url, json=trabajos("500.00"), headers=ASESOR), 201)
+
+    respuesta = exigir(cliente.post(url, json=trabajos("500.00"), headers=ASESOR), 409)
+
+    assert respuesta["detalle"] == (
+        "La cotización adicional v.2 todavía espera la decisión del cliente; "
+        "registre esa decisión antes de generar otra."
+    )
+
+
+# ------------------------------------------------------------------ nombre del autorizante (H-PIA-27)
+def test_ca_063_el_nombre_con_espacios_de_mas_se_acepta(cliente: TestClient) -> None:
+    _, id_cotizacion = cotizada(cliente)
+    cuerpo = {**decision([1, 2]), "nombre_del_autorizante": "  luis   PEÑA "}
+
+    respuesta = exigir(
+        cliente.post(f"/api/cotizaciones/{id_cotizacion}/decision", json=cuerpo, headers=ASESOR),
+        200,
+    )
+
+    assert respuesta["estado_cotizacion"] == "Autorizada"

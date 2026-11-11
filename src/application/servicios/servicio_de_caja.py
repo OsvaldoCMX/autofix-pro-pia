@@ -1,7 +1,7 @@
-"""Pago de contado y cargo a crédito (US-014, US-022, CA-026, CA-039)."""
+"""Pago de contado, su corrección y cargo a crédito (US-014, US-022, CA-026, CA-039, CA-058)."""
 from __future__ import annotations
 
-from application.comandos import RegistrarCargoACredito, RegistrarPago
+from application.comandos import CorregirFormaDePago, RegistrarCargoACredito, RegistrarPago
 from application.puertos import PublicadorDeEventos, Reloj
 from application.resultados import ResultadoDeCargoACredito, ResultadoDePago
 from application.unidad_de_trabajo import UnidadDeTrabajo
@@ -25,6 +25,23 @@ class ServicioDeCaja:
             uow.ordenes.guardar(orden)
             uow.confirmar()
         self._publicador.publicar(uow.eventos_confirmados())
+        return ResultadoDePago(
+            str(orden.numero),
+            orden.estado.value,
+            str(pago.monto.monto),
+            pago.forma.value,
+            pago.registrado_en,
+        )
+
+    def corregir_forma_de_pago(self, comando: CorregirFormaDePago) -> ResultadoDePago:
+        with self._uow as uow:
+            orden = uow.ordenes.obtener(NumeroOrden(comando.numero_orden))
+            orden.corregir_forma_de_pago(comando.forma, self._reloj.ahora())
+            uow.ordenes.guardar(orden)
+            uow.confirmar()
+        self._publicador.publicar(uow.eventos_confirmados())
+        pago = orden.pago
+        assert pago is not None
         return ResultadoDePago(
             str(orden.numero),
             orden.estado.value,

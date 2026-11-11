@@ -7,7 +7,15 @@ from decimal import Decimal
 import pytest
 
 from domain.compartido.errores import ValorInvalido
-from domain.compartido.valores import VIN, Dinero, NumeroOrden, Placas, texto_requerido
+from domain.compartido.valores import (
+    VIN,
+    Correo,
+    Dinero,
+    NumeroOrden,
+    Placas,
+    Telefono,
+    texto_requerido,
+)
 
 
 def test_texto_requerido_quita_espacios_de_los_extremos() -> None:
@@ -151,3 +159,52 @@ def test_vin_rechaza_i_o_q(letra: str) -> None:
 def test_vin_rechaza_simbolos(valor: str) -> None:
     with pytest.raises(ValorInvalido):
         VIN(valor)
+
+
+# ------------------------------------------------------------------ teléfono y correo (RN-31)
+@pytest.mark.parametrize("valor", ["8112345678", "81 1234 5678", "(81) 1234-5678", " 81-1234-5678 "])
+def test_rn_31_telefono_de_10_digitos(valor: str) -> None:
+    assert Telefono(valor).valor == valor.strip()
+
+
+@pytest.mark.parametrize(
+    "valor", ["abc", "81 1234 567x", "+52 81 1234 5678", "81#1234#5678", "811234567O"]
+)
+def test_rn_31_telefono_con_letras_o_simbolos_se_rechaza(valor: str) -> None:
+    with pytest.raises(ValorInvalido) as error:
+        Telefono(valor)
+    assert str(error.value) == (
+        "El teléfono solo puede llevar números. Escriba los 10 dígitos, sin letras."
+    )
+
+
+@pytest.mark.parametrize(
+    ("valor", "digitos"),
+    [("81-2222", 6), ("811234567", 9), ("811234567890", 12), ("(81) 1234-567", 9), ("-", 0)],
+)
+def test_rn_31_telefono_sin_10_digitos_dice_cuantos_escribio(valor: str, digitos: int) -> None:
+    with pytest.raises(ValorInvalido) as error:
+        Telefono(valor)
+    assert str(error.value) == f"El teléfono debe tener 10 dígitos; usted escribió {digitos}."
+
+
+def test_rn_31_telefono_del_responsable_lleva_su_nombre_en_el_mensaje() -> None:
+    with pytest.raises(ValorInvalido, match="^El teléfono del Responsable de Flotilla solo puede"):
+        Telefono("ocho uno", "El teléfono del Responsable de Flotilla")
+
+
+@pytest.mark.parametrize("valor", [None, "", "   "])
+def test_rn_31_telefono_y_correo_con_solo_espacios_no_se_capturan(valor: str | None) -> None:
+    assert Telefono.capturado(valor) is None
+    assert Correo.capturado(valor) is None
+
+
+@pytest.mark.parametrize("valor", ["hola", "luis@correo", "luis correo@x.com", "@correo.com"])
+def test_rn_31_correo_sin_forma_valida_se_rechaza(valor: str) -> None:
+    with pytest.raises(ValorInvalido, match="nombre@dominio.com"):
+        Correo(valor)
+
+
+def test_rn_31_el_mensaje_dice_de_quien_es_el_dato() -> None:
+    with pytest.raises(ValorInvalido, match="^El teléfono del Responsable de Flotilla debe"):
+        Telefono.capturado("123", "El teléfono del Responsable de Flotilla")

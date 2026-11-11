@@ -11,6 +11,8 @@
 | 1.0 | 03/09/2026 | Unidad 2 | Primera versión del BRD (levantamiento con el stakeholder). |
 | 2.0 | 10/2026 | Unidad 3 | Hallazgos H-U2-01 a H-U2-03: se corrigieron inconsistencias entre BRD, User Stories, Glosario y BPMN (US-019 a US-024, sección «Estados del sistema»; 14 necesidades y 43 criterios) y se agregaron al Glosario los términos del modelo. |
 | 3.0 | 04/11/2026 | PIA | H-PIA-01: cancelación de la orden antes de cotizar (N-15, US-025). H-PIA-02: el crédito de flotilla se cuenta desde la entrega. H-PIA-03: los datos ficticios del profesor se usan como datos de prueba y demostración. Detalle en `registro-de-cambios.md`. |
+| 3.1 | 09/11/2026 | Revisión del PIA | El profesor evaluó el sistema como un usuario del taller. H-PIA-21 a H-PIA-29: corregir datos mal capturados dejando constancia y evitar registros repetidos (N-16, US-026 y US-027, restricciones 11 y 12) y una página web para el personal y el cliente (ADR-017). Detalle en `registro-de-cambios.md` §6. |
+| 3.2 | 10/11/2026 | Revisión de la interfaz (Fase 18) | H-PIA-30: la cotización ajustada después del rechazo del Gerente regresa a su revisión si su total supera el que él rechazó (restricción 13, RN-05, CA-067). |
 
 ## 1. Contexto y descripción del negocio
 
@@ -140,6 +142,7 @@ El sistema no contempla la contabilidad general del taller, la gestión de nómi
 | N-13 | Permitir al cliente consultar el estado de su vehículo sin llamar al taller | Media | US-021 |
 | N-14 | (Implícita) Dar seguimiento a las cotizaciones que lleven más de 48 horas sin respuesta | Media | US-023 |
 | N-15 | (Implícita, v3.0) Cancelar la orden cuando el cliente desiste antes de que se genere la cotización | Media | US-025 |
+| N-16 | (Implícita, v3.1) Corregir los datos mal capturados dejando constancia y evitar registros repetidos (revisión del 09/11/2026) | Alta | US-026 |
 
 ## 7. Restricciones
 
@@ -155,6 +158,9 @@ El sistema no contempla la contabilidad general del taller, la gestión de nómi
 8. Compras solo gestiona refacciones de trabajos que el cliente ya autorizó.
 9. El vehículo solo se entrega después de registrar el pago (cliente particular) o el cargo a crédito (cliente de flotilla). Si el cliente rechaza toda la cotización, el vehículo se entrega sin reparación y sin cobro.
 10. *(v3.0)* Una orden solo puede cancelarse mientras no tenga cotización («Recibida» o «En Diagnóstico»); la cancelación no genera cobro.
+11. *(v3.1)* El asesor puede corregir una cotización mal capturada solo antes de la decisión del cliente y con un motivo; queda registro de cada corrección, la cotización se presenta otra vez y, si es inicial y supera $15,000 MXN, regresa al Gerente.
+12. *(v3.1)* Un vehículo no puede tener dos órdenes abiertas al mismo tiempo.
+13. *(v3.2)* Si el Gerente rechaza una cotización, la versión ajustada se presenta al cliente sin volver a revisión solo si su total es igual o menor al que él rechazó; si es mayor, regresa al Gerente.
 
 ### Restricciones técnicas
 

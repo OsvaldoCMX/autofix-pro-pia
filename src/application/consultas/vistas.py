@@ -5,11 +5,13 @@ cada vista desde su Aggregate, para que todos los lectores calculen lo mismo.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
+from collections.abc import Mapping
+from dataclasses import dataclass, field, replace
 from datetime import date, datetime
 
 from domain.clientes.cliente import Cliente
 from domain.cotizaciones.cotizacion import Cotizacion
+from domain.cotizaciones.valores import CorreccionDeCotizacion
 from domain.ordenes.estados import EstadoOrden, EstadoTrabajo
 from domain.ordenes.orden_de_servicio import OrdenDeServicio
 from domain.ordenes.solicitud_de_compra import SolicitudDeCompra
@@ -33,6 +35,14 @@ class ClienteVista:
 
 
 @dataclass(frozen=True)
+class OrdenAbiertaVista:
+    """La orden abierta del vehículo, para abrirla desde la búsqueda por placas (A-01)."""
+
+    numero_orden: str
+    estado: str
+
+
+@dataclass(frozen=True)
 class VehiculoConClienteVista:
     placas: str
     vin: str
@@ -40,6 +50,7 @@ class VehiculoConClienteVista:
     modelo: str
     anio: int
     cliente: ClienteVista
+    orden_abierta: OrdenAbiertaVista | None
 
 
 @dataclass(frozen=True)
@@ -49,6 +60,7 @@ class TrabajoVista:
     importe: str
     estado: str
     tecnico: str | None
+    tecnico_nombre: str | None = None
 
 
 @dataclass(frozen=True)
@@ -112,6 +124,29 @@ class LineaVista:
 
 
 @dataclass(frozen=True)
+class TecnicoVista:
+    """Técnico del taller para elegirlo por su nombre al asignar (CA-053)."""
+
+    id_empleado: str
+    nombre: str
+
+
+@dataclass(frozen=True)
+class CorreccionVista:
+    """Una corrección del historial de la cotización (H-PIA-21)."""
+
+    asesor: str
+    registrada_en: datetime
+    motivo: str
+    total_anterior: str
+    total_nuevo: str
+    estado_anterior: str
+    estado_nuevo: str
+    fecha_presentacion_anterior: datetime | None
+    fecha_aprobacion_gerencial_anterior: datetime | None
+
+
+@dataclass(frozen=True)
 class CotizacionVista:
     id: str
     numero_orden: str
@@ -126,6 +161,7 @@ class CotizacionVista:
     autorizante: str | None
     fecha_decision: datetime | None
     lineas: tuple[LineaVista, ...]
+    correcciones: tuple[CorreccionVista, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -166,6 +202,33 @@ class ExpedienteDeOrdenVista:
     trabajos: tuple[TrabajoVista, ...]
     solicitudes: tuple[SolicitudVista, ...]
     fallas_adicionales: tuple[FallaAdicionalVista, ...]
+    # Lo que la página necesita de otros Aggregates (interfaz-web.md §7, Fase 14)
+    cliente_nombre: str | None = None
+    cliente_tipo: str | None = None
+    empresa: str | None = None
+    responsable_nombre: str | None = None
+    vehiculo_marca: str | None = None
+    vehiculo_modelo: str | None = None
+    vehiculo_anio: int | None = None
+    tecnico_de_diagnostico_nombre: str | None = None
+
+
+@dataclass(frozen=True)
+class DatosRelacionados:
+    """Datos del cliente, del vehículo y de los empleados que muestra el expediente.
+
+    Los lectores los arman desde la base o la memoria; nunca se validan con las reglas de
+    captura, porque solo se leen (condición del equipo, Fase 14).
+    """
+
+    cliente_nombre: str | None = None
+    cliente_tipo: str | None = None
+    empresa: str | None = None
+    responsable_nombre: str | None = None
+    vehiculo_marca: str | None = None
+    vehiculo_modelo: str | None = None
+    vehiculo_anio: int | None = None
+    nombres_de_empleados: Mapping[str, str] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -268,12 +331,31 @@ def vista_de_cotizacion(cotizacion: Cotizacion) -> CotizacionVista:
             )
             for linea in cotizacion.lineas
         ),
+        tuple(_vista_de_correccion(correccion) for correccion in cotizacion.correcciones),
+    )
+
+
+def _vista_de_correccion(correccion: CorreccionDeCotizacion) -> CorreccionVista:
+    return CorreccionVista(
+        correccion.asesor,
+        correccion.registrada_en,
+        correccion.motivo,
+        str(correccion.total_anterior.monto),
+        str(correccion.total_nuevo.monto),
+        correccion.estado_anterior.value,
+        correccion.estado_nuevo.value,
+        correccion.fecha_presentacion_anterior,
+        correccion.fecha_aprobacion_gerencial_anterior,
     )
 
 
 def vista_de_expediente(
-    orden: OrdenDeServicio, cotizaciones: list[Cotizacion]
+    orden: OrdenDeServicio,
+    cotizaciones: list[Cotizacion],
+    relacionados: DatosRelacionados | None = None,
 ) -> ExpedienteDeOrdenVista:
+    datos = relacionados or DatosRelacionados()
+    nombres = datos.nombres_de_empleados
     recepcion = orden.estado_de_recepcion
     diagnostico = orden.diagnostico
     pago = orden.pago
@@ -305,16 +387,29 @@ def vista_de_expediente(
         orden.fecha_entrega,
         orden.cancelacion.motivo if orden.cancelacion else None,
         tuple(vista_de_cotizacion(cotizacion) for cotizacion in cotizaciones),
-        tuple(vista_de_trabajo(trabajo) for trabajo in orden.trabajos),
+        tuple(
+            replace(vista_de_trabajo(trabajo), tecnico_nombre=nombres.get(trabajo.tecnico or ""))
+            for trabajo in orden.trabajos
+        ),
         tuple(vista_de_solicitud(orden, solicitud) for solicitud in orden.solicitudes),
         tuple(
             FallaAdicionalVista(falla.id, falla.descripcion, falla.tecnico, falla.reportada_en)
             for falla in orden.fallas_adicionales
         ),
+        datos.cliente_nombre,
+        datos.cliente_tipo,
+        datos.empresa,
+        datos.responsable_nombre,
+        datos.vehiculo_marca,
+        datos.vehiculo_modelo,
+        datos.vehiculo_anio,
+        nombres.get(orden.tecnico_de_diagnostico or ""),
     )
 
 
-def vista_de_vehiculo(vehiculo: Vehiculo, cliente: Cliente) -> VehiculoConClienteVista:
+def vista_de_vehiculo(
+    vehiculo: Vehiculo, cliente: Cliente, orden_abierta: OrdenAbiertaVista | None
+) -> VehiculoConClienteVista:
     return VehiculoConClienteVista(
         str(vehiculo.placas),
         str(vehiculo.vin),
@@ -322,6 +417,7 @@ def vista_de_vehiculo(vehiculo: Vehiculo, cliente: Cliente) -> VehiculoConClient
         vehiculo.modelo,
         vehiculo.anio,
         vista_de_cliente(cliente),
+        orden_abierta,
     )
 
 

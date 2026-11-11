@@ -1,7 +1,8 @@
-"""Cotización de punta a punta: criterios CA-005 a CA-009 y CA-040."""
+"""Cotización de punta a punta: criterios CA-005 a CA-009, CA-040 y la corrección (CA-047 a CA-051)."""
 from __future__ import annotations
 
 from datetime import timedelta
+from typing import Any
 from unittest.mock import Mock
 
 import pytest
@@ -11,7 +12,9 @@ from sqlalchemy import Engine
 from tests.api.pasos import (
     ASESOR,
     GERENTE,
+    ID_ASESOR,
     alertas_de,
+    autorizada,
     cotizada,
     diagnosticada,
     exigir,
@@ -178,6 +181,38 @@ def test_ca_009_gerente_rechaza_y_ajuste_no_regresa_a_revision(cliente: TestClie
     assert "Revisar la mano de obra" in alerta["mensaje"]
 
 
+def test_ca_067_ajuste_que_sube_el_total_regresa_al_gerente_con_alerta(
+    cliente: TestClient,
+) -> None:
+    _, id_cotizacion = por_aprobar(cliente)
+    exigir(
+        cliente.post(
+            f"/api/cotizaciones/{id_cotizacion}/revision-gerencial",
+            json={"aprobada": False, "observaciones": "Revisar la mano de obra"},
+            headers=GERENTE,
+        ),
+        200,
+    )
+
+    ajuste = exigir(
+        cliente.put(
+            f"/api/cotizaciones/{id_cotizacion}/lineas",
+            json=trabajos("21000.00"),
+            headers=ASESOR,
+        ),
+        200,
+    )
+
+    assert ajuste["estado"] == "Pendiente de Aprobación Gerencial"
+    assert ajuste["total"] == "21000.00"
+    pendientes = exigir(cliente.get("/api/gerencia/cotizaciones-por-aprobar", headers=GERENTE), 200)
+    assert [(c["id_cotizacion"], c["total"]) for c in pendientes] == [(id_cotizacion, "21000.00")]
+    avisos = tipos_de_alertas(cliente, GERENTE).count("AprobacionGerencialRequerida")
+    assert avisos == 2  # al generarla y al ajustarla arriba del total rechazado
+    presentar = cliente.post(f"/api/cotizaciones/{id_cotizacion}/presentacion", headers=ASESOR)
+    assert presentar.status_code == 409
+
+
 def test_ca_040_revision_alerta_a_las_48_horas_y_recontacto_reinicia_el_plazo(
     cliente: TestClient, reloj: Mock
 ) -> None:
@@ -338,3 +373,159 @@ def test_servicio_inhabilitado_responde_422_y_la_orden_sigue_en_diagnostico(
     assert (cuerpo["error"], cuerpo["codigo"]) == ("ValorInvalido", 422)
     assert "AUT-P011" in cuerpo["detalle"]
     assert expediente_de(cliente, numero)["estado"] == "En Diagnóstico"
+
+
+# ------------------------------------------------------------------ corrección (H-PIA-21)
+
+def _correccion(*importes: str, motivo: str = "Mano de obra mal capturada") -> dict[str, Any]:
+    return {**trabajos(*importes), "motivo": motivo}
+
+
+def _corregir(cliente: TestClient, id_cotizacion: str, cuerpo: dict[str, Any]) -> Any:
+    return cliente.post(f"/api/cotizaciones/{id_cotizacion}/correcciones", json=cuerpo, headers=ASESOR)
+
+
+def _detalle(cliente: TestClient, id_cotizacion: str) -> dict[str, Any]:
+    return exigir(cliente.get(f"/api/cotizaciones/{id_cotizacion}", headers=ASESOR), 200)
+
+
+def test_ca_047_corrige_conserva_numero_version_y_queda_sin_presentar(
+    cliente: TestClient,
+) -> None:
+    _, id_cotizacion = presentada(cliente)
+
+    respuesta = exigir(_corregir(cliente, id_cotizacion, _correccion("800.00", "2000.00")), 201)
+
+    assert respuesta["id"] == id_cotizacion
+    assert respuesta["version"] == "v.1"
+    assert respuesta["estado"] == PENDIENTE_DEL_CLIENTE
+    assert respuesta["total"] == "2800.00"
+    assert "fecha_presentacion" not in respuesta
+    exigir(cliente.post(f"/api/cotizaciones/{id_cotizacion}/presentacion", headers=ASESOR), 200)
+
+
+def test_ca_047_el_historial_aparece_en_la_cotizacion_y_el_expediente(
+    cliente: TestClient,
+) -> None:
+    numero, id_cotizacion = presentada(cliente)
+    exigir(_corregir(cliente, id_cotizacion, _correccion("2500.00")), 201)
+
+    (correccion,) = _detalle(cliente, id_cotizacion)["correcciones"]
+
+    assert correccion["asesor"] == ID_ASESOR
+    assert correccion["motivo"] == "Mano de obra mal capturada"
+    assert (correccion["total_anterior"], correccion["total_nuevo"]) == ("3000.00", "2500.00")
+    assert correccion["estado_anterior"] == correccion["estado_nuevo"] == PENDIENTE_DEL_CLIENTE
+    assert correccion["fecha_presentacion_anterior"] is not None
+    assert expediente_de(cliente, numero)["cotizaciones"][0]["correcciones"] == [correccion]
+
+
+def test_ca_048_correccion_arriba_de_15000_regresa_al_gerente_y_le_avisa(
+    cliente: TestClient,
+) -> None:
+    _, id_cotizacion = por_aprobar(cliente)
+    revision = {"aprobada": True}
+    exigir(
+        cliente.post(
+            f"/api/cotizaciones/{id_cotizacion}/revision-gerencial", json=revision, headers=GERENTE
+        ),
+        200,
+    )
+
+    respuesta = exigir(_corregir(cliente, id_cotizacion, _correccion("21000.00")), 201)
+
+    assert respuesta["estado"] == PENDIENTE_DEL_GERENTE
+    assert "fecha_aprobacion_gerencial" not in respuesta
+    assert tipos_de_alertas(cliente, GERENTE).count("AprobacionGerencialRequerida") == 2
+    presentar = cliente.post(f"/api/cotizaciones/{id_cotizacion}/presentacion", headers=ASESOR)
+    assert presentar.status_code == 409
+
+
+def test_ca_049_en_revision_baja_de_15000_pasa_al_cliente(cliente: TestClient) -> None:
+    _, id_cotizacion = por_aprobar(cliente)
+
+    respuesta = exigir(_corregir(cliente, id_cotizacion, _correccion("14000.00")), 201)
+
+    assert respuesta["estado"] == PENDIENTE_DEL_CLIENTE
+
+
+def test_ca_049_en_revision_sigue_arriba_y_no_cambia_de_estado(cliente: TestClient) -> None:
+    _, id_cotizacion = por_aprobar(cliente)
+
+    respuesta = exigir(_corregir(cliente, id_cotizacion, _correccion("22000.00")), 201)
+
+    assert respuesta["estado"] == PENDIENTE_DEL_GERENTE
+    assert respuesta["total"] == "22000.00"
+
+
+def test_ca_050_no_se_corrige_en_requiere_ajuste(cliente: TestClient) -> None:
+    _, id_cotizacion = por_aprobar(cliente)
+    rechazo = {"aprobada": False, "observaciones": "Revise la mano de obra"}
+    exigir(
+        cliente.post(
+            f"/api/cotizaciones/{id_cotizacion}/revision-gerencial", json=rechazo, headers=GERENTE
+        ),
+        200,
+    )
+
+    respuesta = exigir(_corregir(cliente, id_cotizacion, _correccion("18000.00")), 409)
+
+    assert "guarde la cotización ajustada" in respuesta["detalle"]
+
+
+def test_ca_050_no_se_corrige_ya_decidida(cliente: TestClient) -> None:
+    _, id_cotizacion = autorizada(cliente)
+
+    respuesta = exigir(_corregir(cliente, id_cotizacion, _correccion("100.00")), 409)
+
+    assert "cotización adicional" in respuesta["detalle"]
+
+
+def test_ca_050_motivo_obligatorio(cliente: TestClient) -> None:
+    _, id_cotizacion = cotizada(cliente)
+
+    sin_motivo = exigir(_corregir(cliente, id_cotizacion, trabajos("100.00")), 422)
+    en_blanco = exigir(_corregir(cliente, id_cotizacion, _correccion("100.00", motivo="  ")), 422)
+
+    assert "motivo" in sin_motivo["detalle"]
+    assert "motivo" in en_blanco["detalle"]
+    assert _detalle(cliente, id_cotizacion)["total"] == "3000.00"
+
+
+def test_ca_050_cotizacion_inexistente_responde_404(cliente: TestClient) -> None:
+    exigir(_corregir(cliente, "COT-9999", _correccion("100.00")), 404)
+
+
+def test_ca_051_sin_alerta_hasta_volver_a_presentar(cliente: TestClient, reloj: Mock) -> None:
+    _, id_cotizacion = presentada(cliente)
+    poner_hora(reloj, AHORA + timedelta(hours=49))
+    exigir(cliente.post(f"/api/cotizaciones/{id_cotizacion}/recontactos", headers=ASESOR), 201)
+    exigir(_corregir(cliente, id_cotizacion, _correccion("2500.00")), 201)
+
+    poner_hora(reloj, AHORA + timedelta(hours=200))
+    sin_presentar = revisar_plazos(cliente)
+    exigir(cliente.post(f"/api/cotizaciones/{id_cotizacion}/presentacion", headers=ASESOR), 200)
+    poner_hora(reloj, AHORA + timedelta(hours=247))
+    antes_del_plazo = revisar_plazos(cliente)
+    poner_hora(reloj, AHORA + timedelta(hours=249))
+    despues_del_plazo = revisar_plazos(cliente)
+
+    assert sin_presentar["alertas_de_recontacto"] == 0
+    assert antes_del_plazo["alertas_de_recontacto"] == 0
+    assert despues_del_plazo["alertas_de_recontacto"] == 1
+
+
+# ------------------------------------------------------------------ trabajos de $0.00 (H-PIA-25)
+def test_ca_060_un_trabajo_de_0_responde_422(cliente: TestClient) -> None:
+    numero = diagnosticada(cliente)
+
+    respuesta = exigir(
+        cliente.post(
+            f"/api/ordenes/{numero}/cotizaciones", json=trabajos("100.00", "0.00"), headers=ASESOR
+        ),
+        422,
+    )
+
+    assert respuesta["detalle"] == (
+        "El trabajo 2 vale $0.00: capture su mano de obra o sus refacciones."
+    )

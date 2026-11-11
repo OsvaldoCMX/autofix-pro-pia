@@ -25,6 +25,9 @@ class FormaDePago(Enum):
     TRANSFERENCIA = "Transferencia"
 
 
+KILOMETRAJE_MAXIMO = 2_000_000
+
+
 @dataclass(frozen=True)
 class EstadoDeRecepcion:
     """Estado del vehículo al ingresar. Las fotos de daños son opcionales (CA-002)."""
@@ -36,6 +39,18 @@ class EstadoDeRecepcion:
     def __post_init__(self) -> None:
         if self.kilometraje < 0:
             raise ValorInvalido("El kilometraje no puede ser negativo.")
+
+    @classmethod
+    def capturado(
+        cls, kilometraje: int, nivel_de_combustible: NivelDeCombustible
+    ) -> EstadoDeRecepcion:
+        """Al capturar o corregir, el kilometraje llega hasta 2,000,000 km (RN-31)."""
+        if kilometraje > KILOMETRAJE_MAXIMO:
+            raise ValorInvalido(
+                f"El kilometraje no puede ser mayor a {KILOMETRAJE_MAXIMO:,} km. "
+                "Revise el dato capturado."
+            )
+        return cls(kilometraje, nivel_de_combustible)
 
 
 @dataclass(frozen=True)

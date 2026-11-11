@@ -1,5 +1,5 @@
 -- =============================================================================
--- AutoFix Pro · Esquema de la base de datos (PostgreSQL 16 / Supabase) · PIA v3.0
+-- AutoFix Pro · Esquema de la base de datos (PostgreSQL 16 / Supabase) · PIA v3.1
 -- Generado por scripts/db/esquema.py — no editar a mano: cambie esquema.py y regenere.
 --
 -- Cómo usarlo:
@@ -17,6 +17,7 @@ DROP TABLE IF EXISTS catalogo_servicios CASCADE;
 DROP TABLE IF EXISTS secuencias CASCADE;
 DROP TABLE IF EXISTS eventos CASCADE;
 DROP TABLE IF EXISTS alertas_internas CASCADE;
+DROP TABLE IF EXISTS correcciones_de_cotizacion CASCADE;
 DROP TABLE IF EXISTS recontactos CASCADE;
 DROP TABLE IF EXISTS refacciones_cotizadas CASCADE;
 DROP TABLE IF EXISTS lineas_de_cotizacion CASCADE;
@@ -133,7 +134,7 @@ CREATE TABLE ordenes (
     CONSTRAINT pk_ordenes PRIMARY KEY (numero),
     CONSTRAINT uq_ordenes_recibo_numero UNIQUE (recibo_numero),
     CONSTRAINT fk_ordenes_id_cliente FOREIGN KEY (id_cliente) REFERENCES clientes (id) ON DELETE RESTRICT,
-    CONSTRAINT fk_ordenes_placas FOREIGN KEY (placas) REFERENCES vehiculos (placas) ON DELETE RESTRICT,
+    CONSTRAINT fk_ordenes_placas FOREIGN KEY (placas) REFERENCES vehiculos (placas) ON DELETE RESTRICT ON UPDATE CASCADE,
     CONSTRAINT fk_ordenes_asesor FOREIGN KEY (asesor) REFERENCES empleados (id) ON DELETE RESTRICT,
     CONSTRAINT fk_ordenes_tecnico_de_diagnostico FOREIGN KEY (tecnico_de_diagnostico) REFERENCES empleados (id) ON DELETE RESTRICT,
     CONSTRAINT fk_ordenes_cancelacion_asesor FOREIGN KEY (cancelacion_asesor) REFERENCES empleados (id) ON DELETE RESTRICT,
@@ -152,6 +153,7 @@ CREATE INDEX ix_ordenes_estado ON ordenes (estado);
 CREATE INDEX ix_ordenes_cliente ON ordenes (id_cliente);
 CREATE INDEX ix_ordenes_placas ON ordenes (placas);
 CREATE INDEX ix_ordenes_pago_fecha ON ordenes (pago_registrado_en);
+CREATE UNIQUE INDEX uq_ordenes_una_abierta_por_vehiculo ON ordenes (placas) WHERE estado NOT IN ('Cerrada', 'Cerrada sin Reparación', 'Cancelada');
 COMMENT ON TABLE ordenes IS 'Órdenes de Servicio (Aggregate Orden de Servicio). Los Value Objects (recepción, diagnóstico, nota, pago, crédito, cancelación) se guardan como columnas.';
 COMMENT ON COLUMN ordenes.numero IS 'Folio (NumeroOrden): OS-0001… o AUT-O001 en los datos del profesor';
 COMMENT ON COLUMN ordenes.id_cliente IS 'Cliente';
@@ -386,6 +388,40 @@ COMMENT ON COLUMN recontactos.id_cotizacion IS 'Cotización';
 COMMENT ON COLUMN recontactos.asesor IS 'Asesor que recontactó';
 COMMENT ON COLUMN recontactos.registrado_en IS 'Fecha y hora (el plazo de 48 h vuelve a contar)';
 
+-- Historial de correcciones de una cotización antes de la decisión del cliente (CA-047 a CA-050, H-PIA-21, ADR-018).
+CREATE TABLE correcciones_de_cotizacion (
+    id                           BIGSERIAL NOT NULL,
+    id_cotizacion                VARCHAR(20) NOT NULL,
+    asesor                       VARCHAR(20) NOT NULL,
+    registrada_en                TIMESTAMPTZ NOT NULL,
+    motivo                       TEXT NOT NULL,
+    total_anterior               NUMERIC(12,2) NOT NULL,
+    total_nuevo                  NUMERIC(12,2) NOT NULL,
+    estado_anterior              VARCHAR(50) NOT NULL,
+    estado_nuevo                 VARCHAR(50) NOT NULL,
+    fecha_presentacion_anterior  TIMESTAMPTZ,
+    fecha_aprobacion_gerencial_anterior TIMESTAMPTZ,
+    CONSTRAINT pk_correcciones_de_cotizacion PRIMARY KEY (id),
+    CONSTRAINT fk_correcciones_de_cotizacion_id_cotizacion FOREIGN KEY (id_cotizacion) REFERENCES cotizaciones (id) ON DELETE CASCADE,
+    CONSTRAINT fk_correcciones_de_cotizacion_asesor FOREIGN KEY (asesor) REFERENCES empleados (id) ON DELETE RESTRICT,
+    CONSTRAINT ck_correcciones_de_cotizacion_1 CHECK (total_anterior >= 0),
+    CONSTRAINT ck_correcciones_de_cotizacion_2 CHECK (total_nuevo >= 0),
+    CONSTRAINT ck_correcciones_de_cotizacion_3 CHECK (estado_anterior IN ('Pendiente de Aprobación Gerencial', 'Pendiente de Autorización del Cliente')),
+    CONSTRAINT ck_correcciones_de_cotizacion_4 CHECK (estado_nuevo IN ('Pendiente de Aprobación Gerencial', 'Pendiente de Autorización del Cliente'))
+);
+COMMENT ON TABLE correcciones_de_cotizacion IS 'Historial de correcciones de una cotización antes de la decisión del cliente (CA-047 a CA-050, H-PIA-21, ADR-018).';
+COMMENT ON COLUMN correcciones_de_cotizacion.id IS 'Identificador';
+COMMENT ON COLUMN correcciones_de_cotizacion.id_cotizacion IS 'Cotización';
+COMMENT ON COLUMN correcciones_de_cotizacion.asesor IS 'Asesor que corrigió';
+COMMENT ON COLUMN correcciones_de_cotizacion.registrada_en IS 'Fecha y hora de la corrección';
+COMMENT ON COLUMN correcciones_de_cotizacion.motivo IS 'Motivo de la corrección (obligatorio)';
+COMMENT ON COLUMN correcciones_de_cotizacion.total_anterior IS 'Total antes de corregir';
+COMMENT ON COLUMN correcciones_de_cotizacion.total_nuevo IS 'Total después de corregir';
+COMMENT ON COLUMN correcciones_de_cotizacion.estado_anterior IS 'Estado antes de corregir';
+COMMENT ON COLUMN correcciones_de_cotizacion.estado_nuevo IS 'Estado después de corregir (se vuelve a evaluar E1)';
+COMMENT ON COLUMN correcciones_de_cotizacion.fecha_presentacion_anterior IS 'Presentación al cliente que se anuló al corregir';
+COMMENT ON COLUMN correcciones_de_cotizacion.fecha_aprobacion_gerencial_anterior IS 'Aprobación del Gerente que tenía (se borra si regresa a revisión)';
+
 -- Alertas internas del panel de cada empleado (no son correos ni SMS).
 CREATE TABLE alertas_internas (
     id                           BIGSERIAL NOT NULL,
@@ -523,6 +559,7 @@ ALTER TABLE cotizaciones ENABLE ROW LEVEL SECURITY;
 ALTER TABLE lineas_de_cotizacion ENABLE ROW LEVEL SECURITY;
 ALTER TABLE refacciones_cotizadas ENABLE ROW LEVEL SECURITY;
 ALTER TABLE recontactos ENABLE ROW LEVEL SECURITY;
+ALTER TABLE correcciones_de_cotizacion ENABLE ROW LEVEL SECURITY;
 ALTER TABLE alertas_internas ENABLE ROW LEVEL SECURITY;
 ALTER TABLE eventos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE secuencias ENABLE ROW LEVEL SECURITY;

@@ -38,6 +38,17 @@ _O = EstadoOrden
 _T = EstadoTrabajo
 _S = EstadoSolicitud
 
+# Una orden en cualquier otro estado está abierta (Glosario, «Listado de órdenes» y «Orden Abierta»).
+# La condición del índice `uq_ordenes_una_abierta_por_vehiculo` usa esta misma lista (RN-27).
+ESTADOS_DE_ORDEN_CERRADA: frozenset[EstadoOrden] = frozenset(
+    {_O.CERRADA, _O.CERRADA_SIN_REPARACION, _O.CANCELADA}
+)
+
+
+def esta_abierta(estado: EstadoOrden) -> bool:
+    return estado not in ESTADOS_DE_ORDEN_CERRADA
+
+
 MAQUINA_DE_ORDEN: MaquinaDeEstados[EstadoOrden] = MaquinaDeEstados(
     "La orden",
     {
@@ -60,7 +71,7 @@ MAQUINA_DE_ORDEN: MaquinaDeEstados[EstadoOrden] = MaquinaDeEstados(
         _O.PAGADA: {_O.CERRADA},
         _O.POR_COBRAR_CREDITO: {_O.CERRADA},
     },
-    finales={_O.CERRADA, _O.CERRADA_SIN_REPARACION, _O.CANCELADA},
+    finales=ESTADOS_DE_ORDEN_CERRADA,
 )
 
 MAQUINA_DE_TRABAJO: MaquinaDeEstados[EstadoTrabajo] = MaquinaDeEstados(

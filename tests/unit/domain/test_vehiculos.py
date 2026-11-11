@@ -45,7 +45,7 @@ def test_ca_003_vehiculo_actualiza_datos() -> None:
     vehiculo = _vehiculo()
     nuevo_vin = VIN("2HGCM82633A004353")
 
-    vehiculo.actualizar_datos(nuevo_vin, "Toyota", "Yaris", 2021)
+    vehiculo.actualizar_datos(nuevo_vin, "Toyota", "Yaris", 2021, 2026)
 
     assert vehiculo.vin == nuevo_vin
     assert (vehiculo.marca, vehiculo.modelo, vehiculo.anio) == ("Toyota", "Yaris", 2021)
@@ -56,7 +56,7 @@ def test_ca_003_actualizacion_invalida_no_cambia_nada() -> None:
     vehiculo = _vehiculo()
 
     with pytest.raises(ValorInvalido, match="año"):
-        vehiculo.actualizar_datos(VIN(VIN_VALIDO), "Toyota", "Yaris", 1800)
+        vehiculo.actualizar_datos(VIN(VIN_VALIDO), "Toyota", "Yaris", 1800, 2026)
 
     assert (vehiculo.marca, vehiculo.anio) == ("Nissan", 2020)
 
@@ -70,3 +70,19 @@ def test_anio_acepta_los_limites_de_la_base(anio: int) -> None:
 def test_anio_rechaza_valores_fuera_del_rango(anio: int) -> None:
     with pytest.raises(ValorInvalido, match="año"):
         _vehiculo(anio=anio)
+
+
+def test_rn_31_anio_hasta_el_actual_mas_uno() -> None:
+    vehiculo = Vehiculo.registrar(
+        Placas("ABC123"), VIN(VIN_VALIDO), "Nissan", "Versa", 2027, "CLI-1", 2026
+    )
+
+    assert vehiculo.anio == 2027
+    with pytest.raises(ValorInvalido, match="no puede ser mayor a 2027"):
+        vehiculo.actualizar_datos(VIN(VIN_VALIDO), "Nissan", "Versa", 2028, 2026)
+    assert vehiculo.anio == 2027
+
+
+def test_rn_31_reconstruir_no_revisa_el_anio_contra_hoy() -> None:
+    """Condición del equipo: lo guardado se lee aunque no cumpla las reglas de captura."""
+    assert Vehiculo(Placas("ABC123"), VIN(VIN_VALIDO), "Nissan", "Versa", 2099, "CLI-1").anio == 2099

@@ -3,9 +3,21 @@ from __future__ import annotations
 
 import pytest
 
-from application.comandos import DatosDeVehiculo, RegistrarCliente, RegistrarOrden
+from application.comandos import (
+    CancelarOrden,
+    CorregirCliente,
+    CorregirVehiculo,
+    DatosDeVehiculo,
+    RegistrarCliente,
+    RegistrarOrden,
+)
 from domain.clientes.cliente import TipoCliente
-from domain.compartido.errores import ClienteNoEncontrado, ValorInvalido
+from domain.compartido.errores import (
+    ClienteNoEncontrado,
+    ValorInvalido,
+    VehiculoConOrdenAbierta,
+    VehiculoNoEncontrado,
+)
 from domain.ordenes.eventos import OrdenRecibida
 from domain.ordenes.valores import EstadoDeRecepcion, NivelDeCombustible
 from tests.unit.application.escenarios import AHORA, ASESOR, FLOTILLA, PARTICULAR, Taller, recibida
@@ -25,6 +37,12 @@ def _comando(**cambios: object) -> RegistrarOrden:
         "cliente": PARTICULAR,
     }
     return RegistrarOrden(**{**datos, **cambios})  # type: ignore[arg-type]
+
+
+def _visita_anterior_terminada(taller: Taller) -> None:
+    """Un cliente recurrente regresa cuando su orden anterior ya se cerró (RN-27)."""
+    anterior = taller.recepcion.registrar_orden(_comando())
+    taller.cancelacion.cancelar(CancelarOrden(anterior.numero_orden, "Visita anterior", ASESOR))
 
 
 def test_ca_001_registra_cliente_vehiculo_y_orden_recibida(taller: Taller) -> None:
@@ -62,7 +80,7 @@ def test_ca_002_guarda_kilometraje_y_combustible(taller: Taller) -> None:
 
 
 def test_ca_003_reutiliza_vehiculo_y_cliente_por_placas(taller: Taller) -> None:
-    taller.recepcion.registrar_orden(_comando())
+    _visita_anterior_terminada(taller)
 
     segunda = taller.recepcion.registrar_orden(_comando(vehiculo=None, cliente=None))
 
@@ -73,23 +91,23 @@ def test_ca_003_reutiliza_vehiculo_y_cliente_por_placas(taller: Taller) -> None:
 
 
 def test_ca_003_actualiza_cliente_y_vehiculo(taller: Taller) -> None:
-    taller.recepcion.registrar_orden(_comando())
+    _visita_anterior_terminada(taller)
 
     taller.recepcion.registrar_orden(
         _comando(
             vehiculo=DatosDeVehiculo(VIN_1, "Nissan", "Sentra", 2021),
-            cliente=RegistrarCliente("Luis Peña Ruiz", telefono="81-9", correo="nuevo@correo.test"),
+            cliente=RegistrarCliente("Luis Peña Ruiz", telefono="81-9999-0000", correo="nuevo@correo.test"),
         )
     )
 
     cliente = taller.datos.clientes["CLI-0001"]
     vehiculo = taller.datos.vehiculos["ABC123"]
-    assert (cliente.nombre, cliente.telefono) == ("Luis Peña Ruiz", "81-9")
+    assert (cliente.nombre, cliente.telefono) == ("Luis Peña Ruiz", "81-9999-0000")
     assert (vehiculo.modelo, vehiculo.anio) == ("Sentra", 2021)
 
 
 def test_ca_003_placas_de_otro_cliente_es_invalido(taller: Taller) -> None:
-    taller.recepcion.registrar_orden(_comando())
+    _visita_anterior_terminada(taller)
 
     with pytest.raises(ValorInvalido, match="otro cliente"):
         taller.recepcion.registrar_orden(_comando(id_cliente="CLI-9999"))
@@ -120,7 +138,7 @@ def test_ca_004_cliente_existente_tambien_se_actualiza(taller: Taller) -> None:
         _comando(
             placas="XYZ-999",
             vehiculo=DatosDeVehiculo("2HGCM82633A004353", "Toyota", "Yaris", 2019),
-            cliente=RegistrarCliente("Luis P.", telefono="81-7"),
+            cliente=RegistrarCliente("Luis P.", telefono="81-7777-0000"),
             id_cliente="CLI-0001",
         )
     )
@@ -197,3 +215,100 @@ def test_rn_23_error_al_registrar_no_consume_folios(taller: Taller) -> None:
         taller.recepcion.registrar_orden(_comando(motivo_de_ingreso="  "))
 
     assert taller.recepcion.registrar_orden(_comando()).numero_orden == "OS-0001"
+
+
+def test_ca_052_no_abre_segunda_orden_del_mismo_vehiculo(taller: Taller) -> None:
+    taller.recepcion.registrar_orden(_comando())
+
+    with pytest.raises(VehiculoConOrdenAbierta) as error:
+        taller.recepcion.registrar_orden(_comando(vehiculo=None, cliente=None))
+
+    assert str(error.value) == (
+        "El vehículo con placas ABC123 ya tiene abierta la orden OS-0001 (estado «Recibida»). "
+        "Ábrala en lugar de registrar otra."
+    )
+    assert list(taller.datos.ordenes) == ["OS-0001"]
+
+
+def test_rn_27_si_hay_orden_abierta_no_cambia_cliente_ni_vehiculo(taller: Taller) -> None:
+    taller.recepcion.registrar_orden(_comando())
+
+    with pytest.raises(VehiculoConOrdenAbierta):
+        taller.recepcion.registrar_orden(
+            _comando(
+                vehiculo=DatosDeVehiculo(VIN_1, "Nissan", "Sentra", 2021),
+                cliente=RegistrarCliente("Otro Nombre"),
+            )
+        )
+
+    assert taller.datos.clientes["CLI-0001"].nombre == "Luis Peña"
+    assert taller.datos.vehiculos["ABC123"].modelo == "Versa"
+
+
+def test_rn_27_con_la_orden_anterior_cancelada_si_se_abre_otra(taller: Taller) -> None:
+    _visita_anterior_terminada(taller)
+
+    segunda = taller.recepcion.registrar_orden(_comando(vehiculo=None, cliente=None))
+
+    assert segunda.numero_orden == "OS-0002"
+
+
+# ------------------------------------------------------------------ correcciones (H-PIA-24)
+def test_ca_055_corrige_nombre_telefono_y_correo(taller: Taller) -> None:
+    orden = taller.recepcion.registrar_orden(_comando())
+
+    resultado = taller.recepcion.corregir_cliente(
+        CorregirCliente(orden.id_cliente, "Luis Peña Ruiz", "81 1234 5678", "luis.p@correo.test")
+    )
+
+    cliente = taller.datos.clientes[orden.id_cliente]
+    assert (resultado.nombre, resultado.telefono) == ("Luis Peña Ruiz", "81 1234 5678")
+    assert (cliente.nombre, cliente.correo) == ("Luis Peña Ruiz", "luis.p@correo.test")
+    assert taller.datos.ordenes[orden.numero_orden].id_cliente == orden.id_cliente
+
+
+def test_rn_29_cliente_con_nombre_vacio_no_se_corrige(taller: Taller) -> None:
+    orden = taller.recepcion.registrar_orden(_comando())
+
+    with pytest.raises(ValorInvalido):
+        taller.recepcion.corregir_cliente(CorregirCliente(orden.id_cliente, "   "))
+
+    assert taller.datos.clientes[orden.id_cliente].nombre == "Luis Peña"
+
+
+def test_ca_055_cliente_inexistente(taller: Taller) -> None:
+    with pytest.raises(ClienteNoEncontrado):
+        taller.recepcion.corregir_cliente(CorregirCliente("CLI-9999", "Nadie"))
+
+
+def test_ca_056_corrige_vin_marca_modelo_y_anio_sin_cambiar_placas(taller: Taller) -> None:
+    taller.recepcion.registrar_orden(_comando())
+
+    resultado = taller.recepcion.corregir_vehiculo(
+        CorregirVehiculo("abc-123", "2HGCM82633A004353", "Nissan", "Sentra", 2021)
+    )
+
+    vehiculo = taller.datos.vehiculos["ABC123"]
+    assert resultado.placas == "ABC123"
+    assert (vehiculo.vin.valor, vehiculo.modelo, vehiculo.anio) == (
+        "2HGCM82633A004353",
+        "Sentra",
+        2021,
+    )
+
+
+def test_ca_056_vin_de_otro_vehiculo_no_se_acepta(taller: Taller) -> None:
+    taller.recepcion.registrar_orden(_comando())
+    taller.recepcion.registrar_orden(
+        _comando(placas="XYZ-999", vehiculo=DatosDeVehiculo("2HGCM82633A004353", "Kia", "Rio", 2019))
+    )
+
+    with pytest.raises(ValorInvalido, match="Ya existe un vehículo con el VIN"):
+        taller.recepcion.corregir_vehiculo(
+            CorregirVehiculo("XYZ999", VIN_1, "Kia", "Rio", 2019)
+        )
+
+
+def test_ca_056_placas_no_registradas(taller: Taller) -> None:
+    with pytest.raises(VehiculoNoEncontrado):
+        taller.recepcion.corregir_vehiculo(CorregirVehiculo("ZZZ999", VIN_1, "Kia", "Rio", 2019))

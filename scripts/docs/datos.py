@@ -21,27 +21,29 @@ NECESIDADES = [
     ("N-13", "Permitir al cliente consultar el estado de su vehículo sin llamar al taller.", "Media"),
     ("N-14", "(Implícita) Dar seguimiento a las cotizaciones que lleven más de 48 horas sin respuesta.", "Media"),
     ("N-15", "(Implícita, v3.0) Cancelar la orden cuando el cliente desiste antes de que se genere la cotización.", "Media"),
+    ("N-16", "(Implícita, v3.1) Corregir los datos mal capturados dejando constancia y evitar registros repetidos (revisión del 09/11/2026).", "Alta"),
 ]
 
 # necesidad -> (US, CA, proceso BPMN)
 TRAZA_NECESIDAD = {
-    "N-01": (["US-001", "US-002", "US-003"], ["CA-001", "CA-002", "CA-003", "CA-004"], "Fase 1: Recepción y registro"),
-    "N-02": (["US-004"], ["CA-005", "CA-006"], "Fase 2: Diagnóstico y cotización; Fase 3: Autorización"),
-    "N-03": (["US-006"], ["CA-010", "CA-011", "CA-012"], "Fase 3: Autorización"),
-    "N-04": (["US-005"], ["CA-007", "CA-008", "CA-009"], "Fase 2: Diagnóstico y cotización"),
+    "N-01": (["US-001", "US-002", "US-003"], ["CA-001", "CA-002", "CA-003", "CA-004", "CA-052", "CA-059"], "Fase 1: Recepción y registro"),
+    "N-02": (["US-004"], ["CA-005", "CA-006", "CA-060"], "Fase 2: Diagnóstico y cotización; Fase 3: Autorización"),
+    "N-03": (["US-006"], ["CA-010", "CA-011", "CA-012", "CA-063"], "Fase 3: Autorización"),
+    "N-04": (["US-005"], ["CA-007", "CA-008", "CA-009", "CA-067"], "Fase 2: Diagnóstico y cotización"),
     "N-05": (["US-012"], ["CA-023"], "Fase 4: Gestión de refacciones"),
-    "N-06": (["US-009", "US-019"], ["CA-016", "CA-017", "CA-018", "CA-034"], "Fase 5: Reparación y ampliación"),
-    "N-07": (["US-016", "US-022"], ["CA-028", "CA-029", "CA-039", "CA-041"], "Fase 1, Fase 3 y Fase 6: Cierre, pago y entrega"),
+    "N-06": (["US-009", "US-019"], ["CA-016", "CA-017", "CA-018", "CA-034", "CA-061"], "Fase 5: Reparación y ampliación"),
+    "N-07": (["US-016", "US-022"], ["CA-028", "CA-029", "CA-039", "CA-041", "CA-064", "CA-065"], "Fase 1, Fase 3 y Fase 6: Cierre, pago y entrega"),
     "N-08": (["US-017", "US-018"], ["CA-030", "CA-031"], "Consulta transversal (no es una tarea del flujo)"),
-    "N-09": (["US-007", "US-008", "US-019", "US-020"],
-             ["CA-013", "CA-014", "CA-015", "CA-032", "CA-033", "CA-035", "CA-036", "CA-046"], "Fase 1, Fase 2 y Fase 5"),
-    "N-10": (["US-010", "US-011"], ["CA-019", "CA-020", "CA-021", "CA-022"], "Fase 4: Gestión de refacciones"),
-    "N-11": (["US-014", "US-015", "US-024"], ["CA-026", "CA-027", "CA-041", "CA-042", "CA-043"],
+    "N-09": (["US-007", "US-008", "US-019", "US-020"], ["CA-013", "CA-014", "CA-015", "CA-032", "CA-033", "CA-035", "CA-036", "CA-046", "CA-053", "CA-054"], "Fase 1, Fase 2 y Fase 5"),
+    "N-10": (["US-010", "US-011"], ["CA-019", "CA-020", "CA-021", "CA-022", "CA-062"], "Fase 4: Gestión de refacciones"),
+    "N-11": (["US-014", "US-015", "US-024"], ["CA-026", "CA-027", "CA-041", "CA-042", "CA-043", "CA-058"],
              "Fase 6: Cierre, pago y entrega (y Fase 3 para la entrega sin reparación)"),
     "N-12": (["US-013"], ["CA-024", "CA-025"], "Diagrama 2 (Casos especiales): Retiro anticipado"),
     "N-13": (["US-021"], ["CA-037", "CA-038"], "Consulta transversal (no es una tarea del flujo)"),
     "N-14": (["US-023"], ["CA-040"], "Fase 3: Autorización (temporizador de 48 h)"),
     "N-15": (["US-025"], ["CA-044", "CA-045"], "Diagrama 2 (Casos especiales): Cliente desiste antes de la cotización"),
+    "N-16": (["US-026", "US-020", "US-027", "US-014"], ["CA-047", "CA-048", "CA-049", "CA-050", "CA-051", "CA-054", "CA-055", "CA-056", "CA-057", "CA-058", "CA-066"],
+             "Fase 2 y Fase 3: corrección de la cotización (v3.1)"),
 }
 
 # ----------------------------------------------------------------------------- user stories
@@ -71,6 +73,8 @@ US = {
     "US-023": ("Asesor de Servicio", "Como Asesor de Servicio, quiero recibir una alerta cuando una cotización presentada lleve más de 48 horas sin respuesta, para volver a contactar al cliente o al Responsable de Flotilla."),
     "US-024": ("Asesor de Servicio", "Como Asesor de Servicio, quiero registrar la entrega del vehículo al cliente, para cerrar la orden de servicio y dejar constancia de cuándo salió el vehículo del taller."),
     "US-025": ("Asesor de Servicio", "Como Asesor de Servicio, quiero cancelar una orden cuando el cliente desiste del servicio antes de que se genere la cotización, para cerrar el expediente sin cobro y dejar registrado el motivo."),
+    "US-026": ("Asesor de Servicio", "Como Asesor de Servicio, quiero corregir una cotización con un importe o una descripción mal capturados mientras espera la revisión del Gerente o la decisión del cliente, indicando el motivo, para presentar un documento correcto sin perder el historial de lo que cambió."),
+    "US-027": ("Asesor de Servicio", "Como Asesor de Servicio, quiero corregir los datos del cliente, del vehículo y del estado de recepción que capturé mal, para que el expediente quede correcto sin tener que abrir otra orden."),
 }
 
 # ----------------------------------------------------------------------------- criterios
@@ -79,15 +83,23 @@ US = {
 #   máquina de estados, evento) · servicio: caso de uso · ruta: endpoint · rol · prioridad:
 #   P1 = se implementa en el PIA; P2 = se implementa si el tiempo lo permite (PDF/fotos)
 #   cambio: hallazgo que modificó el criterio en v3.0 (None = sin cambios desde U2/U3)
+#   planeado: aprobado en la Fase 13 y todavía sin construir; la Fase 14 quita la marca al
+#   construirlo (tests/test_trazabilidad.py exige que un criterio planeado aún no tenga prueba)
 D, C, E, Y = "Dado", "Cuando", "Entonces", "Y"
+PLANEADO = "Planeado"
 
 CA = {}
 
 
-def ca(id_, us, pasos, bpmn, reglas, dominio, servicio, ruta, rol, prioridad="P1", cambio=None, nombre=None):
+def ca(id_, us, pasos, bpmn, reglas, dominio, servicio, ruta, rol, prioridad="P1", cambio=None, nombre=None,
+       planeado=False):
     CA[id_] = dict(id=id_, us=us, pasos=pasos, bpmn=bpmn, reglas=reglas, dominio=dominio,
                    servicio=servicio, ruta=ruta, rol=rol, prioridad=prioridad, cambio=cambio,
-                   nombre=nombre)
+                   nombre=nombre, planeado=planeado)
+
+
+def prioridad_de(c):
+    return f"{c['prioridad']} · {PLANEADO}" if c["planeado"] else c["prioridad"]
 
 
 F1, F2, F3, F4, F5, F6 = ("Fase 1: Recepción y registro", "Fase 2: Diagnóstico y cotización",
@@ -182,7 +194,7 @@ ca("CA-009", "US-005", [
     (E, "el sistema debe cambiar su estado a «Requiere Ajuste»"),
     (Y, "debe notificar al asesor"),
     (C, "el asesor guarda la cotización ajustada"),
-    (E, "su estado pasa a «Pendiente de Autorización del Cliente» sin volver a revisión gerencial"),
+    (E, "si su total es igual o menor al que rechazó el Gerente, su estado pasa a «Pendiente de Autorización del Cliente» sin volver a revisión gerencial (si es mayor, ver CA-067)"),
 ], F2, ["RN-05", "RN-22"], "Cotizacion (ajustar), evento CotizacionRechazadaPorGerente → AlertaInterna",
    "ServicioDeAprobacionGerencial.revisar · ServicioDeCotizacion.ajustar",
    "POST /api/cotizaciones/{id}/revision-gerencial · PUT /api/cotizaciones/{id}/lineas", f"{GER} / {ASE}",
@@ -533,17 +545,230 @@ ca("CA-046", "US-008", [
    "ServicioDeReparacion.iniciar_trabajo", "POST /api/ordenes/{numero}/trabajos/{id}/inicio (409)", TEC,
    cambio="H-PIA-06", nombre="No se trabaja un vehículo retirado del taller")
 
+# ----------------------------------------------------------------------------- v3.1 (revisión del 09/11/2026)
+# Criterios aprobados en la Fase 13 a partir de docs/auditoria-errores-de-usuario.md.
+F23 = "Fase 2 y Fase 3: corrección de la cotización"
+
+ca("CA-047", "US-026", [
+    (D, "que una cotización está en «Pendiente de Autorización del Cliente» con un importe o una descripción mal capturados"),
+    (C, "el asesor la corrige capturando los trabajos correctos y el motivo de la corrección"),
+    (E, "el sistema debe guardar los trabajos corregidos conservando el número y la versión de la cotización"),
+    (Y, "debe guardar en el historial de correcciones al asesor, la fecha y hora, el motivo, el total anterior y el total nuevo"),
+    (Y, "si la cotización no requiere aprobación gerencial, debe dejarla en «Pendiente de Autorización del Cliente» como no presentada, para que el asesor la presente otra vez"),
+], F23, ["RN-25", "RN-26", "RN-23"],
+   "Cotizacion (corregir), CorreccionDeCotizacion, spec RequiereAprobacionGerencial, evento CotizacionCorregida",
+   "ServicioDeCotizacion.corregir", "POST /api/cotizaciones/{id}/correcciones", ASE,
+   cambio="H-PIA-21", nombre="Corregir una cotización que espera la decisión del cliente")
+
+ca("CA-048", "US-026", [
+    (D, "que una cotización inicial está en «Pendiente de Autorización del Cliente», aunque el Gerente ya la haya aprobado o se haya ajustado según sus observaciones"),
+    (C, "el asesor la corrige y el total nuevo es mayor a $15,000 MXN"),
+    (E, "el sistema debe cambiarla a «Pendiente de Aprobación Gerencial»"),
+    (Y, "debe borrar la fecha de aprobación gerencial, que queda guardada en el historial de la corrección"),
+    (Y, "debe enviar una alerta al panel del Gerente"),
+    (Y, "debe impedir que se presente al cliente hasta que el Gerente la apruebe"),
+], F23, ["RN-26", "RN-04", "RN-06", "RN-22"],
+   "Cotizacion (corregir), spec RequiereAprobacionGerencial, MAQUINA_DE_COTIZACION, eventos CotizacionCorregida y AprobacionGerencialRequerida → AlertaInterna",
+   "ServicioDeCotizacion.corregir", "POST /api/cotizaciones/{id}/correcciones · GET /api/alertas", f"{ASE} / {GER}",
+   cambio="H-PIA-21", nombre="La corrección sube la cotización inicial arriba de $15,000 MXN")
+
+ca("CA-049", "US-026", [
+    (D, "que una cotización está en «Pendiente de Aprobación Gerencial»"),
+    (C, "el asesor la corrige capturando el motivo"),
+    (E, "si el total nuevo sigue siendo mayor a $15,000 MXN, la cotización debe quedarse en «Pendiente de Aprobación Gerencial» con los trabajos corregidos"),
+    (Y, "si el total nuevo es menor o igual a $15,000 MXN, debe cambiarla a «Pendiente de Autorización del Cliente» como no presentada"),
+    (Y, "en los dos casos debe guardar la corrección en el historial"),
+], F23, ["RN-25", "RN-26", "RN-04"],
+   "Cotizacion (corregir), spec RequiereAprobacionGerencial, MAQUINA_DE_COTIZACION, evento CotizacionCorregida",
+   "ServicioDeCotizacion.corregir", "POST /api/cotizaciones/{id}/correcciones", ASE,
+   cambio="H-PIA-21", nombre="Corregir una cotización que espera al Gerente")
+
+ca("CA-050", "US-026", [
+    (D, "que el asesor intenta corregir una cotización"),
+    (C, "la cotización está en «Requiere Ajuste», «Autorizada», «Autorizada Parcialmente» o «Rechazada», o el asesor no captura el motivo"),
+    (E, "el sistema no debe permitirlo"),
+    (Y, "si falta el motivo, debe pedir que lo capture"),
+    (Y, "si está en «Requiere Ajuste», debe indicar que se guarde la cotización ajustada según las observaciones del Gerente"),
+    (Y, "si ya tiene la decisión del cliente, debe indicar que ya no se corrige y que los trabajos nuevos se cotizan con una cotización adicional"),
+], F23, ["RN-25", "RN-05"],
+   "Cotizacion (corregir), error OperacionDeCotizacionNoPermitida, ValorInvalido (motivo)",
+   "ServicioDeCotizacion.corregir", "POST /api/cotizaciones/{id}/correcciones (409, 422)", ASE,
+   cambio="H-PIA-21", nombre="No se corrige sin motivo ni una cotización por ajustar o ya decidida")
+
+ca("CA-051", "US-026", [
+    (D, "que una cotización presentada, con recontactos registrados, se corrigió y quedó en «Pendiente de Autorización del Cliente»"),
+    (C, "el sistema ejecuta su revisión de plazos antes de que el asesor la presente otra vez"),
+    (E, "no debe generar la alerta de 48 horas"),
+    (Y, "debe conservar los recontactos anteriores como historial"),
+    (C, "el asesor la presenta otra vez"),
+    (E, "el plazo de 48 horas debe contar solo desde la nueva presentación y los recontactos posteriores a ella"),
+], F23, ["RN-26", "RN-12"],
+   "Cotizacion (fecha_presentacion, ultimo_contacto), spec RequiereRecontacto, ServicioDeRevisionDePlazos",
+   "ServicioDeRevisionDePlazos.revisar · ServicioDeCotizacion.presentar",
+   "POST /api/revisiones/plazos · POST /api/cotizaciones/{id}/presentacion", f"{SIS} / {ASE}",
+   cambio="H-PIA-21", nombre="El plazo de 48 horas después de una corrección")
+
+ca("CA-052", "US-001", [
+    (D, "que el vehículo con placas XYZ998 ya tiene una orden abierta (en un estado distinto de «Cerrada», «Cerrada sin Reparación» y «Cancelada»)"),
+    (C, "el asesor intenta registrar otra orden para ese vehículo, por ejemplo con un doble clic en «Registrar»"),
+    (E, "el sistema no debe abrir una segunda orden"),
+    (Y, "debe mostrar el mensaje «El vehículo con placas XYZ998 ya tiene abierta la orden OS-0001 (estado «Recibida»). Ábrala en lugar de registrar otra.»"),
+    (Y, "aunque las dos solicitudes lleguen al mismo tiempo, solo una orden debe quedar registrada y la otra debe recibir el mismo mensaje"),
+], F1, ["RN-27"], "VerificadorDeOrdenUnica, RepositorioDeOrdenes.abierta_del_vehiculo, índice único parcial de ordenes(placas), error VehiculoConOrdenAbierta",
+   "ServicioDeRecepcion.registrar_orden", "POST /api/ordenes (409)", ASE,
+   cambio="H-PIA-22", nombre="No se abre una segunda orden del mismo vehículo")
+
+ca("CA-053", "US-020", [
+    (D, "que el asesor va a asignar un técnico para el diagnóstico o para los trabajos autorizados"),
+    (C, "consulta la lista de técnicos"),
+    (E, "el sistema debe mostrar la clave y el nombre de cada empleado con rol Técnico"),
+    (Y, "no debe mostrar empleados de otros puestos"),
+], F2, ["RN-28"], "Empleado (RolDeEmpleado.TECNICO), modelo de lectura TecnicoVista", "Consulta ListarTecnicos",
+   "GET /api/tecnicos", ASE, cambio="H-PIA-23", nombre="Lista de técnicos para asignar")
+
+ca("CA-054", "US-020", [
+    (D, "que una orden está en «En Diagnóstico» y el técnico asignado todavía no registra el diagnóstico"),
+    (C, "el asesor asigna a otro técnico"),
+    (E, "el sistema debe cambiar el técnico de la orden sin cambiar su estado"),
+    (Y, "la orden debe salir del panel del técnico anterior y aparecer en el del nuevo"),
+    (Y, "si el diagnóstico ya está registrado, no debe permitir el cambio e indicar que el diagnóstico ya está registrado"),
+], F2, ["RN-28", "RN-22"], "OrdenDeServicio (asignar_tecnico_para_diagnostico), evento TecnicoDeDiagnosticoReasignado, error CorreccionNoPermitida",
+   "ServicioDeDiagnostico.asignar_tecnico", "POST /api/ordenes/{numero}/asignacion-diagnostico · GET /api/tecnicos/me/panel", ASE,
+   cambio="H-PIA-23", nombre="Cambiar el técnico de diagnóstico")
+
+ca("CA-055", "US-027", [
+    (D, "que el nombre, el teléfono o el correo de un cliente se capturaron mal"),
+    (C, "el asesor los corrige"),
+    (E, "el sistema debe guardar los datos corregidos sin cambiar las órdenes ni las cotizaciones del cliente"),
+    (Y, "las decisiones que se registren después deben compararse con el nombre corregido"),
+], F1, ["RN-29", "RN-07"], "Cliente (actualizar_contacto)", "ServicioDeRecepcion.corregir_cliente",
+   "PUT /api/clientes/{id}", ASE, cambio="H-PIA-24", nombre="Corregir los datos del cliente")
+
+ca("CA-056", "US-027", [
+    (D, "que el VIN, la marca, el modelo o el año de un vehículo se capturaron mal"),
+    (C, "el asesor los corrige"),
+    (E, "el sistema debe guardar los datos corregidos sin cambiar las placas"),
+    (Y, "si el VIN corregido ya pertenece a otro vehículo, no debe permitirlo e indicar que revise el dato"),
+], F1, ["RN-29"], "Vehiculo (actualizar_datos), VIN (VO)", "ServicioDeRecepcion.corregir_vehiculo",
+   "PUT /api/vehiculos/{placas}", ASE, cambio="H-PIA-24", nombre="Corregir los datos del vehículo")
+
+ca("CA-057", "US-027", [
+    (D, "que una orden está en «Recibida» o «En Diagnóstico»"),
+    (C, "el asesor corrige el kilometraje, el nivel de combustible o el motivo de ingreso"),
+    (E, "el sistema debe guardar los datos corregidos sin cambiar el estado de la orden"),
+    (Y, "si la orden ya tiene cotización, no debe permitirlo e indicar que esos datos solo se corrigen antes de la cotización"),
+], F1, ["RN-29"], "OrdenDeServicio (corregir_datos_de_recepcion), EstadoDeRecepcion, evento DatosDeRecepcionCorregidos, error CorreccionNoPermitida",
+   "ServicioDeRecepcion.corregir_recepcion", "PUT /api/ordenes/{numero}/recepcion", ASE,
+   cambio="H-PIA-24", nombre="Corregir el estado de recepción")
+
+ca("CA-058", "US-014", [
+    (D, "que Caja registró el pago de una orden con la forma de pago equivocada y la orden sigue «Pagada»"),
+    (C, "Caja corrige la forma de pago"),
+    (E, "el sistema debe guardar la forma de pago correcta sin cambiar el monto, la fecha del pago ni el estado de la orden"),
+    (Y, "debe dejar constancia de la forma de pago anterior y de la nueva"),
+    (Y, "si el vehículo ya se entregó, no debe permitir el cambio"),
+], F6, ["RN-30", "RN-16"], "OrdenDeServicio (corregir_forma_de_pago), Pago, FormaDePago, evento FormaDePagoCorregida, error CorreccionNoPermitida",
+   "ServicioDeCaja.corregir_forma_de_pago", "PUT /api/ordenes/{numero}/pago", CAJ,
+   cambio="H-PIA-24", nombre="Corregir la forma de pago antes de la entrega")
+
+ca("CA-059", "US-001", [
+    (D, "que el asesor captura los datos del cliente, del Responsable de Flotilla, del vehículo y del estado de recepción"),
+    (C, "escribe un teléfono que no tiene 10 dígitos, un correo sin la forma nombre@dominio.algo, un año mayor al año actual + 1, un kilometraje mayor a 2,000,000 o un texto de más de 1,000 caracteres"),
+    (E, "el sistema no debe guardar el registro"),
+    (Y, "debe indicar qué dato está mal y cómo debe capturarse, por ejemplo «El teléfono debe tener 10 dígitos; usted escribió 7.» o «El teléfono solo puede llevar números. Escriba los 10 dígitos, sin letras.»"),
+    (Y, "un teléfono o un correo con solo espacios debe tratarse como no capturado"),
+], F1, ["RN-31"], "Telefono y Correo (VO), Vehiculo (año), EstadoDeRecepcion (kilometraje), textos libres con largo máximo",
+   "ServicioDeRecepcion.registrar_orden / registrar_cliente", "POST /api/ordenes (422) · POST /api/clientes (422)", ASE,
+   cambio="H-PIA-25", nombre="Datos de captura con forma y rango razonables")
+
+ca("CA-060", "US-004", [
+    (D, "que el asesor captura los trabajos de una cotización"),
+    (C, "un trabajo suma $0.00 entre su mano de obra y sus refacciones"),
+    (E, "el sistema no debe guardar la cotización"),
+    (Y, "debe indicar qué trabajo vale $0.00 y pedir que capture su importe"),
+], F2, ["RN-32", "RN-23"], "LineaDeCotizacion (subtotal), Dinero",
+   "ServicioDeCotizacion.generar_inicial / generar_adicional / ajustar / corregir",
+   "POST /api/ordenes/{numero}/cotizaciones (422) · POST /api/ordenes/{numero}/cotizaciones-adicionales (422)", ASE,
+   cambio="H-PIA-25", nombre="Cada trabajo de la cotización vale más de $0.00")
+
+ca("CA-061", "US-009", [
+    (D, "que una orden tiene una cotización adicional en «Pendiente de Autorización del Cliente»"),
+    (C, "el asesor intenta generar otra cotización adicional, por ejemplo con un doble clic"),
+    (E, "el sistema no debe generarla"),
+    (Y, "debe indicar que primero se registre la decisión del cliente sobre la cotización adicional pendiente, con su versión"),
+], F5, ["RN-33", "RN-24"], "OrdenDeServicio (adicionales_pendientes), error OperacionDeCotizacionNoPermitida",
+   "ServicioDeCotizacion.generar_adicional", "POST /api/ordenes/{numero}/cotizaciones-adicionales (409)", ASE,
+   cambio="H-PIA-26", nombre="Una sola cotización adicional sin decisión a la vez")
+
+ca("CA-062", "US-010", [
+    (D, "que un trabajo ya tiene una solicitud de compra «Solicitada» de una refacción"),
+    (C, "el técnico vuelve a solicitar la misma refacción para el mismo trabajo, por ejemplo con un doble clic"),
+    (E, "el sistema no debe crear otra solicitud"),
+    (Y, "debe indicar que esa refacción ya está solicitada y que Compras la está gestionando"),
+    (Y, "la refacción debe compararse sin distinguir mayúsculas ni espacios repetidos"),
+], F4, ["RN-34", "RN-09"], "OrdenDeServicio (crear_solicitud_de_compra), SolicitudDeCompra, error SolicitudNoPermitida",
+   "ServicioDeRefacciones.solicitar", "POST /api/ordenes/{numero}/solicitudes-de-compra (409)", TEC,
+   cambio="H-PIA-26", nombre="No se repite la solicitud de una refacción pendiente")
+
+ca("CA-063", "US-006", [
+    (D, "que el cliente particular se llama «Luis Peña»"),
+    (C, "el asesor registra la decisión a nombre de «Luis  Peña» (con dos espacios), « luis peña » o «LUIS PEÑA»"),
+    (E, "el sistema debe aceptar el nombre como el mismo"),
+    (Y, "si el nombre se escribe sin acento («Luis Pena»), debe rechazarlo e indicar a nombre de quién se registra la decisión"),
+], F3, ["RN-07"], "spec AutorizanteValido (AutorizaElCliente, AutorizaSuResponsableDeFlotilla)",
+   "ServicioDeAutorizacion.registrar_decision", "POST /api/cotizaciones/{id}/decision", ASE,
+   cambio="H-PIA-27", nombre="El nombre del autorizante con espacios de más")
+
+ca("CA-064", "US-016", [
+    (D, "que la orden es de un cliente de flotilla de la empresa «Transportes Norte», cuyo Responsable de Flotilla es «Ana Torres»"),
+    (C, "el asesor registra la decisión con el rol «Cliente» o a nombre de otra persona"),
+    (E, "el sistema no debe registrarla"),
+    (Y, "debe indicar la empresa, el nombre del Responsable de Flotilla y el rol con el que se registra: «Para la flotilla de Transportes Norte, registre la decisión a nombre de su Responsable de Flotilla, Ana Torres, con el rol «Responsable de Flotilla».»"),
+], F3, ["RN-07"], "VerificadorDeAutorizante, error AutorizanteNoValido",
+   "ServicioDeAutorizacion.registrar_decision", "POST /api/cotizaciones/{id}/decision (409)", ASE,
+   cambio="H-PIA-27", nombre="Flotilla: el mensaje dice a nombre de quién y con qué rol")
+
+ca("CA-065", "US-016", [
+    (D, "que la empresa «Transportes Norte» ya está registrada con su Responsable de Flotilla «Ana Torres»"),
+    (C, "el asesor registra la misma empresa con datos distintos del responsable"),
+    (E, "el sistema no debe crear otra empresa ni cambiar en silencio al responsable registrado"),
+    (Y, "debe indicar que la empresa ya está registrada, con el nombre y el teléfono de su Responsable de Flotilla, para que use ese registro"),
+    (Y, "si los datos del responsable son los mismos, debe devolver la empresa registrada, como hasta ahora"),
+], F1, ["RN-07"], "Cliente (TipoCliente.FLOTILLA), ResponsableDeFlotilla, error EmpresaYaRegistrada",
+   "ServicioDeRecepcion.registrar_cliente", "POST /api/clientes (409)", ASE,
+   cambio="H-PIA-28", nombre="La empresa de flotilla ya está registrada")
+
+ca("CA-066", "US-027", [
+    (D, "que una orden está en «Recibida» o «En Diagnóstico» y las placas de su vehículo se capturaron mal"),
+    (C, "el asesor corrige las placas"),
+    (E, "el sistema debe cambiar las placas del vehículo y de sus órdenes"),
+    (Y, "el cliente debe poder consultar el estado de su orden con las placas correctas"),
+    (Y, "si las placas nuevas ya pertenecen a otro vehículo, o la orden está en otro estado, no debe permitirlo e indicar el motivo"),
+], F1, ["RN-35"], "Vehiculo y OrdenDeServicio (corregir placas), Placas (VO), evento PlacasCorregidas, error CorreccionNoPermitida",
+   "ServicioDeRecepcion.corregir_placas", "PUT /api/ordenes/{numero}/placas · GET /api/consulta-de-estado?orden=&placas=", ASE,
+   cambio="H-PIA-29", nombre="Corregir las placas mal capturadas")
+
+ca("CA-067", "US-005", [
+    (D, "que el Gerente rechazó con observaciones una cotización de $20,000.00 y está en «Requiere Ajuste»"),
+    (C, "el asesor guarda la cotización ajustada con un total mayor, por ejemplo $21,000.00"),
+    (E, "su estado debe regresar a «Pendiente de Aprobación Gerencial»"),
+    (Y, "el sistema debe notificar al Gerente para que revise el monto nuevo"),
+    (Y, "la cotización no se puede presentar al cliente hasta que el Gerente la apruebe"),
+], F2, ["RN-05", "RN-04"], "Cotizacion (ajustar), Dinero (comparación de totales), evento AprobacionGerencialRequerida → AlertaInterna",
+   "ServicioDeCotizacion.ajustar", "PUT /api/cotizaciones/{id}/lineas · GET /api/gerencia/cotizaciones-por-aprobar", ASE,
+   cambio="H-PIA-30", nombre="El ajuste sube el total que rechazó el Gerente")
+
 # ----------------------------------------------------------------------------- áreas (archivos .feature)
 AREAS = [
     ("01_recepcion", "Recepción y registro del vehículo",
      "Registrar digitalmente al cliente, al vehículo y su estado de ingreso para abrir la Orden de Servicio.",
-     ["US-001", "US-002", "US-003", "US-016"]),
+     ["US-001", "US-002", "US-003", "US-016", "US-027"]),
     ("02_diagnostico", "Asignación y diagnóstico",
      "Asignar técnicos, registrar el diagnóstico y reportar fallas adicionales.",
      ["US-020", "US-019", "US-007"]),
     ("03_cotizacion", "Cotización y aprobación gerencial",
      "Generar cotizaciones formales, aprobar las de alto monto y dar seguimiento a las que no tienen respuesta.",
-     ["US-004", "US-005", "US-023"]),
+     ["US-004", "US-005", "US-023", "US-026"]),
     ("04_autorizacion", "Autorización del cliente y cotizaciones adicionales",
      "Registrar con evidencia la decisión del cliente o del Responsable de Flotilla.",
      ["US-006", "US-009"]),
@@ -567,7 +792,7 @@ REGLAS = {
     "RN-02": ("La cotización solo se genera a partir de un diagnóstico registrado por el técnico asignado.", "BRD §1; CA-005, CA-032"),
     "RN-03": ("Después de generar la cotización el diagnóstico no se modifica; los hallazgos nuevos son fallas adicionales.", "BRD Restricción 7"),
     "RN-04": ("La cotización inicial mayor a $15,000 MXN requiere aprobación del Gerente; las adicionales nunca.", "BRD Restricción 4"),
-    "RN-05": ("El rechazo del Gerente exige observaciones; la versión ajustada no regresa a revisión.", "BRD §2 Reglas implícitas"),
+    "RN-05": ("El rechazo del Gerente exige observaciones; la versión ajustada no regresa a revisión si su total es igual o menor al que rechazó el Gerente; si es mayor, regresa a «Pendiente de Aprobación Gerencial» y se avisa al Gerente (v3.1, H-PIA-30).", "BRD §2 Reglas implícitas; revisión de la Fase 18 (10/11/2026)"),
     "RN-06": ("Una cotización que espera aprobación gerencial no puede presentarse al cliente.", "BRD Restricción 4; CE-05"),
     "RN-07": ("La decisión se registra a nombre del autorizante válido: el cliente particular o el Responsable de Flotilla, nunca el conductor.", "BRD Restricción 5"),
     "RN-08": ("Solo los trabajos autorizados se asignan y se ejecutan; los demás quedan «No Autorizado».", "BRD §2 Excepciones; CE-01"),
@@ -587,7 +812,22 @@ REGLAS = {
     "RN-22": ("Los estados solo cambian por las transiciones permitidas de su máquina de estados; un cambio inválido se rechaza.", "Glosario §2; ADR-007"),
     "RN-23": ("Importes en MXN nunca negativos y calculados con Decimal; cantidades mayores a cero; una cotización tiene al menos un trabajo.", "BRD §5; datos del profesor"),
     "RN-24": ("La cotización adicional es la versión siguiente (v.2, v.3…) y no modifica la cotización original.", "BRD §2 Excepciones"),
+    # v3.1 (revisión del 09/11/2026)
+    "RN-25": ("Solo el Asesor corrige una cotización, con motivo, y solo en «Pendiente de Aprobación Gerencial» o «Pendiente de Autorización del Cliente»; conserva su número y versión, y cada corrección queda en su historial (asesor, fecha y hora, motivo, total anterior y total nuevo). En «Requiere Ajuste» se usa el ajuste (RN-05); después de la decisión del cliente, la cotización adicional.", "Revisión del 09/11/2026 (H-PIA-21); BRD Restricción 11"),
+    "RN-26": ("Al corregir se vuelve a evaluar E1 y la cotización se presenta otra vez: si es inicial y supera $15,000 MXN regresa al Gerente aunque ya la hubiera aprobado o ajustado, porque RN-05 solo protege el ajuste que pidió el Gerente y una corrección cambia el monto que él revisó; el plazo de 48 horas cuenta desde la nueva presentación.", "H-PIA-21; BRD Restricciones 2, 4 y 11; ADR-018"),
+    "RN-27": ("Un vehículo tiene a lo más una orden abierta (en un estado que no sea «Cerrada», «Cerrada sin Reparación» ni «Cancelada»); un segundo registro se rechaza con el mismo mensaje aunque llegue al mismo tiempo.", "Revisión del 09/11/2026 (H-PIA-22); BRD Restricción 12"),
+    "RN-28": ("El técnico de diagnóstico se elige entre los empleados con rol Técnico y se puede cambiar mientras la orden está «En Diagnóstico» sin diagnóstico registrado; el cambio no modifica el estado de la orden.", "Revisión del 09/11/2026 (H-PIA-23); US-020"),
+    "RN-29": ("El Asesor corrige los datos del cliente (nombre, teléfono, correo) y del vehículo (VIN, marca, modelo, año) con las mismas validaciones del registro y sin repetir un VIN; el kilometraje, el nivel de combustible y el motivo de ingreso solo se corrigen con la orden «Recibida» o «En Diagnóstico».", "Revisión del 09/11/2026 (H-PIA-24); CA-003"),
+    "RN-30": ("Caja corrige la forma de pago solo mientras la orden está «Pagada» (antes de la entrega); el monto y la fecha del pago no cambian y queda constancia de la forma anterior.", "Revisión del 09/11/2026 (H-PIA-24); BRD Restricción 9"),
+    "RN-31": ("Los datos de captura tienen forma y rango razonables: teléfono con 10 dígitos (se aceptan espacios, guiones y paréntesis), correo con la forma nombre@dominio.algo, año del vehículo hasta el año actual + 1 (America/Monterrey), kilometraje hasta 2,000,000 y textos libres de hasta 1,000 caracteres; un teléfono o un correo con solo espacios cuenta como no capturado.", "Revisión del 09/11/2026 (H-PIA-25); BRD §5"),
+    "RN-32": ("Cada trabajo de una cotización vale más de $0.00 (mano de obra más refacciones); el taller no maneja trabajos sin costo.", "Revisión del 09/11/2026 (H-PIA-25); BRD §5 (sin garantías ni promociones)"),
+    "RN-33": ("Una orden tiene a lo más una cotización adicional sin decisión del cliente; la siguiente se genera después de registrar esa decisión.", "Revisión del 09/11/2026 (H-PIA-26); BRD §2 Excepciones"),
+    "RN-34": ("Un trabajo no tiene dos solicitudes «Solicitada» de la misma refacción (misma descripción, sin distinguir mayúsculas ni espacios repetidos); cuando la pieza llega se puede volver a solicitar.", "Revisión del 09/11/2026 (H-PIA-26); BRD Restricción 8"),
+    "RN-35": ("Las placas de un vehículo se corrigen solo mientras su orden está «Recibida» o «En Diagnóstico» y si no pertenecen a otro vehículo; cambian en el vehículo y en sus órdenes a la vez (P2).", "Revisión del 09/11/2026 (H-PIA-29); AU-01, AU-36"),
 }
+
+# Reglas aprobadas en la Fase 13 que todavía no se construyen (misma idea que `planeado` en los CA).
+REGLAS_PLANEADAS = set()
 
 # ----------------------------------------------------------------------------- pruebas previstas
 # Convención: toda prueba de aceptación se llama test_ca_0XX_<descripcion> para poder
@@ -623,6 +863,7 @@ def validar():
             assert r in REGLAS, (c["id"], r)
     reglas_usadas = {r for c in CA.values() for r in c["reglas"]}
     assert reglas_usadas == set(REGLAS), set(REGLAS) - reglas_usadas
+    assert REGLAS_PLANEADAS <= set(REGLAS), REGLAS_PLANEADAS - set(REGLAS)
     return len(NECESIDADES), len(US), len(CA), len(REGLAS)
 
 

@@ -12,6 +12,7 @@ from api.esquemas.diagnostico import (
     DiagnosticoRegistrado,
     FallaAdicionalRegistrada,
     OrdenDelPanel,
+    TecnicoDelTaller,
 )
 from api.seguridad import SOLO_ASESOR, Tecnico
 from application.comandos import (
@@ -19,8 +20,8 @@ from application.comandos import (
     RegistrarDiagnostico,
     ReportarFallaAdicional,
 )
-from application.consultas.consultas import ConsultarPanelDelTecnico
-from application.consultas.vistas import OrdenDelPanelVista
+from application.consultas.consultas import ConsultarPanelDelTecnico, ListarTecnicos
+from application.consultas.vistas import OrdenDelPanelVista, TecnicoVista
 from application.resultados import (
     ResultadoDeDiagnostico,
     ResultadoDeEstado,
@@ -72,6 +73,17 @@ def reportar_falla_adicional(
 ) -> ResultadoDeFallaAdicional:
     comando = ReportarFallaAdicional(numero, tecnico.id_empleado, datos.descripcion)
     return contenedor.diagnostico().reportar_falla_adicional(comando)
+
+
+@router.get(
+    "/tecnicos",
+    response_model=list[TecnicoDelTaller],
+    summary="Técnicos del taller (clave y nombre) para asignarlos",
+    dependencies=[SOLO_ASESOR],
+    responses=errores(401, 403),
+)
+def listar_tecnicos(contenedor: ContenedorDeLaApp) -> list[TecnicoVista]:
+    return contenedor.listar_tecnicos().ejecutar(ListarTecnicos())
 
 
 @router.get(

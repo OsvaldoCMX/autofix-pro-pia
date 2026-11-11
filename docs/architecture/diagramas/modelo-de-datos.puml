@@ -7,7 +7,7 @@ skinparam linetype ortho
 hide circle
 hide methods
 left to right direction
-title Modelo de datos — AutoFix Pro (PostgreSQL / Supabase) · PIA v3.0
+title Modelo de datos — AutoFix Pro (PostgreSQL / Supabase) · PIA v3.1
 
 entity "empleados" as empleados #EEF5FF {
   * <b>id</b> : VARCHAR(20) <<PK>>
@@ -155,6 +155,20 @@ entity "recontactos" as recontactos #EEF5FF {
   * asesor : VARCHAR(20) <<FK>>
   * registrado_en : TIMESTAMPTZ
 }
+entity "correcciones_de_cotizacion" as correcciones_de_cotizacion #EEF5FF {
+  * <b>id</b> : BIGSERIAL <<PK>>
+  --
+  * id_cotizacion : VARCHAR(20) <<FK>>
+  * asesor : VARCHAR(20) <<FK>>
+  * registrada_en : TIMESTAMPTZ
+  * motivo : TEXT
+  * total_anterior : NUMERIC(12,2)
+  * total_nuevo : NUMERIC(12,2)
+  * estado_anterior : VARCHAR(50)
+  * estado_nuevo : VARCHAR(50)
+    fecha_presentacion_anterior : TIMESTAMPTZ
+    fecha_aprobacion_gerencial_anterior : TIMESTAMPTZ
+}
 entity "alertas_internas" as alertas_internas #EEF5FF {
   * <b>id</b> : BIGSERIAL <<PK>>
   --
@@ -223,6 +237,8 @@ cotizaciones ||--o{ lineas_de_cotizacion
 lineas_de_cotizacion ||--o{ refacciones_cotizadas
 cotizaciones ||--o{ recontactos
 empleados ||--o{ recontactos
+cotizaciones ||--o{ correcciones_de_cotizacion
+empleados ||--o{ correcciones_de_cotizacion
 empleados ||--o{ alertas_internas
 ordenes ||--o{ alertas_internas
 cotizaciones ||--o{ alertas_internas

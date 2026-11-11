@@ -4,8 +4,11 @@ Invariantes que protege:
 - Tiene al menos un trabajo y su total es la suma de sus líneas (RN-23).
 - La inicial es v.1; las adicionales son v.2 en adelante (RN-24).
 - No se presenta al cliente mientras espera al Gerente (RN-06).
-- El rechazo del Gerente exige observaciones y la ajustada no regresa a revisión (RN-05).
+- El rechazo del Gerente exige observaciones; la ajustada no regresa a revisión salvo que su
+  total supere el que rechazó el Gerente (RN-05, H-PIA-30).
 - La decisión se registra una sola vez y sobre líneas existentes (RN-22).
+- Solo se corrige antes de la decisión y fuera de «Requiere Ajuste», con motivo; después se
+  vuelve a evaluar E1 y se presenta otra vez (RN-25, RN-26, ADR-018).
 """
 from __future__ import annotations
 
@@ -26,6 +29,7 @@ from domain.cotizaciones.estados import MAQUINA_DE_COTIZACION, EstadoCotizacion
 from domain.cotizaciones.linea_de_cotizacion import DecisionDeLinea, LineaDeCotizacion
 from domain.cotizaciones.valores import (
     Autorizante,
+    CorreccionDeCotizacion,
     DecisionDelCliente,
     Recontacto,
     TipoCotizacion,
@@ -34,6 +38,9 @@ from domain.cotizaciones.valores import (
 )
 
 _E = EstadoCotizacion
+_CORREGIBLES = frozenset(
+    {_E.PENDIENTE_DE_APROBACION_GERENCIAL, _E.PENDIENTE_DE_AUTORIZACION_DEL_CLIENTE}
+)
 
 
 class Cotizacion(RaizDeAgregado):
@@ -60,6 +67,7 @@ class Cotizacion(RaizDeAgregado):
         self.fecha_presentacion: datetime | None = None
         self.decision: DecisionDelCliente | None = None
         self._recontactos: list[Recontacto] = []
+        self._correcciones: list[CorreccionDeCotizacion] = []
 
     @classmethod
     def generar(
@@ -72,6 +80,7 @@ class Cotizacion(RaizDeAgregado):
         fecha: datetime,
         politica: Especificacion[Cotizacion] | None = None,
     ) -> Cotizacion:
+        lineas = _con_importe(lineas)
         cotizacion = cls(id_cotizacion, numero_orden, tipo, version, lineas, fecha)
         cotizacion._registrar(
             ev.CotizacionGenerada(fecha, *cotizacion._claves(), str(version), cotizacion._total())
@@ -99,11 +108,25 @@ class Cotizacion(RaizDeAgregado):
         return tuple(self._recontactos)
 
     @property
+    def correcciones(self) -> tuple[CorreccionDeCotizacion, ...]:
+        return tuple(self._correcciones)
+
+    @property
     def ultimo_contacto(self) -> datetime | None:
-        """Fecha desde la que corren las 48 horas: el último recontacto o la presentación."""
-        if self._recontactos:
-            return max(recontacto.registrado_en for recontacto in self._recontactos)
-        return self.fecha_presentacion
+        """Fecha desde la que corren las 48 horas: la presentación o el último recontacto.
+
+        Después de una corrección solo cuentan la nueva presentación y los recontactos
+        posteriores a ella; los anteriores quedan como historial (CA-051).
+        """
+        presentacion = self.fecha_presentacion
+        if presentacion is None:
+            return None
+        posteriores = (
+            recontacto.registrado_en
+            for recontacto in self._recontactos
+            if recontacto.registrado_en >= presentacion
+        )
+        return max(posteriores, default=presentacion)
 
     def aprobar_por_gerente(self, fecha: datetime) -> None:
         self._exigir_estado(_E.PENDIENTE_DE_APROBACION_GERENCIAL, "aprobar")
@@ -121,11 +144,100 @@ class Cotizacion(RaizDeAgregado):
         self._registrar(ev.CotizacionRechazadaPorGerente(fecha, *self._claves(), limpias))
 
     def ajustar(self, lineas: Iterable[LineaDeCotizacion], fecha: datetime) -> None:
-        """La versión ajustada sigue las indicaciones del Gerente y no regresa a revisión."""
+        """La versión ajustada va al cliente si no supera el total que rechazó el Gerente (RN-05).
+
+        Mientras espera el ajuste, sus líneas son las que el Gerente rechazó; si el ajuste sube
+        ese total, el Gerente debe ver el monto nuevo y la cotización regresa a revisión (H-PIA-30).
+        """
         self._exigir_estado(_E.REQUIERE_AJUSTE, "ajustar")
-        self._lineas = self._indexar_lineas(lineas)
-        self._cambiar_estado(_E.PENDIENTE_DE_AUTORIZACION_DEL_CLIENTE)
+        nuevas = self._indexar_lineas(_con_importe(lineas))
+        total_rechazado = self.total
+        self._lineas = nuevas
+        regresa_al_gerente = self.total > total_rechazado
+        self._cambiar_estado(
+            _E.PENDIENTE_DE_APROBACION_GERENCIAL
+            if regresa_al_gerente
+            else _E.PENDIENTE_DE_AUTORIZACION_DEL_CLIENTE
+        )
         self._registrar(ev.CotizacionAjustada(fecha, *self._claves(), self._total()))
+        if regresa_al_gerente:
+            self._registrar(ev.AprobacionGerencialRequerida(fecha, *self._claves(), self._total()))
+
+    def corregir(
+        self,
+        lineas: Iterable[LineaDeCotizacion],
+        motivo: str,
+        asesor: str,
+        fecha: datetime,
+        politica: Especificacion[Cotizacion] | None = None,
+    ) -> CorreccionDeCotizacion:
+        """Arregla un dato mal capturado antes de la decisión del cliente (RN-25, RN-26).
+
+        Se valida todo antes de modificar nada. La cotización vuelve a quedar sin presentar y
+        se evalúa otra vez E1: una inicial que supera $15,000 regresa al Gerente aunque ya la
+        hubiera aprobado o ajustado, porque la corrección cambia el monto que él revisó.
+        """
+        self._exigir_corregible()
+        motivo_limpio = texto_requerido(
+            motivo, "Capture el motivo de la corrección de la cotización."
+        )
+        nuevas = self._indexar_lineas(_con_importe(lineas))
+        estado_anterior, total_anterior = self.estado, self.total
+        presentacion_anterior = self.fecha_presentacion
+        aprobacion_anterior = self.fecha_aprobacion_gerencial
+
+        self._lineas = nuevas
+        requiere_gerente = (politica or RequiereAprobacionGerencial()).es_satisfecha_por(self)
+        estado_nuevo = (
+            _E.PENDIENTE_DE_APROBACION_GERENCIAL
+            if requiere_gerente
+            else _E.PENDIENTE_DE_AUTORIZACION_DEL_CLIENTE
+        )
+        if estado_nuevo is not estado_anterior:
+            self._cambiar_estado(estado_nuevo)
+        self.fecha_presentacion = None
+        if requiere_gerente:
+            self.fecha_aprobacion_gerencial = None
+
+        correccion = CorreccionDeCotizacion(
+            asesor,
+            fecha,
+            motivo_limpio,
+            total_anterior,
+            self.total,
+            estado_anterior,
+            estado_nuevo,
+            presentacion_anterior,
+            aprobacion_anterior,
+        )
+        self._correcciones.append(correccion)
+        self._registrar(
+            ev.CotizacionCorregida(
+                fecha,
+                *self._claves(),
+                correccion.asesor,
+                correccion.motivo,
+                str(total_anterior.monto),
+                self._total(),
+                estado_nuevo.value,
+            )
+        )
+        if estado_anterior is _E.PENDIENTE_DE_AUTORIZACION_DEL_CLIENTE and requiere_gerente:
+            self._registrar(ev.AprobacionGerencialRequerida(fecha, *self._claves(), self._total()))
+        return correccion
+
+    def _exigir_corregible(self) -> None:
+        if self.estado is _E.REQUIERE_AJUSTE:
+            raise OperacionDeCotizacionNoPermitida(
+                f"La cotización {self.version} está en «{_E.REQUIERE_AJUSTE.value}»: guarde la "
+                "cotización ajustada según las observaciones del Gerente en lugar de corregirla."
+            )
+        if self.estado not in _CORREGIBLES:
+            raise OperacionDeCotizacionNoPermitida(
+                f"La cotización {self.version} ya tiene la decisión del cliente "
+                f"(«{self.estado.value}») y ya no se corrige. Si el cliente necesita otros "
+                "trabajos, cotícelos con una cotización adicional durante la reparación."
+            )
 
     def marcar_presentada(self, fecha: datetime) -> None:
         """Inicia el plazo de 48 horas; una segunda presentación no lo reinicia."""
@@ -244,3 +356,29 @@ class Cotizacion(RaizDeAgregado):
         if not indice:
             raise CotizacionSinTrabajos("Una cotización debe incluir al menos un trabajo.")
         return indice
+
+
+def _con_importe(lineas: Iterable[LineaDeCotizacion]) -> list[LineaDeCotizacion]:
+    """RN-32: al capturar, cada trabajo vale más de $0.00 (el taller no maneja trabajos gratis).
+
+    No se revisa al leer de la base: las cotizaciones guardadas se reconstruyen tal cual.
+    """
+    lista = list(lineas)
+    for linea in lista:
+        if linea.subtotal == Dinero.cero():
+            raise ValorInvalido(
+                f"El trabajo {linea.numero} vale $0.00: "
+                "capture su mano de obra o sus refacciones."
+            )
+    return lista
+
+
+def exigir_sin_adicional_pendiente(cotizaciones: Iterable[Cotizacion]) -> None:
+    """RN-33: una sola cotización adicional sin decisión del cliente a la vez (CA-061)."""
+    for cotizacion in cotizaciones:
+        if cotizacion.tipo is TipoCotizacion.ADICIONAL and cotizacion.estado in _CORREGIBLES:
+            raise OperacionDeCotizacionNoPermitida(
+                f"La cotización adicional {cotizacion.version} todavía espera la decisión del "
+                "cliente; registre esa decisión antes de generar otra."
+            )
+

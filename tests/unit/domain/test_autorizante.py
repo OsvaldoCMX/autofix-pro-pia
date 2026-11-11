@@ -51,7 +51,8 @@ def test_ca_029_responsable_de_flotilla_autoriza() -> None:
 
 
 def test_ca_029_conductor_no_autoriza() -> None:
-    with pytest.raises(AutorizanteNoValido, match="conductor"):
+    # CA-064 cambió el texto: ahora dice a nombre de quién y con qué rol (H-PIA-27).
+    with pytest.raises(AutorizanteNoValido, match="a nombre de su Responsable de Flotilla, Ana"):
         VerificadorDeAutorizante().verificar(FLOTILLA, Autorizante("Pedro Conductor", _RESPONSABLE))
 
 
@@ -99,3 +100,32 @@ def test_rn_07_e2_cada_pieza_se_evalua_por_separado() -> None:
     assert not AutorizaElCliente().es_satisfecha_por(del_responsable)
     assert AutorizaSuResponsableDeFlotilla().es_satisfecha_por(del_responsable)
     assert not AutorizaSuResponsableDeFlotilla().es_satisfecha_por(del_cliente)
+
+
+# ------------------------------------------------------------------ H-PIA-27
+@pytest.mark.parametrize("nombre", ["Luis  Peña", " luis peña ", "LUIS PEÑA", "Luis\tPeña"])
+def test_ca_063_espacios_de_mas_y_mayusculas_no_cuentan(nombre: str) -> None:
+    VerificadorDeAutorizante().verificar(
+        PARTICULAR, Autorizante(nombre, RolDeAutorizante.CLIENTE)
+    )
+
+
+def test_ca_063_sin_acento_se_rechaza_y_dice_a_nombre_de_quien() -> None:
+    with pytest.raises(AutorizanteNoValido, match="a nombre del cliente Luis Peña"):
+        VerificadorDeAutorizante().verificar(
+            PARTICULAR, Autorizante("Luis Pena", RolDeAutorizante.CLIENTE)
+        )
+
+
+@pytest.mark.parametrize(
+    ("nombre", "rol"),
+    [("Ana Torres", RolDeAutorizante.CLIENTE), ("Pedro Conductor", RolDeAutorizante.CLIENTE)],
+)
+def test_ca_064_flotilla_dice_el_responsable_y_el_rol(nombre: str, rol: RolDeAutorizante) -> None:
+    with pytest.raises(AutorizanteNoValido) as error:
+        VerificadorDeAutorizante().verificar(FLOTILLA, Autorizante(nombre, rol))
+
+    assert str(error.value) == (
+        "Para la flotilla de Norte, registre la decisión a nombre de su Responsable "
+        "de Flotilla, Ana Torres, con el rol «Responsable de Flotilla»."
+    )

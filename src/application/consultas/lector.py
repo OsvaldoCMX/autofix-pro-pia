@@ -14,6 +14,7 @@ from application.consultas.vistas import (
     OrdenDelPanelVista,
     OrdenResumenVista,
     SolicitudVista,
+    TecnicoVista,
     VehiculoConClienteVista,
 )
 from application.puertos import AlertaInterna
@@ -33,6 +34,10 @@ class LectorDeOrdenes(ABC):
     @abstractmethod
     def panel_del_tecnico(self, id_tecnico: str) -> list[OrdenDelPanelVista]:
         """Órdenes con lugar en la fila que tiene asignadas, de la más antigua a la más reciente."""
+
+    @abstractmethod
+    def tecnicos(self) -> list[TecnicoVista]:
+        """Empleados con rol Técnico, por su clave (CA-053, RN-28)."""
 
     @abstractmethod
     def solicitudes_pendientes(self) -> list[SolicitudVista]: ...

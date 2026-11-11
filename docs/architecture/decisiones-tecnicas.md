@@ -1,6 +1,6 @@
 # Decisiones técnicas — AutoFix Pro (PIA)
 
-Resumen operativo de **cómo** se construye el sistema. El **porqué** de cada decisión está en su ADR (`adr/`). Todas las decisiones están aceptadas por el equipo (04/11/2026); si alguna cambia, se actualiza su ADR.
+Resumen operativo de **cómo** se construye el sistema. El **porqué** de cada decisión está en su ADR (`adr/`). Todas las decisiones están aceptadas por el equipo (04/11/2026); si alguna cambia, se actualiza su ADR. La v3.1 (09/11/2026) agrega la interfaz web (ADR-017) y la corrección de cotizaciones (ADR-018).
 
 ## 1. Stack
 
@@ -18,6 +18,7 @@ Resumen operativo de **cómo** se construye el sistema. El **porqué** de cada d
 | CI/CD | GitHub Actions (lint + pruebas + cobertura ≥ 80 % con PostgreSQL como servicio) y despliegue automático en Render desde `main` | ADR-011 |
 | Despliegue | Render: Web Service (Docker) conectado a Supabase | ADR-011 |
 | Seguridad | Token Bearer sencillo por empleado; cada ruta exige un rol | ADR-012 |
+| Interfaz web *(v3.1)* | HTML, CSS y JavaScript sin framework (módulos ES) en `src/api/web/`, servidos por el mismo FastAPI; sin Node, sin npm ni compilación. Pantallas en [`../interfaz-web.md`](../interfaz-web.md) | ADR-017 |
 
 ## 2. Estructura del repositorio
 
@@ -49,8 +50,12 @@ autofix-pro/
 │   └── api/                   ← FastAPI
 │       ├── main.py · dependencias.py (composition root) · seguridad.py · errores.py
 │       ├── esquemas/          modelos Pydantic de entrada y salida
-│       └── rutas/             recepcion, diagnostico, cotizaciones, autorizacion, reparacion, refacciones,
-│                              retiro, caja, entrega, cancelacion, consultas, alertas, revisiones, salud
+│       ├── rutas/             recepcion, diagnostico, cotizaciones, autorizacion, reparacion, refacciones,
+│       │                      retiro, caja, entrega, cancelacion, consultas, alertas, revisiones, salud
+│       │                      (v3.1: sesion)
+│       ├── interfaz.py        (v3.1) sirve la página: `/` entrega index.html y `/web/…` sus archivos
+│       └── web/               (v3.1) la página: index.html, estilos.css y módulos JS (principal, api,
+│                              sesion, formato, ui, expediente, alertas y uno por puesto); la sirve FastAPI en `/` (ADR-017)
 ├── tests/
 │   ├── unit/domain/ · unit/application/ · integration/ · api/ · datos_profesor/
 │   └── conftest.py
@@ -61,6 +66,8 @@ autofix-pro/
 ├── .github/workflows/         ci.yml · revision-de-plazos.yml
 ├── Dockerfile · docker-compose.yml · .env.example · pyproject.toml · README.md
 ```
+
+La interfaz web vive dentro de `src/api/web/` porque es parte de la capa de presentación: así `src/` conserva sus 4 paquetes y el Dockerfile no cambia. `/docs`, `/openapi.json`, `/health` y `/api/*` siguen funcionando igual, y la página solo habla con la API (nunca con Supabase). Los archivos de la página se sirven en `/web/…` y no directamente en `/`, para que una dirección que no existe siga respondiendo el error 404 de siempre; ni `/` ni `/web/…` aparecen en Swagger (`interfaz-web.md` §8).
 
 **Regla de dependencias:** `api → application → domain` e `infrastructure → application/domain`. El dominio no importa nada de las otras capas; la composición (qué implementación se usa) vive solo en `api/dependencias.py` (Composition Root). Una prueba de arquitectura (como la de la U5) verifica estas dependencias.
 
@@ -86,28 +93,30 @@ Toda la configuración viene del entorno; `.env.example` se sube al repositorio 
 - Prefijo `/api`; recursos en español, en plural y con guiones: `/api/ordenes/{numero}/solicitudes-de-compra`.
 - Las **acciones** del negocio se exponen como sub-recursos con `POST` (p. ej. `/cotizaciones/{id}/presentacion`, `/ordenes/{numero}/entrega`), porque cada una es un caso de uso con reglas propias y no un simple cambio de campo.
 - Códigos: **201** crea algo (orden, cotización, solicitud, pago…), **200** acción o consulta, **400** JSON mal formado, **401** falta el token o no es válido, **403** el rol no puede usar la ruta (o el trabajo es de otro técnico), **404** no existe, **409** viola una regla o transición del negocio, **422** un dato es inválido (ADR-008).
+- *(v3.1, H-PIA-28)* Mensajes que revisó la auditoría: un importe negativo responde «La mano de obra del trabajo 1 no puede ser negativa. Escriba la cantidad en pesos, por ejemplo 1500.00.» (con el nombre de cada importe: mano de obra, precio unitario o monto; H4 de la Fase 18; antes, el mensaje de formato); el número en la dirección se llama «número de trabajo» o «número de solicitud» según la ruta (antes, «número de registro»); la función de otro puesto responde «Esta función es de otro puesto del taller. Pida a la persona encargada que la realice.»; y `recomendaciones` del diagnóstico es opcional en el esquema, como en el dominio.
+- *(v3.1, Fase 15)* `GET /api/sesion` responde `id_empleado`, `nombre`, `rol` (el valor del código, por ejemplo «Asesor») y `puesto` (el nombre del Glosario §1: Asesor de Servicio, Técnico, Gerente de Taller, Personal de Compras o Personal de Caja); la página usa el rol para abrir el menú del puesto. Con la clave de Sistema responde 403 con el mismo tipo `RolNoPermitido` pero un mensaje propio, porque en la pantalla de inicio de sesión el de «otro puesto» confunde: «Esta clave es del sistema automático, no de un empleado del taller. Escriba su clave de acceso personal.» Las demás rutas conservan su mensaje.
 - Formato de error único: `{"error": "EntregaNoPermitida", "detalle": "No se puede entregar el vehículo de la orden AUT-O006 (estado «Autorizada»): primero debe registrarse el pago o el cargo a crédito.", "codigo": 409}`.
 - Importes como texto decimal con dos decimales (`"12887.00"`), nunca `float`. Fechas en ISO 8601 con zona.
-- Las «pantallas» de los criterios de aceptación (p. ej. «Nueva Orden», «Consulta tu vehículo») se representan con sus endpoints; para la demostración se usa Swagger UI.
+- Las «pantallas» de los criterios de aceptación (p. ej. «Nueva Orden», «Consulta tu vehículo») se representan con sus endpoints. *(v3.1)* Desde la revisión del 09/11/2026, el personal y el cliente usan la página web (`../interfaz-web.md`, ADR-017); Swagger UI queda para la parte técnica.
 - El contrato completo planeado está en [`../api/README.md`](../api/README.md); el `openapi.json` real se exporta a `docs/api/openapi.json` cuando la API esté implementada.
 
 ## 5. Roles y permisos
 
 | Rol | Puede |
 |---|---|
-| Asesor | Recepción, clientes, cancelación, asignaciones, cotizaciones (generar, presentar, ajustar, recontactar), decisión del cliente, avisos al cliente, retiro y reactivación, entrega. |
+| Asesor | Recepción, clientes, cancelación, asignaciones (con la lista de técnicos, v3.1), cotizaciones (generar, presentar, ajustar, corregir, recontactar), decisión del cliente, avisos al cliente, retiro y reactivación, entrega y, en la v3.1, corrección de los datos del cliente, del vehículo, de la recepción y de las placas (P2). |
 | Técnico | Su panel, diagnóstico, fallas adicionales, iniciar/completar **sus** trabajos, solicitudes de compra. |
 | Gerente | Revisión gerencial, cotizaciones por aprobar, listado de órdenes, ingresos del día, expediente. |
 | Compras | Solicitudes pendientes y registro de llegada. |
-| Caja | Pago, cargo a crédito, recibo interno. |
+| Caja | Pago, cargo a crédito, recibo interno y, en la v3.1, corrección de la forma de pago. |
 | Sistema | Solo la revisión de plazos. |
-| Público | Consulta de estado (sin token) y `/health`. |
+| Público | Consulta de estado (sin token), `/health` y, en la v3.1, la página web (`/`), que pide la clave de acceso para las pantallas del personal. |
 
 ## 6. Datos de demostración
 
 La base se prepara con tres scripts de `database/` (en Supabase: SQL Editor; en Docker: automáticamente al crear el volumen):
 
-1. `01_esquema.sql` — crea las 18 tablas (borra las anteriores; los datos son ficticios).
+1. `01_esquema.sql` — crea las 19 tablas (borra las anteriores; los datos son ficticios).
 2. `02_datos_iniciales.sql` — 6 empleados de demostración y el **estado inicial** de los datos del profesor: 40 clientes, 60 vehículos, 60 órdenes «Recibida», 20 servicios de catálogo y 117 líneas de detalle. Los cambios de estado se hacen después con la API, como pide el paquete del profesor.
 3. `03_verificacion.sql` — muestra los conteos obtenidos contra los esperados.
 
@@ -141,3 +150,4 @@ Las reglas de conversión y las diferencias con el modelo del profesor están en
 
 - **P1 (obligatorio en el PIA):** todo el flujo de la orden, las 8 Specifications, las 4 máquinas de estados, los Domain Events con sus alertas, la revisión de plazos, las consultas, la seguridad por roles, la carga de los datos del profesor y sus pruebas.
 - **P2 (si el tiempo lo permite):** generación de PDF (cotización, Nota de Responsabilidad, recibo) y fotos de daños. Mientras no estén, las rutas P2 responden `501 Not Implemented` con un mensaje claro y la matriz de trazabilidad lo indica en la columna «Prioridad». **Decisión del equipo (06/11/2026):** P2 se omite en esta entrega por falta de tiempo; las 4 rutas siguen en 501.
+- **P2 de la v3.1 (09/11/2026):** la corrección de placas (`PUT /api/ordenes/{numero}/placas`, CA-066, H-PIA-29) era P2 («solo si sobra tiempo»); sí alcanzó el tiempo y se construyó al final de la Fase 14, así que ya no responde 501.

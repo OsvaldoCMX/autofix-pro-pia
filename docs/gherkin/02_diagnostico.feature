@@ -23,6 +23,21 @@ Característica: Asignación y diagnóstico
     Cuando el asesor los asigna a un técnico
     Entonces el sistema debe mostrarlos en el panel de ese técnico en estado «Pendiente»
 
+  @US-020 @CA-053 @v3.1
+  Escenario: CA-053 Lista de técnicos para asignar
+    Dado que el asesor va a asignar un técnico para el diagnóstico o para los trabajos autorizados
+    Cuando consulta la lista de técnicos
+    Entonces el sistema debe mostrar la clave y el nombre de cada empleado con rol Técnico
+    Y no debe mostrar empleados de otros puestos
+
+  @US-020 @CA-054 @v3.1
+  Escenario: CA-054 Cambiar el técnico de diagnóstico
+    Dado que una orden está en «En Diagnóstico» y el técnico asignado todavía no registra el diagnóstico
+    Cuando el asesor asigna a otro técnico
+    Entonces el sistema debe cambiar el técnico de la orden sin cambiar su estado
+    Y la orden debe salir del panel del técnico anterior y aparecer en el del nuevo
+    Y si el diagnóstico ya está registrado, no debe permitir el cambio e indicar que el diagnóstico ya está registrado
+
   # ---------------------------------------------------------------- US-019 (Técnico)
 
   @US-019 @CA-032

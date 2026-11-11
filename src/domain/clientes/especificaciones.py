@@ -11,7 +11,9 @@ ClienteYAutorizante: TypeAlias = tuple[Cliente, Autorizante]
 
 
 def _mismo_nombre(uno: str, otro: str) -> bool:
-    return uno.casefold() == otro.casefold()
+    """Sin distinguir mayúsculas ni espacios repetidos o en los extremos; los acentos sí cuentan
+    («Luis Pena» no es «Luis Peña») (CA-063, H-PIA-27)."""
+    return " ".join(uno.split()).casefold() == " ".join(otro.split()).casefold()
 
 
 class EsClienteParticular(Especificacion[ClienteYAutorizante]):

@@ -17,6 +17,10 @@ ESTADOS_ORDEN = ["Recibida", "En Diagnóstico", "Cotizada", "Autorizada", "En Re
                  "Cerrada sin Reparación", "Cancelada"]
 ESTADOS_COTIZACION = ["Pendiente de Aprobación Gerencial", "Requiere Ajuste", "Pendiente de Autorización del Cliente",
                       "Autorizada", "Autorizada Parcialmente", "Rechazada"]
+# Una orden en estos estados está cerrada; en cualquier otro, abierta (RN-27, ESTADOS_DE_ORDEN_CERRADA)
+ESTADOS_ORDEN_CERRADA = ["Cerrada", "Cerrada sin Reparación", "Cancelada"]
+# Estados en los que el asesor puede corregir una cotización (RN-25)
+ESTADOS_CORREGIBLES = ["Pendiente de Aprobación Gerencial", "Pendiente de Autorización del Cliente"]
 ESTADOS_TRABAJO = ["Pendiente", "En Progreso", "Completado", "No Autorizado"]
 ESTADOS_SOLICITUD = ["Solicitada", "Disponible"]
 ROLES = ["Asesor", "Técnico", "Gerente", "Compras", "Caja"]
@@ -108,7 +112,7 @@ tabla("ordenes", "Órdenes de Servicio (Aggregate Orden de Servicio). Los Value 
     ("cancelacion_motivo", "TEXT", True, None, "Motivo de la cancelación (CA-044)"),
     ("cancelacion_registrada_en", TS, True, None, "Fecha de la cancelación"),
     ("cancelacion_asesor", "VARCHAR(20)", True, None, "Asesor que canceló"),
-], ["numero"], fks=[(["id_cliente"], "clientes", ["id"], "RESTRICT"), (["placas"], "vehiculos", ["placas"], "RESTRICT"),
+], ["numero"], fks=[(["id_cliente"], "clientes", ["id"], "RESTRICT"), (["placas"], "vehiculos", ["placas"], "RESTRICT", "CASCADE"),
                     (["asesor"], "empleados", ["id"], "RESTRICT"), (["tecnico_de_diagnostico"], "empleados", ["id"], "RESTRICT"),
                     (["cancelacion_asesor"], "empleados", ["id"], "RESTRICT")],
     uniques=[["recibo_numero"]], checks=[
@@ -123,7 +127,10 @@ tabla("ordenes", "Órdenes de Servicio (Aggregate Orden de Servicio). Los Value 
     "NOT (pago_monto IS NOT NULL AND credito_monto IS NOT NULL)",
     "estado <> 'Cancelada' OR cancelacion_motivo IS NOT NULL",
 ], indices=[("ix_ordenes_estado", "estado"), ("ix_ordenes_cliente", "id_cliente"), ("ix_ordenes_placas", "placas"),
-            ("ix_ordenes_pago_fecha", "pago_registrado_en")])
+            ("ix_ordenes_pago_fecha", "pago_registrado_en"),
+            # RN-27: respaldo ante dos registros al mismo tiempo (doble clic)
+            ("uq_ordenes_una_abierta_por_vehiculo", "placas",
+             dict(unico=True, donde=f"estado NOT IN ({lista(ESTADOS_ORDEN_CERRADA)})"))])
 
 tabla("trabajos", "Trabajos de la orden (entidad interna). Se crean al registrar la decisión del cliente.", [
     ("numero_orden", "VARCHAR(20)", False, None, "Orden"),
@@ -221,6 +228,26 @@ tabla("recontactos", "Recontactos al cliente por cotizaciones sin respuesta (CA-
     ("registrado_en", TS, False, None, "Fecha y hora (el plazo de 48 h vuelve a contar)"),
 ], ["id"], fks=[(["id_cotizacion"], "cotizaciones", ["id"], "CASCADE"), (["asesor"], "empleados", ["id"], "RESTRICT")])
 
+tabla("correcciones_de_cotizacion", "Historial de correcciones de una cotización antes de la decisión del cliente (CA-047 a CA-050, H-PIA-21, ADR-018).", [
+    ("id", "BIGSERIAL", False, None, "Identificador"),
+    ("id_cotizacion", "VARCHAR(20)", False, None, "Cotización"),
+    ("asesor", "VARCHAR(20)", False, None, "Asesor que corrigió"),
+    ("registrada_en", TS, False, None, "Fecha y hora de la corrección"),
+    ("motivo", "TEXT", False, None, "Motivo de la corrección (obligatorio)"),
+    ("total_anterior", MXN, False, None, "Total antes de corregir"),
+    ("total_nuevo", MXN, False, None, "Total después de corregir"),
+    ("estado_anterior", "VARCHAR(50)", False, None, "Estado antes de corregir"),
+    ("estado_nuevo", "VARCHAR(50)", False, None, "Estado después de corregir (se vuelve a evaluar E1)"),
+    ("fecha_presentacion_anterior", TS, True, None, "Presentación al cliente que se anuló al corregir"),
+    ("fecha_aprobacion_gerencial_anterior", TS, True, None, "Aprobación del Gerente que tenía (se borra si regresa a revisión)"),
+], ["id"], fks=[(["id_cotizacion"], "cotizaciones", ["id"], "CASCADE"), (["asesor"], "empleados", ["id"], "RESTRICT")],
+    checks=[
+    "total_anterior >= 0",
+    "total_nuevo >= 0",
+    f"estado_anterior IN ({lista(ESTADOS_CORREGIBLES)})",
+    f"estado_nuevo IN ({lista(ESTADOS_CORREGIBLES)})",
+])
+
 tabla("alertas_internas", "Alertas internas del panel de cada empleado (no son correos ni SMS).", [
     ("id", "BIGSERIAL", False, None, "Identificador"),
     ("destinatario", "VARCHAR(20)", True, None, "Empleado destinatario (o NULL si va a todo un rol)"),
@@ -281,7 +308,7 @@ tabla("referencia_operaciones_profesor", "Columnas del profesor sin equivalente 
 
 def sql():
     o = ["-- =============================================================================",
-         "-- AutoFix Pro · Esquema de la base de datos (PostgreSQL 16 / Supabase) · PIA v3.0",
+         "-- AutoFix Pro · Esquema de la base de datos (PostgreSQL 16 / Supabase) · PIA v3.1",
          "-- Generado por scripts/db/esquema.py — no editar a mano: cambie esquema.py y regenere.",
          "--",
          "-- Cómo usarlo:",
@@ -307,16 +334,21 @@ def sql():
         lineas.append(f"    CONSTRAINT pk_{t['nombre']} PRIMARY KEY ({', '.join(t['pk'])})")
         for cols in t["uniques"]:
             lineas.append(f"    CONSTRAINT uq_{t['nombre']}_{'_'.join(cols)} UNIQUE ({', '.join(cols)})")
-        for cols, ref, rcols, accion in t["fks"]:
+        for cols, ref, rcols, accion, *al_actualizar in t["fks"]:
+            # RN-35: corregir las placas del vehículo las cambia también en sus órdenes.
+            cascada = f" ON UPDATE {al_actualizar[0]}" if al_actualizar else ""
             lineas.append(f"    CONSTRAINT fk_{t['nombre']}_{'_'.join(cols)} FOREIGN KEY ({', '.join(cols)}) "
-                          f"REFERENCES {ref} ({', '.join(rcols)}) ON DELETE {accion}")
+                          f"REFERENCES {ref} ({', '.join(rcols)}) ON DELETE {accion}{cascada}")
         for i, ch in enumerate(t["checks"], 1):
             lineas.append(f"    CONSTRAINT ck_{t['nombre']}_{i} CHECK ({ch})")
         o.append(f"CREATE TABLE {t['nombre']} (")
         o.append(",\n".join(lineas))
         o.append(");")
-        for nombre, cols in t["indices"]:
-            o.append(f"CREATE INDEX {nombre} ON {t['nombre']} ({cols});")
+        for nombre, cols, *opciones in t["indices"]:
+            opcion = opciones[0] if opciones else {}
+            unico = "UNIQUE " if opcion.get("unico") else ""
+            donde = f" WHERE {opcion['donde']}" if opcion.get("donde") else ""
+            o.append(f"CREATE {unico}INDEX {nombre} ON {t['nombre']} ({cols}){donde};")
         o.append(f"COMMENT ON TABLE {t['nombre']} IS '{t['descripcion'].replace(chr(39), chr(39) * 2)}';")
         for c, _tipo, _n, _d, com in t["columnas"]:
             o.append(f"COMMENT ON COLUMN {t['nombre']}.{c} IS '{com.replace(chr(39), chr(39) * 2)}';")
@@ -334,7 +366,7 @@ def sql():
 def puml():
     o = ["@startuml modelo-de-datos", "skinparam defaultFontName Arial", "skinparam defaultFontSize 11", "skinparam shadowing false",
          "skinparam dpi 150", "skinparam linetype ortho", "hide circle", "hide methods", "left to right direction",
-         "title Modelo de datos — AutoFix Pro (PostgreSQL / Supabase) · PIA v3.0", ""]
+         "title Modelo de datos — AutoFix Pro (PostgreSQL / Supabase) · PIA v3.1", ""]
     colores = {"Dominio": "#EEF5FF", "Soporte": "#F4F6F6", "Datos del profesor": "#FEF9E7"}
     for t in T:
         o.append(f"entity \"{t['nombre']}\" as {t['nombre']} {colores[t['grupo']]} {{")
@@ -353,7 +385,7 @@ def puml():
     o.append("")
     vistos = set()
     for t in T:
-        for _cols, ref, _rc, _acc in t["fks"]:
+        for _cols, ref, _rc, _acc, *_cascada in t["fks"]:
             if (t["nombre"], ref) in vistos:
                 continue
             vistos.add((t["nombre"], ref))
@@ -365,7 +397,7 @@ def puml():
 
 
 def md():
-    o = ["# Modelo de datos — AutoFix Pro (PIA v3.0)\n",
+    o = ["# Modelo de datos — AutoFix Pro (PIA v3.1)\n",
          "Esquema oficial de la base de datos (PostgreSQL 16 en Docker y en **Supabase**, ADR-009). Lo genera `scripts/db/esquema.py`, que también produce `database/01_esquema.sql` y el diagrama `diagramas/modelo-de-datos.png`.\n",
          "**Reglas del mapeo:** cada Aggregate tiene su tabla raíz (`ordenes`, `cotizaciones`, `clientes`, `vehiculos`, `empleados`); las entidades internas tienen llave compuesta con el folio de su raíz; los Value Objects se guardan como columnas. Importes en `NUMERIC(12,2)` (pesos con centavos, se leen como `Decimal`) y fechas en `TIMESTAMPTZ` (UTC). Los nombres de estado son los del Glosario y la base los valida con `CHECK`. Las reglas de negocio **no** se programan en la base: viven en el dominio; la base solo protege la integridad (llaves, tipos y valores permitidos).\n",
          "**Implementación:** `src/infrastructure/base_de_datos/tablas.py` (SQLAlchemy) debe tener exactamente estas tablas y columnas; una prueba de integración con PostgreSQL lo verifica. En las pruebas sin Docker se usa SQLite con `metadata.create_all()`.\n",
@@ -381,8 +413,9 @@ def md():
                 clave = " (PK)" if c in t["pk"] else ""
                 o.append(f"| `{c}`{clave} | {tipo} | {'sí' if nulo else 'no'} | {com}{' · por defecto ' + d if d else ''} |")
             extra = []
-            for cols, ref, rc, _acc in t["fks"]:
-                extra.append(f"FK ({', '.join(cols)}) → `{ref}` ({', '.join(rc)})")
+            for cols, ref, rc, _acc, *cascada in t["fks"]:
+                al_actualizar = f", ON UPDATE {cascada[0]}" if cascada else ""
+                extra.append(f"FK ({', '.join(cols)}) → `{ref}` ({', '.join(rc)}){al_actualizar}")
             for cols in t["uniques"]:
                 extra.append(f"UNIQUE ({', '.join(cols)})")
             for ch in t["checks"]:

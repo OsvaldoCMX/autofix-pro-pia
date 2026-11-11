@@ -13,12 +13,14 @@ from collections.abc import Sequence
 from typing import Any
 
 from sqlalchemy import Connection, Table, delete, func, insert, select, update
+from sqlalchemy.exc import IntegrityError
 
 from application.puertos import AlertaInterna, CatalogoDeServicios, RepositorioDeAlertas
 from domain.clientes.cliente import Cliente, TipoCliente
 from domain.clientes.repositorio import RepositorioDeClientes
 from domain.compartido.errores import (
     ClienteNoEncontrado,
+    CorreccionNoPermitida,
     CotizacionNoEncontrada,
     EmpleadoNoEncontrado,
     OrdenNoEncontrada,
@@ -32,15 +34,19 @@ from domain.cotizaciones.repositorio import RepositorioDeCotizaciones
 from domain.cotizaciones.valores import VersionCotizacion
 from domain.empleados.empleado import Empleado
 from domain.empleados.repositorio import RepositorioDeEmpleados
+from domain.ordenes.estados import ESTADOS_DE_ORDEN_CERRADA
 from domain.ordenes.orden_de_servicio import OrdenDeServicio
 from domain.ordenes.repositorio import RepositorioDeOrdenes
+from domain.servicios.verificador_de_orden_unica import vehiculo_con_orden_abierta
 from domain.vehiculos.repositorio import RepositorioDeVehiculos
 from domain.vehiculos.vehiculo import Vehiculo
 from infrastructure.base_de_datos import mapeo
 from infrastructure.base_de_datos.tablas import (
+    INDICE_DE_ORDEN_ABIERTA,
     alertas_internas,
     catalogo_servicios,
     clientes,
+    correcciones_de_cotizacion,
     cotizaciones,
     empleados,
     fallas_adicionales,
@@ -109,6 +115,9 @@ def cargar_cotizacion(
         refacciones_cotizadas.c.id_cotizacion == id_cotizacion
     )
     contactos = select(recontactos).where(recontactos.c.id_cotizacion == id_cotizacion)
+    corregidas = select(correcciones_de_cotizacion).where(
+        correcciones_de_cotizacion.c.id_cotizacion == id_cotizacion
+    )
     return mapeo.cotizacion_desde_filas(
         mapeo.FilasDeCotizacion(
             fila,
@@ -121,6 +130,9 @@ def cargar_cotizacion(
             .mappings()
             .all(),
             conexion.execute(contactos.order_by(recontactos.c.id)).mappings().all(),
+            conexion.execute(corregidas.order_by(correcciones_de_cotizacion.c.id))
+            .mappings()
+            .all(),
         )
     )
 
@@ -161,8 +173,36 @@ class RepositorioDeOrdenesSqlAlchemy(RepositorioDeOrdenes):
             select(ordenes.c.numero).where(ordenes.c.numero == clave)
         ).first():
             raise ValorInvalido(f"La orden {orden.numero} ya existe.")
-        self._escribir(orden)
+        try:
+            self._escribir_orden_nueva(orden)
+        except IntegrityError as error:
+            if not _es_otra_orden_abierta(error):
+                raise
+            abierta = self.abierta_del_vehiculo(orden.placas)
+            raise vehiculo_con_orden_abierta(orden.placas, abierta) from error
         self._recordar(orden)
+
+    def abierta_del_vehiculo(self, placas: Placas) -> OrdenDeServicio | None:
+        numero = self._conexion.execute(
+            select(ordenes.c.numero)
+            .where(
+                ordenes.c.placas == str(placas),
+                ordenes.c.estado.not_in([estado.value for estado in ESTADOS_DE_ORDEN_CERRADA]),
+            )
+            .order_by(ordenes.c.numero)
+            .limit(1)
+        ).scalar()
+        return None if numero is None else self.obtener(NumeroOrden(numero))
+
+    def _escribir_orden_nueva(self, orden: OrdenDeServicio) -> None:
+        """En PostgreSQL un error deja la transacción inservible: el savepoint la conserva para
+        poder leer la otra orden y responder con el mismo mensaje del verificador (RN-27).
+        SQLite solo rechaza la sentencia, así que ahí no hace falta."""
+        if self._conexion.dialect.name != "postgresql":
+            self._escribir(orden)
+            return
+        with self._conexion.begin_nested():
+            self._escribir(orden)
 
     def guardar(self, orden: OrdenDeServicio) -> None:
         self._escribir(orden)
@@ -245,12 +285,18 @@ class RepositorioDeCotizacionesSqlAlchemy(RepositorioDeCotizaciones):
             cotizaciones.c.id == id_cotizacion,
             dict(filas.cotizacion),
         )
-        # Ajustar una cotización cambia sus líneas: las partes internas se reemplazan completas.
-        for tabla in (refacciones_cotizadas, lineas_de_cotizacion, recontactos):
+        # Ajustar o corregir una cotización cambia sus líneas: las partes internas se reemplazan.
+        for tabla in (
+            refacciones_cotizadas,
+            lineas_de_cotizacion,
+            recontactos,
+            correcciones_de_cotizacion,
+        ):
             self._conexion.execute(delete(tabla).where(tabla.c.id_cotizacion == id_cotizacion))
         _insertar(self._conexion, lineas_de_cotizacion, filas.lineas)
         _insertar(self._conexion, refacciones_cotizadas, filas.refacciones)
         _insertar(self._conexion, recontactos, filas.recontactos)
+        _insertar(self._conexion, correcciones_de_cotizacion, filas.correcciones)
 
     def _recordar(self, cotizacion: Cotizacion) -> None:
         self._cargadas[cotizacion.id] = cotizacion
@@ -356,6 +402,25 @@ class RepositorioDeVehiculosSqlAlchemy(RepositorioDeVehiculos):
         )
         self._cargados[clave] = vehiculo
 
+    def cambiar_placas(self, anteriores: Placas, nuevas: Placas) -> Vehiculo:
+        """`ON UPDATE CASCADE` cambia también las placas de sus órdenes (RN-35)."""
+        vehiculo = self.por_placas(anteriores)
+        if self._conexion.execute(
+            select(vehiculos.c.placas).where(vehiculos.c.placas == str(nuevas))
+        ).first():
+            raise CorreccionNoPermitida(
+                f"Las placas {nuevas} ya pertenecen a otro vehículo. Revise el dato capturado."
+            )
+        self._conexion.execute(
+            update(vehiculos)
+            .where(vehiculos.c.placas == str(anteriores))
+            .values(placas=str(nuevas))
+        )
+        del self._cargados[str(anteriores)]
+        vehiculo.placas = nuevas
+        self._cargados[str(nuevas)] = vehiculo
+        return vehiculo
+
     def _exigir_vin_libre(self, vehiculo: Vehiculo) -> None:
         """Responde con el error del negocio, no con el de la restricción UNIQUE."""
         if self._conexion.execute(
@@ -417,3 +482,9 @@ class CatalogoDeServiciosSqlAlchemy(CatalogoDeServicios):
             .order_by(catalogo_servicios.c.recurso_id)
         )
         return tuple(self._conexion.execute(consulta).scalars())
+
+
+def _es_otra_orden_abierta(error: IntegrityError) -> bool:
+    """PostgreSQL nombra el índice; SQLite solo dice qué columna repitió."""
+    mensaje = str(error.orig)
+    return INDICE_DE_ORDEN_ABIERTA in mensaje or "ordenes.placas" in mensaje

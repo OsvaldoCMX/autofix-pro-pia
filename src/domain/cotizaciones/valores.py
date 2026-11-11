@@ -7,6 +7,7 @@ from enum import Enum
 
 from domain.compartido.errores import ValorInvalido
 from domain.compartido.valores import Dinero, texto_requerido
+from domain.cotizaciones.estados import EstadoCotizacion
 
 
 class TipoCotizacion(Enum):
@@ -99,3 +100,27 @@ class Recontacto:
     def __post_init__(self) -> None:
         asesor = texto_requerido(self.asesor, "Debe indicarse el asesor que hizo el recontacto.")
         object.__setattr__(self, "asesor", asesor)
+
+
+@dataclass(frozen=True)
+class CorreccionDeCotizacion:
+    """Una corrección del asesor antes de la decisión del cliente (RN-25, H-PIA-21).
+
+    Guarda lo que cambió y lo que la cotización tenía antes de corregirse (ADR-018).
+    """
+
+    asesor: str
+    registrada_en: datetime
+    motivo: str
+    total_anterior: Dinero
+    total_nuevo: Dinero
+    estado_anterior: EstadoCotizacion
+    estado_nuevo: EstadoCotizacion
+    fecha_presentacion_anterior: datetime | None
+    fecha_aprobacion_gerencial_anterior: datetime | None
+
+    def __post_init__(self) -> None:
+        asesor = texto_requerido(self.asesor, "Debe indicarse el asesor que corrige la cotización.")
+        motivo = texto_requerido(self.motivo, "Capture el motivo de la corrección de la cotización.")
+        object.__setattr__(self, "asesor", asesor)
+        object.__setattr__(self, "motivo", motivo)

@@ -39,6 +39,14 @@ Cada fase está ligada a sus criterios de aceptación en `../user-stories.md` (s
 
 El flujo principal (6 fases) no cambió.
 
+## 2.1 Cambios que haría la v3.1 (solo anotados)
+
+Después de la revisión del 09/11/2026 no se editó el PDF de Lucidchart. Si se vuelve a editar, estos serían los cambios:
+
+| # | Dónde | Cambio | Motivo |
+|---|---|---|---|
+| 9 | Diagrama 1, Fases 2 y 3, carril Asesor | Tarea «Corregir cotización (con motivo)» antes de la decisión del cliente, que regresa a la compuerta «¿Monto mayor a $15,000 MXN?» y, después, a «Presentar cotización». Anotación: «Se guarda el historial; si es inicial y supera $15,000 MXN regresa al Gerente aunque ya la hubiera aprobado.» | H-PIA-21 (CA-047 a CA-051) |
+
 ## 3. Correspondencia de los objetos de datos con los estados
 
 Los objetos de datos usan exactamente los estados del Glosario: «Orden de Servicio [Recibida]» (Fase 1), «[Lista para Entrega]» (Fase 5), «[Cerrada]» (Fase 6), «[Pausada por Retiro de Vehículo]» (caso 1) y «[Cancelada]» (caso 2). El rechazo total termina en el evento «Orden cerrada sin reparación» (Fase 3), que corresponde al estado «Cerrada sin Reparación». La máquina de estados completa está en `../architecture/diagramas/estados-orden.png`.

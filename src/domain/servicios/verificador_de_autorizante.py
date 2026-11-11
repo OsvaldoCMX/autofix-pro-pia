@@ -8,7 +8,7 @@ from __future__ import annotations
 from domain.clientes.cliente import Cliente
 from domain.clientes.especificaciones import AutorizanteValido
 from domain.compartido.errores import AutorizanteNoValido
-from domain.cotizaciones.valores import Autorizante
+from domain.cotizaciones.valores import Autorizante, RolDeAutorizante
 
 
 class VerificadorDeAutorizante:
@@ -19,9 +19,11 @@ class VerificadorDeAutorizante:
         if self._regla.es_satisfecha_por((cliente, autorizante)):
             return
         if cliente.es_de_flotilla:
+            responsable = cliente.responsable.nombre if cliente.responsable else ""
             raise AutorizanteNoValido(
-                f"Para la flotilla de {cliente.empresa} solo puede autorizar "
-                "su Responsable de Flotilla; el conductor no puede autorizar."
+                f"Para la flotilla de {cliente.empresa}, registre la decisión a nombre de su "
+                f"Responsable de Flotilla, {responsable}, con el rol "
+                f"«{RolDeAutorizante.RESPONSABLE_DE_FLOTILLA.value}»."
             )
         raise AutorizanteNoValido(
             f"La decisión debe registrarse a nombre del cliente {cliente.nombre}."

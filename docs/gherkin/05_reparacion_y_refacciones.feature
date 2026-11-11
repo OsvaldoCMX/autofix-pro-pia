@@ -51,6 +51,14 @@ Característica: Reparación, refacciones y retiro anticipado
     Cuando el técnico intenta crear una solicitud de compra para ese trabajo
     Entonces el sistema no debe permitirlo
 
+  @US-010 @CA-062 @v3.1
+  Escenario: CA-062 No se repite la solicitud de una refacción pendiente
+    Dado que un trabajo ya tiene una solicitud de compra «Solicitada» de una refacción
+    Cuando el técnico vuelve a solicitar la misma refacción para el mismo trabajo, por ejemplo con un doble clic
+    Entonces el sistema no debe crear otra solicitud
+    Y debe indicar que esa refacción ya está solicitada y que Compras la está gestionando
+    Y la refacción debe compararse sin distinguir mayúsculas ni espacios repetidos
+
   # ---------------------------------------------------------------- US-011 (Personal de Compras)
 
   @US-011 @CA-021

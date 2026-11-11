@@ -306,6 +306,50 @@ def test_rn_05_ajustada_no_regresa_a_revision() -> None:
     ]
 
 
+def test_ca_067_ajustada_con_el_mismo_total_va_al_cliente() -> None:
+    cotizacion = _con_gerente()
+    cotizacion.rechazar_por_gerente("Cambiar la descripción", DESPUES)
+    _sin_eventos(cotizacion)
+
+    cotizacion.ajustar([_linea(monto="20000.00")], DESPUES)
+
+    assert cotizacion.estado is _E.PENDIENTE_DE_AUTORIZACION_DEL_CLIENTE
+    assert cotizacion.extraer_eventos() == [
+        ev.CotizacionAjustada(DESPUES, "COT-1", "OS-1", "20000.00")
+    ]
+
+
+def test_ca_067_ajustada_que_sube_el_total_rechazado_regresa_al_gerente() -> None:
+    cotizacion = _con_gerente()
+    cotizacion.rechazar_por_gerente("Revisar la mano de obra", DESPUES)
+    _sin_eventos(cotizacion)
+
+    cotizacion.ajustar([_linea(monto="20000.01")], DESPUES)
+
+    assert cotizacion.estado is _E.PENDIENTE_DE_APROBACION_GERENCIAL
+    assert cotizacion.total == _pesos("20000.01")
+    assert cotizacion.fecha_aprobacion_gerencial is None
+    assert cotizacion.observaciones_del_gerente == "Revisar la mano de obra"
+    assert cotizacion.extraer_eventos() == [
+        ev.CotizacionAjustada(DESPUES, "COT-1", "OS-1", "20000.01"),
+        ev.AprobacionGerencialRequerida(DESPUES, "COT-1", "OS-1", "20000.01"),
+    ]
+    with pytest.raises(OperacionDeCotizacionNoPermitida):
+        cotizacion.marcar_presentada(DESPUES)
+
+
+def test_ca_067_la_comparacion_es_con_el_ultimo_total_rechazado() -> None:
+    """Si el Gerente rechaza otra vez, el ajuste se compara con el total de ese rechazo."""
+    cotizacion = _con_gerente()
+    cotizacion.rechazar_por_gerente("Revisar", DESPUES)
+    cotizacion.ajustar([_linea(monto="25000.00")], DESPUES)
+    cotizacion.rechazar_por_gerente("Sigue alto", DESPUES)
+
+    cotizacion.ajustar([_linea(monto="22000.00")], DESPUES)
+
+    assert cotizacion.estado is _E.PENDIENTE_DE_AUTORIZACION_DEL_CLIENTE
+
+
 def test_rn_05_ajustar_exige_al_menos_un_trabajo_sin_cambiar_nada() -> None:
     cotizacion = _con_gerente()
     cotizacion.rechazar_por_gerente("Revisar", DESPUES)

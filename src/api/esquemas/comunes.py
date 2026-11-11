@@ -18,6 +18,7 @@ LARGO_DE_IDENTIFICADOR = 20  # clientes.id, empleados.id
 LARGO_DE_MARCA = 60  # vehiculos.marca, vehiculos.modelo
 LARGO_DE_VIN = 17  # vehiculos.vin
 LARGO_DE_REFACCION = 200  # solicitudes_de_compra.refaccion, refacciones_cotizadas.descripcion
+LARGO_DE_TEXTO_LIBRE = 1000  # columnas TEXT: motivos, descripciones, observaciones (RN-31)
 ENTERO_MAXIMO = 2_147_483_647  # INTEGER de PostgreSQL
 ANIO_MINIMO = 1900  # CHECK de vehiculos.anio
 ANIO_MAXIMO = 2100
@@ -29,6 +30,7 @@ TextoDeIdentificador = Annotated[str, StringConstraints(max_length=LARGO_DE_IDEN
 TextoDeMarca = Annotated[str, StringConstraints(max_length=LARGO_DE_MARCA)]
 TextoDeVin = Annotated[str, StringConstraints(max_length=LARGO_DE_VIN)]
 TextoDeRefaccion = Annotated[str, StringConstraints(max_length=LARGO_DE_REFACCION)]
+TextoLargo = Annotated[str, StringConstraints(max_length=LARGO_DE_TEXTO_LIBRE)]
 Importe = Annotated[
     str,
     StringConstraints(pattern=PATRON_DE_IMPORTE),

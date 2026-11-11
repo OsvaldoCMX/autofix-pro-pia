@@ -12,6 +12,10 @@ class DatosDePago(ModeloDeEntrada):
     forma: FormaDePago
 
 
+class DatosDeFormaDePago(ModeloDeEntrada):
+    forma: FormaDePago
+
+
 class PagoRegistrado(ModeloDeSalida):
     numero_orden: str
     estado: str

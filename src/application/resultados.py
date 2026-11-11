@@ -15,6 +15,26 @@ class ResultadoDeCliente:
     tipo: str
     empresa: str | None
     responsable_nombre: str | None
+    telefono: str | None = None
+    correo: str | None = None
+
+
+@dataclass(frozen=True)
+class ResultadoDeRecepcion:
+    numero_orden: str
+    estado: str
+    kilometraje: int
+    nivel_de_combustible: str
+    motivo_de_ingreso: str
+
+
+@dataclass(frozen=True)
+class ResultadoDeVehiculo:
+    placas: str
+    vin: str
+    marca: str
+    modelo: str
+    anio: int
 
 
 @dataclass(frozen=True)

@@ -5,16 +5,19 @@ from collections.abc import Callable
 
 import pytest
 
+from application.comandos import CancelarOrden
 from application.puertos import AlertaInterna
 from application.unidad_de_trabajo import UnidadDeTrabajo
 from domain.clientes.cliente import Cliente, ResponsableDeFlotilla, TipoCliente
 from domain.compartido.errores import (
     ClienteNoEncontrado,
+    CorreccionNoPermitida,
     CotizacionNoEncontrada,
     EmpleadoNoEncontrado,
     ErrorDeDominio,
     OrdenNoEncontrada,
     ValorInvalido,
+    VehiculoConOrdenAbierta,
     VehiculoNoEncontrado,
 )
 from domain.compartido.valores import VIN, Dinero, NumeroOrden, Placas
@@ -24,8 +27,17 @@ from domain.cotizaciones.valores import TipoCotizacion, VersionCotizacion
 from domain.empleados.empleado import RolDeEmpleado
 from domain.ordenes.orden_de_servicio import OrdenDeServicio
 from domain.ordenes.valores import EstadoDeRecepcion, NivelDeCombustible
+from domain.servicios.verificador_de_orden_unica import vehiculo_con_orden_abierta
 from domain.vehiculos.vehiculo import Vehiculo
-from tests.unit.application.escenarios import AHORA, ASESOR, TECNICO, Taller, en_diagnostico
+from tests.integration.apoyo_base import TallerEnBase
+from tests.unit.application.escenarios import (
+    AHORA,
+    ASESOR,
+    TECNICO,
+    Taller,
+    en_diagnostico,
+    recibida,
+)
 
 ID_CLIENTE = "CLI-1"
 NUMERO = NumeroOrden("OS-0001")
@@ -125,7 +137,7 @@ def test_guardar_vehiculo_rechaza_el_vin_de_otro(taller: Taller) -> None:
         uow.vehiculos.agregar(_vehiculo())
         segundo = _vehiculo("ABC2", VIN_2)
         uow.vehiculos.agregar(segundo)
-        segundo.actualizar_datos(VIN(VIN_1), "Nissan", "Versa", 2020)
+        segundo.actualizar_datos(VIN(VIN_1), "Nissan", "Versa", 2020, 2026)
 
         with pytest.raises(ValorInvalido, match="VIN"):
             uow.vehiculos.guardar(segundo)
@@ -154,10 +166,10 @@ def test_guardar_actualiza_lo_que_ya_existe(taller: Taller) -> None:
 
     with taller.uow() as uow:
         cliente = uow.clientes.obtener(ID_CLIENTE)
-        cliente.actualizar_contacto("Luis Peña", "81-2222", "luis@correo.test")
+        cliente.actualizar_contacto("Luis Peña", "81-2222-0000", "luis@correo.test")
         uow.clientes.guardar(cliente)
         vehiculo = uow.vehiculos.por_placas(PLACAS)
-        vehiculo.actualizar_datos(VIN(VIN_2), "Toyota", "Yaris", 2021)
+        vehiculo.actualizar_datos(VIN(VIN_2), "Toyota", "Yaris", 2021, 2026)
         uow.vehiculos.guardar(vehiculo)
         uow.confirmar()
 
@@ -167,7 +179,7 @@ def test_guardar_actualiza_lo_que_ya_existe(taller: Taller) -> None:
 
     assert (cliente.nombre, cliente.telefono, cliente.correo) == (
         "Luis Peña",
-        "81-2222",
+        "81-2222-0000",
         "luis@correo.test",
     )
     assert (str(vehiculo.vin), vehiculo.marca, vehiculo.modelo, vehiculo.anio) == (
@@ -285,3 +297,89 @@ def test_catalogo_devuelve_los_servicios_inhabilitados_de_la_orden(taller: Talle
             "AUT-P011",
         )
         assert uow.catalogo.servicios_inhabilitados_de_la_orden(NumeroOrden("OS-9999")) == ()
+
+
+def _placas_de(taller: Taller, numero: str) -> Placas:
+    with taller.uow() as uow:
+        return uow.ordenes.obtener(NumeroOrden(numero)).placas
+
+
+def test_rn_27_abierta_del_vehiculo_encuentra_la_orden_abierta(taller: Taller) -> None:
+    numero = recibida(taller)
+    placas = _placas_de(taller, numero)
+
+    with taller.uow() as uow:
+        abierta = uow.ordenes.abierta_del_vehiculo(placas)
+        sin_ordenes = uow.ordenes.abierta_del_vehiculo(Placas("ZZZ999"))
+
+    assert abierta is not None and str(abierta.numero) == numero
+    assert sin_ordenes is None
+
+
+def test_rn_27_una_orden_cancelada_ya_no_esta_abierta(taller: Taller) -> None:
+    numero = recibida(taller)
+    taller.cancelacion.cancelar(CancelarOrden(numero, "El cliente desistió", ASESOR))
+
+    with taller.uow() as uow:
+        assert uow.ordenes.abierta_del_vehiculo(_placas_de(taller, numero)) is None
+
+
+def test_rn_27_si_la_base_rechaza_la_segunda_orden_lanza_el_mismo_error(
+    taller_en_base: TallerEnBase,
+) -> None:
+    """Dos registros al mismo tiempo: el segundo se salta la revisión y lo detiene el índice."""
+    numero = recibida(taller_en_base)
+
+    with taller_en_base.uow() as uow:
+        primera = uow.ordenes.obtener(NumeroOrden(numero))
+        repetida = OrdenDeServicio.registrar(
+            uow.ordenes.siguiente_numero(),
+            primera.id_cliente,
+            False,
+            primera.placas,
+            ASESOR,
+            "Doble clic",
+            EstadoDeRecepcion(1000, NivelDeCombustible.MEDIO),
+            AHORA,
+        )
+        with pytest.raises(VehiculoConOrdenAbierta) as error:
+            uow.ordenes.agregar(repetida)
+        esperado = str(vehiculo_con_orden_abierta(primera.placas, primera))
+
+    assert str(error.value) == esperado
+    with taller_en_base.uow() as uow:
+        assert uow.ordenes.abierta_del_vehiculo(primera.placas) is not None
+
+
+def test_ca_053_lista_solo_empleados_con_rol_tecnico(taller: Taller) -> None:
+    tecnicos = taller.lector().tecnicos()
+
+    assert [(t.id_empleado, t.nombre) for t in tecnicos] == [
+        ("EMP-002", "Carlos Ruiz"),
+        ("EMP-003", "Diego Salinas"),
+    ]
+
+
+def test_rn_35_cambiar_placas_mueve_el_vehiculo_y_sus_ordenes(taller: Taller) -> None:
+    numero = recibida(taller)
+    anteriores = _placas_de(taller, numero)
+
+    with taller.uow() as uow:
+        uow.vehiculos.cambiar_placas(anteriores, Placas("XYZ998"))
+        orden = uow.ordenes.obtener(NumeroOrden(numero))
+        orden.corregir_placas(Placas("XYZ998"), AHORA)
+        uow.ordenes.guardar(orden)
+        uow.confirmar()
+
+    with taller.uow() as uow:
+        assert uow.vehiculos.por_placas(Placas("XYZ998")).placas == Placas("XYZ998")
+        assert uow.ordenes.obtener(NumeroOrden(numero)).placas == Placas("XYZ998")
+        with pytest.raises(VehiculoNoEncontrado):
+            uow.vehiculos.por_placas(anteriores)
+
+
+def test_rn_35_placas_de_otro_vehiculo_no_se_toman(taller: Taller) -> None:
+    primera, segunda = recibida(taller), recibida(taller)
+
+    with taller.uow() as uow, pytest.raises(CorreccionNoPermitida, match="otro vehículo"):
+        uow.vehiculos.cambiar_placas(_placas_de(taller, primera), _placas_de(taller, segunda))
