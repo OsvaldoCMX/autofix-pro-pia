@@ -215,9 +215,22 @@ function conEtiqueta(entrada, etiqueta) {
   );
 }
 
-/** Un campo con su etiqueta y su lugar para el mensaje de error. */
+/**
+ * Un campo con su etiqueta y su lugar para el mensaje de error. Un campo de teléfono
+ * (`type: "tel"`) no deja escribir letras (H2); el dominio vuelve a revisar el teléfono.
+ */
 export function campo(id, etiqueta, atributos = {}) {
-  return conEtiqueta(crear("input", { id, name: id, type: "text", ...atributos }), etiqueta);
+  const entrada = crear("input", { id, name: id, type: "text", ...atributos });
+  if (entrada.type === "tel") {
+    entrada.inputMode = "tel";
+    entrada.addEventListener("input", () => {
+      const permitido = entrada.value.replace(/[^0-9 ()-]/g, "");
+      if (permitido !== entrada.value) {
+        entrada.value = permitido;
+      }
+    });
+  }
+  return conEtiqueta(entrada, etiqueta);
 }
 
 /** Campo de texto largo (motivos, descripciones). */

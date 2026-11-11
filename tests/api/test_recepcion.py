@@ -413,12 +413,22 @@ def test_ca_057_despues_de_cotizar_responde_409(cliente: TestClient) -> None:
 
 
 # ------------------------------------------------------------------ datos de captura (H-PIA-25)
-def test_ca_059_telefono_sin_10_digitos_responde_422(cliente: TestClient) -> None:
+def test_ca_059_telefono_con_letras_responde_422(cliente: TestClient) -> None:
     datos = datos_de_orden(cliente={**CLIENTE_PARTICULAR, "telefono": "abc"})
 
     respuesta = exigir(cliente.post("/api/ordenes", json=datos, headers=ASESOR), 422)
 
-    assert respuesta["detalle"] == "El teléfono debe tener 10 dígitos, por ejemplo 81 1234 5678."
+    assert respuesta["detalle"] == (
+        "El teléfono solo puede llevar números. Escriba los 10 dígitos, sin letras."
+    )
+
+
+def test_ca_059_telefono_sin_10_digitos_responde_422(cliente: TestClient) -> None:
+    datos = datos_de_orden(cliente={**CLIENTE_PARTICULAR, "telefono": "81 1234 567"})
+
+    respuesta = exigir(cliente.post("/api/ordenes", json=datos, headers=ASESOR), 422)
+
+    assert respuesta["detalle"] == "El teléfono debe tener 10 dígitos; usted escribió 9."
 
 
 def test_ca_059_correo_sin_forma_valida_responde_422(cliente: TestClient) -> None:

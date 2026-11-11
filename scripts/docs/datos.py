@@ -675,7 +675,7 @@ ca("CA-059", "US-001", [
     (D, "que el asesor captura los datos del cliente, del Responsable de Flotilla, del vehículo y del estado de recepción"),
     (C, "escribe un teléfono que no tiene 10 dígitos, un correo sin la forma nombre@dominio.algo, un año mayor al año actual + 1, un kilometraje mayor a 2,000,000 o un texto de más de 1,000 caracteres"),
     (E, "el sistema no debe guardar el registro"),
-    (Y, "debe indicar qué dato está mal y cómo debe capturarse, por ejemplo «El teléfono debe tener 10 dígitos, por ejemplo 81 1234 5678.»"),
+    (Y, "debe indicar qué dato está mal y cómo debe capturarse, por ejemplo «El teléfono debe tener 10 dígitos; usted escribió 7.» o «El teléfono solo puede llevar números. Escriba los 10 dígitos, sin letras.»"),
     (Y, "un teléfono o un correo con solo espacios debe tratarse como no capturado"),
 ], F1, ["RN-31"], "Telefono y Correo (VO), Vehiculo (año), EstadoDeRecepcion (kilometraje), textos libres con largo máximo",
    "ServicioDeRecepcion.registrar_orden / registrar_cliente", "POST /api/ordenes (422) · POST /api/clientes (422)", ASE,

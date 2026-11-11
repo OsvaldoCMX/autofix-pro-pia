@@ -167,10 +167,30 @@ def test_rn_31_telefono_de_10_digitos(valor: str) -> None:
     assert Telefono(valor).valor == valor.strip()
 
 
-@pytest.mark.parametrize("valor", ["abc", "81-2222", "811234567890", "81 1234 567x", "+52 81 1234"])
-def test_rn_31_telefono_sin_10_digitos_se_rechaza(valor: str) -> None:
-    with pytest.raises(ValorInvalido, match="10 dígitos, por ejemplo 81 1234 5678"):
+@pytest.mark.parametrize(
+    "valor", ["abc", "81 1234 567x", "+52 81 1234 5678", "81#1234#5678", "811234567O"]
+)
+def test_rn_31_telefono_con_letras_o_simbolos_se_rechaza(valor: str) -> None:
+    with pytest.raises(ValorInvalido) as error:
         Telefono(valor)
+    assert str(error.value) == (
+        "El teléfono solo puede llevar números. Escriba los 10 dígitos, sin letras."
+    )
+
+
+@pytest.mark.parametrize(
+    ("valor", "digitos"),
+    [("81-2222", 6), ("811234567", 9), ("811234567890", 12), ("(81) 1234-567", 9), ("-", 0)],
+)
+def test_rn_31_telefono_sin_10_digitos_dice_cuantos_escribio(valor: str, digitos: int) -> None:
+    with pytest.raises(ValorInvalido) as error:
+        Telefono(valor)
+    assert str(error.value) == f"El teléfono debe tener 10 dígitos; usted escribió {digitos}."
+
+
+def test_rn_31_telefono_del_responsable_lleva_su_nombre_en_el_mensaje() -> None:
+    with pytest.raises(ValorInvalido, match="^El teléfono del Responsable de Flotilla solo puede"):
+        Telefono("ocho uno", "El teléfono del Responsable de Flotilla")
 
 
 @pytest.mark.parametrize("valor", [None, "", "   "])

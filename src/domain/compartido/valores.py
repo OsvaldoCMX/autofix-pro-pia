@@ -141,10 +141,15 @@ class Telefono:
 
     def __post_init__(self) -> None:
         limpio = self.valor.strip()
-        digitos = sum(caracter.isdigit() for caracter in limpio)
-        if not _CARACTERES_DE_TELEFONO.fullmatch(limpio) or digitos != _DIGITOS_DE_TELEFONO:
+        if not _CARACTERES_DE_TELEFONO.fullmatch(limpio):
             raise ValorInvalido(
-                f"{self.dato} debe tener {_DIGITOS_DE_TELEFONO} dígitos, por ejemplo 81 1234 5678."
+                f"{self.dato} solo puede llevar números. "
+                f"Escriba los {_DIGITOS_DE_TELEFONO} dígitos, sin letras."
+            )
+        digitos = sum(caracter.isdigit() for caracter in limpio)
+        if digitos != _DIGITOS_DE_TELEFONO:
+            raise ValorInvalido(
+                f"{self.dato} debe tener {_DIGITOS_DE_TELEFONO} dígitos; usted escribió {digitos}."
             )
         object.__setattr__(self, "valor", limpio)
 
