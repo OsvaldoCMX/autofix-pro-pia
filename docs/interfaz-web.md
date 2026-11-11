@@ -8,7 +8,7 @@ Este documento dice **qué pantallas** tiene la página web, qué ve cada usuari
 
 ## 1. Principios
 
-1. **Usuario no técnico.** Todo texto va en español sencillo: sin códigos HTTP, sin JSON, sin nombres de clases y sin inglés. Letras y botones grandes, legibles en laptop y en tablet.
+1. **Usuario no técnico.** Todo texto va en español sencillo: sin códigos HTTP, sin JSON, sin nombres de clases y sin inglés. Letras y botones grandes, legibles en laptop y en tablet. Las tarjetas de formulario miden unos 640 px y van centradas, con los campos a todo lo ancho; las tablas, el expediente y el editor de la cotización usan todo el ancho (H7, Fase 18).
 2. **Botones con verbos claros.** «Registrar llegada del vehículo», «Presentar cotización al cliente», «Registrar pago»; nunca «Enviar», «OK» ni «Submit».
 3. **Nombres del Glosario.** Los estados se muestran con su nombre exacto (`glosario.md` §2), con un color por grupo:
 

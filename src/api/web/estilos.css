@@ -57,6 +57,7 @@
   --sombra: 0 1px 2px rgba(15, 23, 42, 0.06), 0 2px 8px rgba(15, 23, 42, 0.06);
   --sombra-alta: 0 4px 14px rgba(15, 23, 42, 0.14);
   --ancho: 62rem;
+  --ancho-formulario: 35.5rem; /* unos 640 px */
 }
 
 * { box-sizing: border-box; }
@@ -209,6 +210,12 @@ a { color: var(--principal); }
 .tarjeta > :first-child { margin-top: 0; }
 .tarjeta .aviso { margin-top: var(--esp-4); }
 
+/* Tarjetas de formulario (H7): angostas y centradas, con los campos a todo lo ancho. Las tablas,
+   el expediente y el editor de la cotización (`tarjeta-ancha`) siguen anchos. */
+form.tarjeta:not(.tarjeta-ancha) { max-width: var(--ancho-formulario); margin-left: auto; margin-right: auto; }
+form.tarjeta:not(.tarjeta-ancha) .campo { max-width: none; }
+form.tarjeta:not(.tarjeta-ancha) .acciones { justify-content: flex-start; }
+
 /* Opción secundaria (por ejemplo, abrir una orden por su número en A-01). */
 .tarjeta-secundaria { background: var(--superficie-suave); box-shadow: none; border-style: dashed; border-color: var(--borde-fuerte); padding: var(--esp-4) var(--esp-5); }
 .tarjeta-secundaria h2 { font-size: var(--letra-media); }
@@ -333,7 +340,7 @@ a { color: var(--principal); }
 
 /* Formularios */
 
-.campo { display: flex; flex-direction: column; gap: var(--esp-1); margin-bottom: var(--esp-4); max-width: 26rem; }
+.campo { display: flex; flex-direction: column; gap: var(--esp-1); margin-bottom: var(--esp-4); max-width: 26rem; min-width: 0; }
 
 .campo label { font-weight: 600; }
 
@@ -359,6 +366,7 @@ fieldset {
   border-radius: var(--radio);
   padding: var(--esp-4) var(--esp-5) var(--esp-2);
   margin: 0 0 var(--esp-5);
+  min-width: 0; /* sin esto, el fieldset no se encoge y desborda la pantalla en tablet */
 }
 
 legend { font-weight: 700; font-size: var(--letra-media); padding: 0 var(--esp-2); }
@@ -465,7 +473,7 @@ legend { font-weight: 700; font-size: var(--letra-media); padding: 0 var(--esp-2
 
 .refaccion {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr auto;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr) auto;
   gap: 0 var(--esp-3);
   align-items: end;
   padding-bottom: var(--esp-2);
@@ -518,4 +526,6 @@ legend { font-weight: 700; font-size: var(--letra-media); padding: 0 var(--esp-2
   .portada { padding-top: var(--esp-4); }
   .portada h1 { font-size: 2.1rem; }
   .tarjeta { padding: var(--esp-4); }
+  /* En teléfono, los botones del formulario uno debajo del otro y a todo lo ancho. */
+  form.tarjeta .acciones { flex-direction: column; align-items: stretch; }
 }

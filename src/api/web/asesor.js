@@ -1329,9 +1329,10 @@ function mostrarEditor(contexto, modo, cotizacion = null) {
   const trabajos = crear("div", { className: "trabajos" });
   const lineas = cotizacion?.lineas ?? [{}];
   trabajos.append(...lineas.map(bloqueDeTrabajo));
+  // Ancho como una tabla: cada refacción es un renglón de cuatro columnas (H7).
   const forma = crear(
     "form",
-    { className: "tarjeta", noValidate: true },
+    { className: "tarjeta tarjeta-ancha", noValidate: true },
     crear("h1", {}, textos.titulo),
     crear("p", { className: "placas" }, expediente.placas),
     datos([
