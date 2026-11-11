@@ -14,7 +14,7 @@ Este documento contiene las User Stories derivadas del levantamiento de requerim
 
 Las historias siguen el formato *Como… quiero… para…* y cada criterio de aceptación está escrito en Gherkin (*Dado / Cuando / Entonces / Y*). Los mismos criterios, palabra por palabra, están en los archivos `docs/gherkin/*.feature` con las etiquetas `@US-xxx` y `@CA-xxx`, para que cada escenario se pueda relacionar con su prueba automatizada (convención `test_ca_0XX_…`). Los nombres de estados, roles y términos son los del [Glosario del Dominio](glosario.md).
 
-**Resumen:** 16 necesidades · 27 User Stories · 66 criterios de aceptación · 8 archivos `.feature`.
+**Resumen:** 16 necesidades · 27 User Stories · 67 criterios de aceptación · 8 archivos `.feature`.
 
 ## 1. Trazabilidad con el BRD
 
@@ -118,7 +118,8 @@ Los criterios marcados con **(v3.0)** se agregaron o se precisaron en el PIA y l
 |---|---|
 | **CA-007**<br>Cotización inicial mayor a $15,000 MXN | **Dado** que el asesor guarda una cotización inicial con un total mayor a $15,000 MXN<br>**Cuando** el sistema la genera<br>**Entonces** debe asignarle el estado «Pendiente de Aprobación Gerencial»<br>**Y** debe impedir que se marque como presentada<br>**Y** debe enviar una alerta al panel del Gerente |
 | **CA-008**<br>El Gerente aprueba la cotización | **Dado** que la cotización está en «Pendiente de Aprobación Gerencial»<br>**Cuando** el Gerente la revisa y la aprueba<br>**Entonces** el sistema debe cambiar su estado a «Pendiente de Autorización del Cliente»<br>**Y** debe registrar la fecha de aprobación<br>**Y** debe notificar al asesor para que pueda presentarla |
-| **CA-009**<br>El Gerente rechaza la cotización con observaciones | **Dado** que la cotización está en «Pendiente de Aprobación Gerencial»<br>**Cuando** el Gerente la rechaza capturando sus observaciones<br>**Entonces** el sistema debe cambiar su estado a «Requiere Ajuste»<br>**Y** debe notificar al asesor<br>**Cuando** el asesor guarda la cotización ajustada<br>**Entonces** su estado pasa a «Pendiente de Autorización del Cliente» sin volver a revisión gerencial |
+| **CA-009**<br>El Gerente rechaza la cotización con observaciones | **Dado** que la cotización está en «Pendiente de Aprobación Gerencial»<br>**Cuando** el Gerente la rechaza capturando sus observaciones<br>**Entonces** el sistema debe cambiar su estado a «Requiere Ajuste»<br>**Y** debe notificar al asesor<br>**Cuando** el asesor guarda la cotización ajustada<br>**Entonces** si su total es igual o menor al que rechazó el Gerente, su estado pasa a «Pendiente de Autorización del Cliente» sin volver a revisión gerencial (si es mayor, ver CA-067) |
+| **CA-067**<br>El ajuste sube el total que rechazó el Gerente **(v3.1, H-PIA-30)** | **Dado** que el Gerente rechazó con observaciones una cotización de $20,000.00 y está en «Requiere Ajuste»<br>**Cuando** el asesor guarda la cotización ajustada con un total mayor, por ejemplo $21,000.00<br>**Entonces** su estado debe regresar a «Pendiente de Aprobación Gerencial»<br>**Y** el sistema debe notificar al Gerente para que revise el monto nuevo<br>**Y** la cotización no se puede presentar al cliente hasta que el Gerente la apruebe |
 
 ### US-006
 
@@ -335,7 +336,7 @@ Los criterios marcados con **(v3.0)** se agregaron o se precisaron en el PIA y l
 | N-01 | US-001, US-002, US-003 | CA-001, CA-002, CA-003, CA-004, CA-052, CA-059 | Fase 1: Recepción y registro |
 | N-02 | US-004 | CA-005, CA-006, CA-060 | Fase 2: Diagnóstico y cotización; Fase 3: Autorización |
 | N-03 | US-006 | CA-010, CA-011, CA-012, CA-063 | Fase 3: Autorización |
-| N-04 | US-005 | CA-007, CA-008, CA-009 | Fase 2: Diagnóstico y cotización |
+| N-04 | US-005 | CA-007, CA-008, CA-009, CA-067 | Fase 2: Diagnóstico y cotización |
 | N-05 | US-012 | CA-023 | Fase 4: Gestión de refacciones |
 | N-06 | US-009, US-019 | CA-016, CA-017, CA-018, CA-034, CA-061 | Fase 5: Reparación y ampliación |
 | N-07 | US-016, US-022 | CA-028, CA-029, CA-039, CA-041, CA-064, CA-065 | Fase 1, Fase 3 y Fase 6: Cierre, pago y entrega |

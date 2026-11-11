@@ -1343,6 +1343,10 @@ function mostrarEditor(contexto, modo, cotizacion = null) {
     modo === "corregir"
       ? crear("p", { className: "aviso aviso-info" }, "La cotización se volverá a presentar al cliente; si es la inicial y supera $15,000.00, regresará al Gerente.")
       : null,
+    // Solo informa; si regresa al Gerente lo decide la API (H-PIA-30).
+    modo === "ajustar"
+      ? crear("p", { className: "aviso aviso-info" }, `Si el total supera ${dinero(cotizacion.total)}, el monto que rechazó el Gerente, la cotización regresará a su revisión.`)
+      : null,
     trabajos,
     crear("div", { className: "acciones" }, secundario("Agregar trabajo", () => {
       trabajos.append(bloqueDeTrabajo());

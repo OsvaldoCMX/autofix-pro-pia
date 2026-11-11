@@ -4,7 +4,8 @@ Invariantes que protege:
 - Tiene al menos un trabajo y su total es la suma de sus líneas (RN-23).
 - La inicial es v.1; las adicionales son v.2 en adelante (RN-24).
 - No se presenta al cliente mientras espera al Gerente (RN-06).
-- El rechazo del Gerente exige observaciones y la ajustada no regresa a revisión (RN-05).
+- El rechazo del Gerente exige observaciones; la ajustada no regresa a revisión salvo que su
+  total supere el que rechazó el Gerente (RN-05, H-PIA-30).
 - La decisión se registra una sola vez y sobre líneas existentes (RN-22).
 - Solo se corrige antes de la decisión y fuera de «Requiere Ajuste», con motivo; después se
   vuelve a evaluar E1 y se presenta otra vez (RN-25, RN-26, ADR-018).
@@ -143,11 +144,24 @@ class Cotizacion(RaizDeAgregado):
         self._registrar(ev.CotizacionRechazadaPorGerente(fecha, *self._claves(), limpias))
 
     def ajustar(self, lineas: Iterable[LineaDeCotizacion], fecha: datetime) -> None:
-        """La versión ajustada sigue las indicaciones del Gerente y no regresa a revisión."""
+        """La versión ajustada va al cliente si no supera el total que rechazó el Gerente (RN-05).
+
+        Mientras espera el ajuste, sus líneas son las que el Gerente rechazó; si el ajuste sube
+        ese total, el Gerente debe ver el monto nuevo y la cotización regresa a revisión (H-PIA-30).
+        """
         self._exigir_estado(_E.REQUIERE_AJUSTE, "ajustar")
-        self._lineas = self._indexar_lineas(_con_importe(lineas))
-        self._cambiar_estado(_E.PENDIENTE_DE_AUTORIZACION_DEL_CLIENTE)
+        nuevas = self._indexar_lineas(_con_importe(lineas))
+        total_rechazado = self.total
+        self._lineas = nuevas
+        regresa_al_gerente = self.total > total_rechazado
+        self._cambiar_estado(
+            _E.PENDIENTE_DE_APROBACION_GERENCIAL
+            if regresa_al_gerente
+            else _E.PENDIENTE_DE_AUTORIZACION_DEL_CLIENTE
+        )
         self._registrar(ev.CotizacionAjustada(fecha, *self._claves(), self._total()))
+        if regresa_al_gerente:
+            self._registrar(ev.AprobacionGerencialRequerida(fecha, *self._claves(), self._total()))
 
     def corregir(
         self,

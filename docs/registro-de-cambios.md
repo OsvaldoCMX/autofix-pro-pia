@@ -80,3 +80,12 @@ En la revisión del 09/11/2026 el profesor evaluó el sistema **como un usuario 
 
 **Cómo se marca lo planeado.** En `scripts/docs/datos.py` (`planeado=True` y `REGLAS_PLANEADAS`), en `scripts/docs/rutas.py` (`P1_PLANEADA`, `P2_PLANEADA` y las descripciones con «*Planeado (H-PIA-xx):*» de las rutas que ya existen) y en la tabla de errores del modelo de dominio («409 · Planeado»). `tests/test_trazabilidad.py`, `tests/api/test_contrato.py` y `tests/api/test_errores_http.py` no exigen prueba, ruta ni error a lo planeado, pero fallan si ya existe: así la Fase 14 tiene que quitar la marca al construir cada cosa.
 
+## 7. Revisión de la interfaz (Fase 18, 10/11/2026)
+
+Al revisar la página como usuario del taller (`evidencias/revision-interfaz.md`), el equipo encontró un hueco en una regla. Los demás hallazgos de la Fase 18 (H1 a H4) solo cambian mensajes y están en esa lista.
+
+| ID | Hallazgo | Origen | Decisión del equipo | Archivos afectados |
+|---|---|---|---|---|
+| H-PIA-30 | Después de que el Gerente rechaza una cotización, el asesor puede guardar la versión ajustada **subiendo** el total y la cotización va al cliente sin que el Gerente vea ese monto (RN-05 decía que la ajustada nunca regresa a revisión). | Revisión de la interfaz, Fase 18 (H5) | RN-05 se precisa: la ajustada no regresa al Gerente si su total es igual o menor al que él rechazó; si es mayor, regresa a «Pendiente de Aprobación Gerencial» y se emite `AprobacionGerencialRequerida` (alerta al Gerente). No se guarda ningún dato nuevo: en «Requiere Ajuste» las líneas son las rechazadas. Criterio nuevo CA-067; la máquina de la cotización gana la transición «Requiere Ajuste» → «Pendiente de Aprobación Gerencial». | `scripts/docs/` (RN-05, CA-009, CA-067, rutas), User Stories, `03_cotizacion.feature`, matriz, `api/README.md`, ADR-018 (nota), BRD (versión 3.2 y restricción 13), Glosario §2, modelo de dominio §2.2 y §5.2, `interfaz-web.md` A-05 |
+
+**Conteos después de la Fase 18:** 67 criterios de aceptación (CA-001 a CA-067); 35 reglas (RN-05 se precisa, no se agrega otra); 51 rutas (ninguna nueva); 25 estados (sin cambios); la máquina de la cotización tiene 2 transiciones nuevas desde la v3.0. El BPMN en PDF (Lucidchart) no se modificó: el ajuste que regresa al Gerente se documenta en el modelo de dominio §5.2.

@@ -181,6 +181,38 @@ def test_ca_009_gerente_rechaza_y_ajuste_no_regresa_a_revision(cliente: TestClie
     assert "Revisar la mano de obra" in alerta["mensaje"]
 
 
+def test_ca_067_ajuste_que_sube_el_total_regresa_al_gerente_con_alerta(
+    cliente: TestClient,
+) -> None:
+    _, id_cotizacion = por_aprobar(cliente)
+    exigir(
+        cliente.post(
+            f"/api/cotizaciones/{id_cotizacion}/revision-gerencial",
+            json={"aprobada": False, "observaciones": "Revisar la mano de obra"},
+            headers=GERENTE,
+        ),
+        200,
+    )
+
+    ajuste = exigir(
+        cliente.put(
+            f"/api/cotizaciones/{id_cotizacion}/lineas",
+            json=trabajos("21000.00"),
+            headers=ASESOR,
+        ),
+        200,
+    )
+
+    assert ajuste["estado"] == "Pendiente de Aprobación Gerencial"
+    assert ajuste["total"] == "21000.00"
+    pendientes = exigir(cliente.get("/api/gerencia/cotizaciones-por-aprobar", headers=GERENTE), 200)
+    assert [(c["id_cotizacion"], c["total"]) for c in pendientes] == [(id_cotizacion, "21000.00")]
+    avisos = tipos_de_alertas(cliente, GERENTE).count("AprobacionGerencialRequerida")
+    assert avisos == 2  # al generarla y al ajustarla arriba del total rechazado
+    presentar = cliente.post(f"/api/cotizaciones/{id_cotizacion}/presentacion", headers=ASESOR)
+    assert presentar.status_code == 409
+
+
 def test_ca_040_revision_alerta_a_las_48_horas_y_recontacto_reinicia_el_plazo(
     cliente: TestClient, reloj: Mock
 ) -> None:

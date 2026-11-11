@@ -271,7 +271,8 @@ adr(18, "correccion-de-cotizaciones", "Corrección de una cotización antes de l
       "(+) RN-05, RN-24 y la orden no cambian; la máquina de la cotización solo gana la transición «Pendiente de Autorización del Cliente» → «Pendiente de Aprobación Gerencial».",
       "(−) Una tabla más (`correcciones_de_cotizacion`) que hay que mapear en memoria y en la base.",
       "(−) Una corrección pequeña de una cotización mayor a $15,000 la regresa al Gerente; es una decisión consciente del equipo."],
-     "H-PIA-21 · AU-17 · N-16 · US-026 · CA-047 a CA-051 · RN-25, RN-26 (y RN-04, RN-05, RN-12) · CE-05 · `modelo-de-dominio.md` §5.2",
+     "H-PIA-21 · AU-17 · N-16 · US-026 · CA-047 a CA-051 · RN-25, RN-26 (y RN-04, RN-05, RN-12) · CE-05 · `modelo-de-dominio.md` §5.2 · H-PIA-30 · CA-067",
+     nota="**Actualización de la Fase 18 (10/11/2026, H-PIA-30).** Al revisar la página, el equipo encontró un hueco en RN-05: después del rechazo del Gerente, el asesor podía guardar la cotización ajustada **subiendo** el total y la cotización iba al cliente sin que el Gerente viera ese monto, lo mismo que esta decisión evita en la corrección. Desde ahora `ajustar` compara el total nuevo con el que rechazó el Gerente (mientras la cotización está en «Requiere Ajuste», sus líneas son las rechazadas, así que no hace falta guardar otro dato): si es igual o menor, va al cliente como antes; si es mayor, regresa a «Pendiente de Aprobación Gerencial» y emite `AprobacionGerencialRequerida` (alerta al Gerente). La máquina de la cotización gana una segunda transición, «Requiere Ajuste» → «Pendiente de Aprobación Gerencial» (CA-067). Las observaciones del Gerente se conservan. Así, ni la corrección ni el ajuste dejan frente al cliente un monto mayor al que revisó el Gerente (CE-05).",
      necesidades="N-02, N-04, N-16")
 
 

@@ -29,7 +29,7 @@ TRAZA_NECESIDAD = {
     "N-01": (["US-001", "US-002", "US-003"], ["CA-001", "CA-002", "CA-003", "CA-004", "CA-052", "CA-059"], "Fase 1: Recepción y registro"),
     "N-02": (["US-004"], ["CA-005", "CA-006", "CA-060"], "Fase 2: Diagnóstico y cotización; Fase 3: Autorización"),
     "N-03": (["US-006"], ["CA-010", "CA-011", "CA-012", "CA-063"], "Fase 3: Autorización"),
-    "N-04": (["US-005"], ["CA-007", "CA-008", "CA-009"], "Fase 2: Diagnóstico y cotización"),
+    "N-04": (["US-005"], ["CA-007", "CA-008", "CA-009", "CA-067"], "Fase 2: Diagnóstico y cotización"),
     "N-05": (["US-012"], ["CA-023"], "Fase 4: Gestión de refacciones"),
     "N-06": (["US-009", "US-019"], ["CA-016", "CA-017", "CA-018", "CA-034", "CA-061"], "Fase 5: Reparación y ampliación"),
     "N-07": (["US-016", "US-022"], ["CA-028", "CA-029", "CA-039", "CA-041", "CA-064", "CA-065"], "Fase 1, Fase 3 y Fase 6: Cierre, pago y entrega"),
@@ -194,7 +194,7 @@ ca("CA-009", "US-005", [
     (E, "el sistema debe cambiar su estado a «Requiere Ajuste»"),
     (Y, "debe notificar al asesor"),
     (C, "el asesor guarda la cotización ajustada"),
-    (E, "su estado pasa a «Pendiente de Autorización del Cliente» sin volver a revisión gerencial"),
+    (E, "si su total es igual o menor al que rechazó el Gerente, su estado pasa a «Pendiente de Autorización del Cliente» sin volver a revisión gerencial (si es mayor, ver CA-067)"),
 ], F2, ["RN-05", "RN-22"], "Cotizacion (ajustar), evento CotizacionRechazadaPorGerente → AlertaInterna",
    "ServicioDeAprobacionGerencial.revisar · ServicioDeCotizacion.ajustar",
    "POST /api/cotizaciones/{id}/revision-gerencial · PUT /api/cotizaciones/{id}/lineas", f"{GER} / {ASE}",
@@ -748,6 +748,16 @@ ca("CA-066", "US-027", [
    "ServicioDeRecepcion.corregir_placas", "PUT /api/ordenes/{numero}/placas · GET /api/consulta-de-estado?orden=&placas=", ASE,
    cambio="H-PIA-29", nombre="Corregir las placas mal capturadas")
 
+ca("CA-067", "US-005", [
+    (D, "que el Gerente rechazó con observaciones una cotización de $20,000.00 y está en «Requiere Ajuste»"),
+    (C, "el asesor guarda la cotización ajustada con un total mayor, por ejemplo $21,000.00"),
+    (E, "su estado debe regresar a «Pendiente de Aprobación Gerencial»"),
+    (Y, "el sistema debe notificar al Gerente para que revise el monto nuevo"),
+    (Y, "la cotización no se puede presentar al cliente hasta que el Gerente la apruebe"),
+], F2, ["RN-05", "RN-04"], "Cotizacion (ajustar), Dinero (comparación de totales), evento AprobacionGerencialRequerida → AlertaInterna",
+   "ServicioDeCotizacion.ajustar", "PUT /api/cotizaciones/{id}/lineas · GET /api/gerencia/cotizaciones-por-aprobar", ASE,
+   cambio="H-PIA-30", nombre="El ajuste sube el total que rechazó el Gerente")
+
 # ----------------------------------------------------------------------------- áreas (archivos .feature)
 AREAS = [
     ("01_recepcion", "Recepción y registro del vehículo",
@@ -782,7 +792,7 @@ REGLAS = {
     "RN-02": ("La cotización solo se genera a partir de un diagnóstico registrado por el técnico asignado.", "BRD §1; CA-005, CA-032"),
     "RN-03": ("Después de generar la cotización el diagnóstico no se modifica; los hallazgos nuevos son fallas adicionales.", "BRD Restricción 7"),
     "RN-04": ("La cotización inicial mayor a $15,000 MXN requiere aprobación del Gerente; las adicionales nunca.", "BRD Restricción 4"),
-    "RN-05": ("El rechazo del Gerente exige observaciones; la versión ajustada no regresa a revisión.", "BRD §2 Reglas implícitas"),
+    "RN-05": ("El rechazo del Gerente exige observaciones; la versión ajustada no regresa a revisión si su total es igual o menor al que rechazó el Gerente; si es mayor, regresa a «Pendiente de Aprobación Gerencial» y se avisa al Gerente (v3.1, H-PIA-30).", "BRD §2 Reglas implícitas; revisión de la Fase 18 (10/11/2026)"),
     "RN-06": ("Una cotización que espera aprobación gerencial no puede presentarse al cliente.", "BRD Restricción 4; CE-05"),
     "RN-07": ("La decisión se registra a nombre del autorizante válido: el cliente particular o el Responsable de Flotilla, nunca el conductor.", "BRD Restricción 5"),
     "RN-08": ("Solo los trabajos autorizados se asignan y se ejecutan; los demás quedan «No Autorizado».", "BRD §2 Excepciones; CE-01"),

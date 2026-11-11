@@ -58,7 +58,15 @@ Característica: Cotización y aprobación gerencial
     Entonces el sistema debe cambiar su estado a «Requiere Ajuste»
     Y debe notificar al asesor
     Cuando el asesor guarda la cotización ajustada
-    Entonces su estado pasa a «Pendiente de Autorización del Cliente» sin volver a revisión gerencial
+    Entonces si su total es igual o menor al que rechazó el Gerente, su estado pasa a «Pendiente de Autorización del Cliente» sin volver a revisión gerencial (si es mayor, ver CA-067)
+
+  @US-005 @CA-067 @v3.1
+  Escenario: CA-067 El ajuste sube el total que rechazó el Gerente
+    Dado que el Gerente rechazó con observaciones una cotización de $20,000.00 y está en «Requiere Ajuste»
+    Cuando el asesor guarda la cotización ajustada con un total mayor, por ejemplo $21,000.00
+    Entonces su estado debe regresar a «Pendiente de Aprobación Gerencial»
+    Y el sistema debe notificar al Gerente para que revise el monto nuevo
+    Y la cotización no se puede presentar al cliente hasta que el Gerente la apruebe
 
   # ---------------------------------------------------------------- US-023 (Asesor de Servicio)
 

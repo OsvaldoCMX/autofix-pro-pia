@@ -63,6 +63,7 @@ from tests.unit.application.escenarios import (
     poner_hora,
     por_cobrar,
     recibida,
+    trabajos,
 )
 
 R = TypeVar("R")
@@ -228,6 +229,20 @@ def test_rn_05_ajuste_reemplaza_lineas_y_refacciones(pareja: Pareja) -> None:
     assert cotizacion.total == "200.00"
     assert [linea.descripcion for linea in cotizacion.lineas] == ["Frenos"]
     assert [r.descripcion for r in cotizacion.lineas[0].refacciones] == ["Balatas"]
+
+
+def test_ca_067_ajuste_arriba_del_total_rechazado_regresa_al_gerente(pareja: Pareja) -> None:
+    def flujo(taller: Taller) -> str:
+        numero, id_cotizacion = cotizada(taller, importes=("20000.00",))
+        taller.aprobacion.revisar(RevisarCotizacion(id_cotizacion, False, "Revisar"))
+        taller.cotizacion.ajustar(AjustarCotizacion(id_cotizacion, trabajos("21000.00")))
+        return numero
+
+    cotizacion = pareja.expediente(pareja.en_ambas(flujo)).cotizaciones[0]
+
+    assert cotizacion.estado == "Pendiente de Aprobación Gerencial"
+    assert cotizacion.total == "21000.00"
+    assert cotizacion.fecha_aprobacion_gerencial is None
 
 
 def test_rn_04_cotizacion_aprobada_por_el_gerente_guarda_su_fecha(pareja: Pareja) -> None:

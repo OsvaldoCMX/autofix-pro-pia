@@ -2,7 +2,7 @@
 
 Relaciona **BRD → regla de negocio → componente → prueba**, como pide el paquete del profesor, y cada criterio de aceptación con su User Story, necesidad, fase del BPMN, ruta de la API y rol. Se genera con los scripts de `scripts/docs/` desde la misma fuente que `user-stories.md` y los `.feature`, así que los textos y conteos coinciden.
 
-**Conteos:** 16 necesidades · 27 User Stories · 66 criterios · 35 reglas de negocio · 8 Specifications · 51 rutas de API.
+**Conteos:** 16 necesidades · 27 User Stories · 67 criterios · 35 reglas de negocio · 8 Specifications · 51 rutas de API.
 
 La columna **Prueba prevista** usa la convención `test_ca_0XX_…` / `test_rn_XX_…` (ver `architecture/decisiones-tecnicas.md` §7). Al terminar la implementación se reemplaza por el nombre real de la prueba y su resultado (✔/✘), y se agrega la evidencia de cobertura.
 
@@ -13,7 +13,7 @@ La columna **Prueba prevista** usa la convención `test_ca_0XX_…` / `test_rn_X
 | N-01 | Registrar digitalmente la recepción del vehículo incluyendo fotografías de daños visibles. | Alta | US-001, US-002, US-003 | CA-001, CA-002, CA-003, CA-004, CA-052, CA-059 | Fase 1: Recepción y registro |
 | N-02 | Generar cotizaciones formales almacenadas con número, fecha, versión y estado. | Alta | US-004 | CA-005, CA-006, CA-060 | Fase 2: Diagnóstico y cotización; Fase 3: Autorización |
 | N-03 | Registrar la decisión del cliente (autorización total, parcial o rechazo) antes de iniciar trabajos. | Alta | US-006 | CA-010, CA-011, CA-012, CA-063 | Fase 3: Autorización |
-| N-04 | Aplicar flujo de aprobación del Gerente para cotizaciones iniciales mayores a $15,000 MXN. | Alta | US-005 | CA-007, CA-008, CA-009 | Fase 2: Diagnóstico y cotización |
+| N-04 | Aplicar flujo de aprobación del Gerente para cotizaciones iniciales mayores a $15,000 MXN. | Alta | US-005 | CA-007, CA-008, CA-009, CA-067 | Fase 2: Diagnóstico y cotización |
 | N-05 | Alertar automáticamente al asesor cuando una refacción tarde más de 3 días hábiles, para que notifique al cliente. | Media | US-012 | CA-023 | Fase 4: Gestión de refacciones |
 | N-06 | Generar cotizaciones adicionales para fallas descubiertas sin modificar la cotización original. | Alta | US-009, US-019 | CA-016, CA-017, CA-018, CA-034, CA-061 | Fase 5: Reparación y ampliación |
 | N-07 | Gestionar el proceso diferenciado para clientes de flotilla empresarial (autorización del responsable y crédito a 15 días desde la entrega). | Media | US-016, US-022 | CA-028, CA-029, CA-039, CA-041, CA-064, CA-065 | Fase 1, Fase 3 y Fase 6: Cierre, pago y entrega |
@@ -36,8 +36,8 @@ Cada regla viene del BRD (o de un hallazgo documentado) y tiene un componente re
 | RN-01 | Solo el Asesor de Servicio registra clientes, vehículos y órdenes. | BRD §2 Roles y permisos | CA-001, CA-003, CA-004 | Empleado (RolDeEmpleado.ASESOR) + `requiere_rol` en la API | ADR-012 | tests/**/test_rn_01_* |
 | RN-02 | La cotización solo se genera a partir de un diagnóstico registrado por el técnico asignado. | BRD §1; CA-005, CA-032 | CA-005, CA-032 | `OrdenDeServicio.marcar_cotizada` → `DiagnosticoRequerido` | ADR-001 | tests/**/test_rn_02_* |
 | RN-03 | Después de generar la cotización el diagnóstico no se modifica; los hallazgos nuevos son fallas adicionales. | BRD Restricción 7 | CA-033 | `OrdenDeServicio.registrar_diagnostico` → `DiagnosticoNoModificable` | ADR-001 | tests/**/test_rn_03_* |
-| RN-04 | La cotización inicial mayor a $15,000 MXN requiere aprobación del Gerente; las adicionales nunca. | BRD Restricción 4 | CA-005, CA-007, CA-008, CA-016, CA-048, CA-049 | Specification E1 `RequiereAprobacionGerencial` | ADR-005, ADR-006 | tests/**/test_rn_04_* |
-| RN-05 | El rechazo del Gerente exige observaciones; la versión ajustada no regresa a revisión. | BRD §2 Reglas implícitas | CA-009, CA-050 | `Cotizacion.rechazar_por_gerente` / `ajustar` | ADR-007 | tests/**/test_rn_05_* |
+| RN-04 | La cotización inicial mayor a $15,000 MXN requiere aprobación del Gerente; las adicionales nunca. | BRD Restricción 4 | CA-005, CA-007, CA-008, CA-016, CA-048, CA-049, CA-067 | Specification E1 `RequiereAprobacionGerencial` | ADR-005, ADR-006 | tests/**/test_rn_04_* |
+| RN-05 | El rechazo del Gerente exige observaciones; la versión ajustada no regresa a revisión si su total es igual o menor al que rechazó el Gerente; si es mayor, regresa a «Pendiente de Aprobación Gerencial» y se avisa al Gerente (v3.1, H-PIA-30). | BRD §2 Reglas implícitas; revisión de la Fase 18 (10/11/2026) | CA-009, CA-050, CA-067 | `Cotizacion.rechazar_por_gerente` / `ajustar` | ADR-007 | tests/**/test_rn_05_* |
 | RN-06 | Una cotización que espera aprobación gerencial no puede presentarse al cliente. | BRD Restricción 4; CE-05 | CA-006, CA-007, CA-048 | `MAQUINA_DE_COTIZACION` (presentar solo desde «Pendiente de Autorización del Cliente») | ADR-007 | tests/**/test_rn_06_* |
 | RN-07 | La decisión se registra a nombre del autorizante válido: el cliente particular o el Responsable de Flotilla, nunca el conductor. | BRD Restricción 5 | CA-010, CA-017, CA-028, CA-029, CA-055, CA-063, CA-064, CA-065 | Specification E2 `AutorizanteValido` + `VerificadorDeAutorizante` | ADR-006 | tests/**/test_rn_07_* |
 | RN-08 | Solo los trabajos autorizados se asignan y se ejecutan; los demás quedan «No Autorizado». | BRD §2 Excepciones; CE-01 | CA-010, CA-011, CA-012, CA-017, CA-018, CA-036 | `OrdenDeServicio.aplicar_decision` / `asignar_trabajos`, `Trabajo` | ADR-007 | tests/**/test_rn_08_* |
@@ -154,8 +154,9 @@ Operadores cubiertos: **AND** (E1, E2, E3, E5, E6, E7, E8), **OR** (E2, E3, E4, 
 | CA-064 | Flotilla: el mensaje dice a nombre de quién y con qué rol | US-016 | N-07 | Fase 3: Autorización | RN-07 | VerificadorDeAutorizante, error AutorizanteNoValido | ServicioDeAutorizacion.registrar_decision | POST /api/cotizaciones/{id}/decision (409) | Asesor | tests/api/test_recepcion.py::test_ca_064_* | P1 | H-PIA-27 |
 | CA-065 | La empresa de flotilla ya está registrada | US-016 | N-07 | Fase 1: Recepción y registro | RN-07 | Cliente (TipoCliente.FLOTILLA), ResponsableDeFlotilla, error EmpresaYaRegistrada | ServicioDeRecepcion.registrar_cliente | POST /api/clientes (409) | Asesor | tests/api/test_recepcion.py::test_ca_065_* | P1 | H-PIA-28 |
 | CA-066 | Corregir las placas mal capturadas | US-027 | N-16 | Fase 1: Recepción y registro | RN-35 | Vehiculo y OrdenDeServicio (corregir placas), Placas (VO), evento PlacasCorregidas, error CorreccionNoPermitida | ServicioDeRecepcion.corregir_placas | PUT /api/ordenes/{numero}/placas · GET /api/consulta-de-estado?orden=&placas= | Asesor | tests/api/test_recepcion.py::test_ca_066_* | P1 | H-PIA-29 |
+| CA-067 | El ajuste sube el total que rechazó el Gerente | US-005 | N-04 | Fase 2: Diagnóstico y cotización | RN-05, RN-04 | Cotizacion (ajustar), Dinero (comparación de totales), evento AprobacionGerencialRequerida → AlertaInterna | ServicioDeCotizacion.ajustar | PUT /api/cotizaciones/{id}/lineas · GET /api/gerencia/cotizaciones-por-aprobar | Asesor | tests/api/test_cotizacion.py::test_ca_067_* | P1 | H-PIA-30 |
 
-**Prioridad:** 62 criterios son P1 completos; la parte P2 (PDF y fotos) se omitió por decisión del equipo y sus rutas responden 501 (ver `architecture/decisiones-tecnicas.md` §8). CA-027 no está implementado; CA-002, CA-005 y CA-024 están implementados, salvo sus fotos o su PDF.
+**Prioridad:** 63 criterios son P1 completos; la parte P2 (PDF y fotos) se omitió por decisión del equipo y sus rutas responden 501 (ver `architecture/decisiones-tecnicas.md` §8). CA-027 no está implementado; CA-002, CA-005 y CA-024 están implementados, salvo sus fotos o su PDF.
 
 **Planeado:** criterio o regla aprobados en la Fase 13 (revisión del 09/11/2026) que todavía no se construyen; la Fase 14 quita la marca al construir cada uno y lo que se recorte queda documentado como planeado. Hoy no hay ninguno.
 

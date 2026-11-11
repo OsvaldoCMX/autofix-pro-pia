@@ -17,7 +17,7 @@ Esta carpeta es la fuente única del análisis y la arquitectura del PIA. Todo e
 | [api/](api/README.md) | Contrato de la API REST (51 rutas, roles, códigos y ejemplos; todas construidas desde la Fase 15). |
 | [trazabilidad/](trazabilidad/matriz-trazabilidad.md) | Matriz BRD → regla → componente → prueba (Markdown y Excel). |
 | [datos-profesor/](datos-profesor/README.md) | Cómo se cargan los datos del profesor, diferencias D-01 a D-07, anomalías y oráculos de los 120 casos y 20 transiciones. |
-| [registro-de-cambios.md](registro-de-cambios.md) | Hallazgos H-PIA-01 a H-PIA-29 y conteos U3 → PIA → v3.1. |
+| [registro-de-cambios.md](registro-de-cambios.md) | Hallazgos H-PIA-01 a H-PIA-30 y conteos U3 → PIA → v3.1. |
 | [interfaz-web.md](interfaz-web.md) | *(v3.1)* Pantallas de la página web por puesto: qué ve cada usuario, sus botones por estado, la ruta que llama y los criterios que cubre. |
 | [auditoria-errores-de-usuario.md](auditoria-errores-de-usuario.md) | *(v3.1)* Auditoría «¿y si me equivoco?» (AU-01 a AU-39) con las decisiones del equipo. |
 | [plan-de-implementacion.md](plan-de-implementacion.md) | Las 21 fases (0 a 20): de la preparación del repositorio a la entrega del 06/11/2026 y, después de la revisión, la interfaz web y las correcciones, con lo que construye cada una, sus pruebas y su estado de avance. |
