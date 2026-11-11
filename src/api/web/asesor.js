@@ -35,9 +35,9 @@ import {
   secundario,
 } from "./ui.js";
 
-// Direcciones de interfaz-web.md §3; el menú del encabezado muestra estas entradas.
+// Direcciones de interfaz-web.md §3; el encabezado y las tarjetas del menú muestran estas entradas.
 export const MENU = [
-  { texto: "Buscar por placas", direccion: "#/asesor" },
+  { texto: "Buscar por placas", direccion: "#/asesor", icono: "lupa" },
 ];
 
 const NIVELES_DE_COMBUSTIBLE = ["Reserva", "1/4", "1/2", "3/4", "Lleno"];

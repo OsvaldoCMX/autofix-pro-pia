@@ -28,9 +28,9 @@ import {
   tabla,
 } from "./ui.js";
 
-// Direcciones de interfaz-web.md §3; el menú del encabezado muestra estas entradas.
+// Direcciones de interfaz-web.md §3; el encabezado y las tarjetas del menú muestran estas entradas.
 export const MENU = [
-  { texto: "Mi fila de trabajo", direccion: "#/tecnico" },
+  { texto: "Mi fila de trabajo", direccion: "#/tecnico", icono: "fila" },
 ];
 
 const ESTADOS_EN_TRABAJO = ["Autorizada", "En Reparación", "En Espera de Refacción"];

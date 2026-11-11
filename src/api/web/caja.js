@@ -24,9 +24,9 @@ import {
   secundario,
 } from "./ui.js";
 
-// Direcciones de interfaz-web.md §3; el menú del encabezado muestra estas entradas.
+// Direcciones de interfaz-web.md §3; el encabezado y las tarjetas del menú muestran estas entradas.
 export const MENU = [
-  { texto: "Buscar orden", direccion: "#/caja" },
+  { texto: "Buscar orden", direccion: "#/caja", icono: "cobro" },
 ];
 
 const FORMAS_DE_PAGO = ["Efectivo", "Tarjeta", "Transferencia"];

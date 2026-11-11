@@ -21,6 +21,7 @@ import * as tecnico from "./tecnico.js";
 import {
   avisarAlLlegar,
   crear,
+  icono,
   limpiarAvisos,
   manejarError,
   mostrarAvisosPendientes,
@@ -40,19 +41,39 @@ const PUESTOS = {
   Caja: { inicio: "/caja", modulo: caja },
 };
 
+/** Tarjeta grande con ícono que lleva a una pantalla (portada y menú de cada puesto). */
+function tarjetaDeOpcion({ texto, direccion, icono: nombreDelIcono, detalle }, actual = false) {
+  const tarjeta = crear(
+    "a",
+    { className: "tarjeta-opcion", href: direccion },
+    icono(nombreDelIcono, "icono icono-grande"),
+    crear(
+      "span",
+      { className: "tarjeta-opcion-textos" },
+      crear("span", { className: "tarjeta-opcion-texto" }, texto),
+      detalle ? crear("span", { className: "tarjeta-opcion-detalle" }, detalle) : null,
+    ),
+  );
+  if (actual) {
+    tarjeta.setAttribute("aria-current", "page");
+  }
+  return tarjeta;
+}
+
 // P-01 Inicio
 function mostrarInicio() {
   pantalla.replaceChildren(
     crear(
       "section",
-      { className: "tarjeta" },
-      crear("h1", {}, "Bienvenido a AutoFix Pro"),
-      crear("p", { className: "nota" }, "¿Qué desea hacer?"),
+      { className: "portada" },
+      icono("llave", "icono portada-logo"),
+      crear("h1", {}, "AutoFix Pro"),
+      crear("p", { className: "portada-frase" }, "Consulte cómo va el servicio de su vehículo o entre al sistema del taller."),
       crear(
         "div",
-        { className: "botones-grandes" },
-        crear("a", { className: "boton", href: "#/consulta" }, "Consulta tu vehículo"),
-        crear("a", { className: "boton boton-secundario", href: "#/entrar" }, "Entrar como personal del taller"),
+        { className: "opciones" },
+        tarjetaDeOpcion({ texto: "Consulta tu vehículo", direccion: "#/consulta", icono: "auto", detalle: "Con su número de orden y sus placas." }),
+        tarjetaDeOpcion({ texto: "Personal del taller", direccion: "#/entrar", icono: "llave", detalle: "Entre con su clave de acceso." }),
       ),
     ),
   );
@@ -104,11 +125,23 @@ function destinoDe(ruta, empleado) {
   return menuPropio ?? "/inicio";
 }
 
+/** Arriba de las pantallas del menú del puesto, sus opciones como tarjetas grandes con ícono. */
+function actualizarTarjetasDelMenu(empleado, ruta) {
+  const tarjetas = document.getElementById("menu-tarjetas");
+  const opciones = empleado ? PUESTOS[empleado.rol].modulo.MENU : [];
+  const enElMenu = opciones.some(({ direccion }) => direccion === `#${ruta}`);
+  tarjetas.hidden = !enElMenu;
+  tarjetas.replaceChildren(
+    ...(enElMenu ? opciones.map((opcion) => tarjetaDeOpcion(opcion, opcion.direccion === `#${ruta}`)) : []),
+  );
+}
+
 function actualizarEncabezado(empleado, ruta) {
   const menu = document.getElementById("menu");
   const usuario = document.getElementById("usuario");
   menu.hidden = !empleado;
   usuario.hidden = !empleado;
+  actualizarTarjetasDelMenu(empleado, ruta);
   if (!empleado) {
     menu.replaceChildren();
     return;
@@ -142,6 +175,7 @@ async function navegar() {
     await recuperarSesion();
   } catch (error) {
     pantalla.replaceChildren();
+    actualizarTarjetasDelMenu(null, ruta);
     manejarError(error, navegar);
     return;
   }

@@ -18,11 +18,11 @@ import {
   tabla,
 } from "./ui.js";
 
-// Direcciones de interfaz-web.md §3; el menú del encabezado muestra estas entradas.
+// Direcciones de interfaz-web.md §3; el encabezado y las tarjetas del menú muestran estas entradas.
 export const MENU = [
-  { texto: "Cotizaciones por aprobar", direccion: "#/gerente" },
-  { texto: "Órdenes", direccion: "#/gerente/ordenes" },
-  { texto: "Ingresos del día", direccion: "#/gerente/ingresos" },
+  { texto: "Cotizaciones por aprobar", direccion: "#/gerente", icono: "aprobar" },
+  { texto: "Órdenes", direccion: "#/gerente/ordenes", icono: "ordenes" },
+  { texto: "Ingresos del día", direccion: "#/gerente/ingresos", icono: "ingresos" },
 ];
 
 // Los 13 estados del Glosario (§2), en el orden del ciclo de vida, para el filtro de G-02.

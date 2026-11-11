@@ -5,9 +5,9 @@ import { pedir } from "./api.js";
 import { fechaYHora } from "./formato.js";
 import { boton, confirmar, crear, enviar, manejarError, mostrarCargando, mostrarExito, tabla } from "./ui.js";
 
-// Direcciones de interfaz-web.md §3; el menú del encabezado muestra estas entradas.
+// Direcciones de interfaz-web.md §3; el encabezado y las tarjetas del menú muestran estas entradas.
 export const MENU = [
-  { texto: "Solicitudes pendientes", direccion: "#/compras" },
+  { texto: "Solicitudes pendientes", direccion: "#/compras", icono: "paquete" },
 ];
 
 const DIAS_PARA_RESALTAR = 3;

@@ -9,18 +9,28 @@
 </head>
 <body>
   <header class="encabezado">
-    <a class="marca" id="marca" href="#/inicio">AutoFix Pro</a>
+    <a class="marca" id="marca" href="#/inicio">
+      <span class="marca-logo" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3.5 17.5a1.4 1.4 0 0 0 2 2l5.8-5.8a4 4 0 0 0 5.4-5.4l-2.4 2.4-2.1-.4-.4-2.1z"/></svg>
+      </span>
+      <span class="marca-texto">AutoFix Pro <span class="marca-lema">Taller automotriz</span></span>
+    </a>
     <nav class="menu" id="menu" aria-label="Menú del puesto" hidden></nav>
     <div class="usuario" id="usuario" hidden>
-      <a class="campana" id="campana" href="#/alertas" aria-label="Alertas"><span aria-hidden="true">🔔</span> Alertas <span class="campana-numero" id="campana-numero" hidden></span></a>
+      <a class="campana" id="campana" href="#/alertas" aria-label="Alertas">
+        <span class="icono" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16v-5a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 21h4"/></svg></span>
+        Alertas <span class="campana-numero" id="campana-numero" hidden></span>
+      </a>
       <span class="saludo" id="saludo"></span>
-      <button class="boton boton-secundario" id="cerrar-sesion" type="button">Cerrar sesión</button>
+      <button class="boton boton-claro" id="cerrar-sesion" type="button">Cerrar sesión</button>
     </div>
   </header>
   <div class="avisos" id="avisos" aria-live="polite"></div>
+  <nav class="menu-tarjetas" id="menu-tarjetas" aria-label="Opciones del puesto" hidden></nav>
   <main class="pantalla" id="pantalla">
     <p class="cargando">Cargando…</p>
   </main>
+  <footer class="pie">AutoFix Pro · Sistema de órdenes de servicio del taller</footer>
   <noscript>
     <p class="aviso aviso-error">Para usar AutoFix Pro, active JavaScript en su navegador.</p>
   </noscript>
