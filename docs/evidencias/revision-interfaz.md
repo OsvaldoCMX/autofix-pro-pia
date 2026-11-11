@@ -151,6 +151,10 @@ Intentar el error y anotar **qué mensaje sale**, palabra por palabra.
 | 9 | Encender la API (`docker compose start app`) y presionar «Intentar de nuevo». | La pantalla carga sin recargar la página. | |
 | 10 | Abrir `/docs` y `/health`. | Siguen funcionando igual. | |
 | 11 | Ver la página en una tablet o con la ventana angosta (unos 800 px). | Todo se lee y los botones se pueden tocar; nada queda cortado. | |
+| 12 | Con alertas en la campana, abrir «Alertas». | El número de la campana queda en 0. | |
+| 13 | Provocar una alerta nueva (por ejemplo, el Técnico registra un diagnóstico) y volver a entrar como el Asesor. | La campana cuenta solo la alerta nueva; en «Alertas» esa lleva la etiqueta «Nueva» y las anteriores no. | |
+| 14 | Entrar con otro empleado en el mismo navegador. | Su campana cuenta sus propias alertas sin ver (la visita se guarda por empleado). | |
+| 15 | Abrir la página en una ventana privada o en otro navegador. | Sin visita guardada, la campana cuenta las alertas de hoy y nada falla. | |
 
 ## 6. Aspecto
 
@@ -173,3 +177,4 @@ Lo que encontró el equipo al probar la página. Cada hallazgo se corrige en est
 | H3 | A-05 | El mensaje de un trabajo de $0.00 repetía toda la descripción. | «El trabajo 1 vale $0.00: capture su mano de obra o sus refacciones.» | §3, fila 14. | |
 | H4 | A-05 | Un importe negativo decía «Escriba un importe, por ejemplo 1500.00 (sin signo de menos).» | «La mano de obra no puede ser negativa. Escriba la cantidad en pesos, por ejemplo 1500.00.» (y lo mismo para el precio de la refacción y el monto). | §4, filas 7 y 8. | |
 | H5 | A-05, G-01 | Después del rechazo del Gerente, el Asesor podía ajustar **subiendo** el total y la cotización iba al cliente sin que el Gerente viera ese monto (hueco de RN-05). | Regla nueva (H-PIA-30): la versión ajustada va al cliente si su total es igual o menor al que rechazó el Gerente; si es mayor, regresa a «Pendiente de Aprobación Gerencial» y se avisa al Gerente. | Cotización de $20,000.00 → el Gerente la rechaza → ajustar a $21,000.00: vuelve al Gerente con alerta. Otra: rechazar $20,000.00 y ajustar a $18,000.00: va al cliente. | |
+| H6 | P-04 | La campana seguía mostrando el número aunque el empleado ya hubiera visto las alertas. | La página guarda en `localStorage`, por empleado, cuándo abrió «Alertas» por última vez; la campana cuenta solo las alertas posteriores y queda en 0 al abrirlas; las posteriores a la visita anterior llevan «Nueva». Solo en la página: la API no cambia. | §5, filas 12 a 15. | |

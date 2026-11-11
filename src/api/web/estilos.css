@@ -488,6 +488,19 @@ legend { font-weight: 700; font-size: var(--letra-media); padding: 0 var(--esp-2
 .alerta { padding: var(--esp-3) 0; border-bottom: 1px solid var(--borde); }
 .alerta p { margin: 0.2rem 0; }
 
+/* Alerta que llegó después de la última visita a #/alertas (H6). */
+.alerta-nueva { border-left: 4px solid var(--acento); padding-left: var(--esp-3); background: var(--info-fondo); }
+.etiqueta-nueva {
+  display: inline-block;
+  margin-right: var(--esp-2);
+  padding: 0 var(--esp-2);
+  border-radius: 999px;
+  background: var(--acento);
+  color: var(--texto);
+  font-size: var(--letra-chica);
+  font-weight: 800;
+}
+
 /* Tablet y teléfono */
 
 @media (max-width: 48rem) {
