@@ -33,7 +33,7 @@ Orden en que se construye el sistema a partir de esta documentación. Cada fase 
 | 15 | Base de la interfaz web | Terminada | 10/11/2026 | `docs: cerrar la Fase 15` |
 | 16 | Pantallas del Asesor | Terminada | 10/11/2026 | `docs: cerrar la Fase 16` |
 | 17 | Pantallas de Técnico, Gerente, Compras y Caja | Terminada | 10/11/2026 | `docs: cerrar la Fase 17` |
-| 18 | Revisión como usuario del taller | Pendiente | — | — |
+| 18 | Revisión como usuario del taller | Terminada | 10/11/2026 | `docs: cerrar la Fase 18` |
 | 19 | Despliegue de la interfaz en Render y datos limpios en Supabase | Pendiente | — | — |
 | 20 | README, guion de demostración y reporte | Pendiente | — | — |
 
@@ -370,6 +370,17 @@ La prioridad es **Alta** si el profesor lo puede encontrar en una demo de 10 min
 Lo que falle se corrige en esta fase: la página, o el mensaje en el dominio o en `src/api/errores.py`. Después se vuelven a correr todas las pruebas.
 
 **Commits:** `fix(web): …` por cada corrección · `docs: lista de revisión de la interfaz`.
+
+**Resultado (10/11/2026).** Se escribió `evidencias/revision-interfaz.md` y el equipo la ejecutó en Docker local con los datos del profesor: los 6 escenarios, H1 a H6, la prueba B (ajustar subiendo el total regresa al Gerente), el doble clic, la descripción vacía, la consulta con placas incorrectas, recargar la página y la dirección de otro puesto salieron bien; las filas que no formaron parte de ese reporte dicen «No reportado». Hallazgos del equipo y cómo se corrigieron:
+- H1: placas escritas en «Número de orden» (A-01). La página dice «Eso parecen unas placas…» si el texto, sin espacios y en mayúsculas, no empieza con `OS-` ni `AUT-`; «¿Ya tiene el número de orden?» queda como opción secundaria.
+- H2: mensajes del teléfono en el dominio («solo puede llevar números…» y «…usted escribió N.»); el campo no deja escribir letras.
+- H3: «El trabajo 1 vale $0.00: capture su mano de obra o sus refacciones.» (sin repetir la descripción).
+- H4: importe negativo con su nombre («La mano de obra no puede ser negativa. Escriba la cantidad en pesos, por ejemplo 1500.00.»), en `api/errores.py` y en la página.
+- H5 → **H-PIA-30**: RN-05 se precisa. La cotización ajustada regresa a «Pendiente de Aprobación Gerencial», con alerta al Gerente, si su total supera el que él rechazó; transición nueva «Requiere Ajuste» → «Pendiente de Aprobación Gerencial» y criterio nuevo CA-067 (67 criterios). Se actualizaron el BRD (versión 3.2, restricción 13), el Glosario, el modelo de dominio, ADR-018 (nota), `registro-de-cambios.md` §7, la matriz y el contrato. Sin cambios en la base.
+- H6: la campana cuenta solo las alertas posteriores a la última visita a `#/alertas` (guardada en `localStorage` por empleado; sin ella, las de hoy) y marca «Nueva»; la API no cambia.
+- H7: tarjetas de formulario de unos 640 px, centradas; se corrigió además que el editor de la cotización se desbordaba en tablet.
+- Pulido visual sin cambiar la lógica: portada con tarjetas e íconos SVG propios, encabezado, pie de página, menú del puesto como tarjetas y estilos con variables (`interfaz-web.md` §1, §3 y P-01).
+- Verificado: 2321 pruebas con SQLite, cobertura 99.81 % (el CI corre PostgreSQL); cada hallazgo se recorrió en Chrome sin ventana con la aplicación en memoria, a 1280, 820 y 390 px, sin errores de JavaScript.
 
 ## Fase 19 — Despliegue de la interfaz en Render y datos limpios en Supabase
 
